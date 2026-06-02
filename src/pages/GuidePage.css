@@ -1,0 +1,40 @@
+.guide-intro {
+  margin-bottom: 28px;
+}
+
+.guide-intro__text {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.guide-section {
+  margin-bottom: 28px;
+}
+
+.guide-section__desc {
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin: 6px 0 14px;
+  line-height: 1.4;
+}
+
+.guide-section form.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.guide-section .btn-primary {
+  margin-top: 8px;
+}
+
+.guide-data-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guide-data-actions .btn {
+  width: 100%;
+}

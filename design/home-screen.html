@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Path · Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --paper:        #f7f3eb;
+      --paper-deep:   #ede6d8;
+      --ink:          #2c2419;
+      --ink-soft:     #5c5248;
+      --ink-muted:    #8a8074;
+      --sage:         #6b8f71;
+      --sage-light:   #e4ece5;
+      --sage-deep:    #4a6b50;
+      --moss:         #3d5a42;
+      --earth:        #8b7355;
+      --earth-light:  #d4c4ae;
+      --terracotta:   #c4785a;
+      --terracotta-soft: #f0ddd4;
+      --sky:          #c5d4ce;
+      --trail:        #a8b89e;
+      --white:        #fffcf7;
+      --radius-sm:    10px;
+      --radius-md:    16px;
+      --radius-lg:    22px;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #d8d2c8;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
+      color: var(--ink);
+      padding: 32px 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .device {
+      width: 390px;
+      height: 844px;
+      background: var(--ink);
+      border-radius: 48px;
+      padding: 12px;
+      position: relative;
+    }
+
+    .device::before {
+      content: '';
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 32px;
+      background: var(--ink);
+      border-radius: 20px;
+      z-index: 10;
+    }
+
+    .screen {
+      width: 100%;
+      height: 100%;
+      background: var(--paper);
+      border-radius: 38px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .screen::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30 Q15 25 30 30 T60 30' fill='none' stroke='%23d4cbb8' stroke-width='0.5' opacity='0.4'/%3E%3Cpath d='M0 45 Q15 40 30 45 T60 45' fill='none' stroke='%23d4cbb8' stroke-width='0.5' opacity='0.3'/%3E%3Cpath d='M0 15 Q15 10 30 15 T60 15' fill='none' stroke='%23d4cbb8' stroke-width='0.5' opacity='0.3'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      position: relative;
+      z-index: 1;
+      scrollbar-width: none;
+      padding-bottom: 8px;
+    }
+    .content::-webkit-scrollbar { display: none; }
+
+    /* ── Header ── */
+    .header {
+      padding: 52px 24px 0;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .brand-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--sage-deep);
+    }
+
+    .brand-name {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.15;
+    }
+
+    .compass {
+      width: 44px;
+      height: 44px;
+      background: var(--white);
+      border: 1.5px solid var(--earth-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .date-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .date-text {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--ink-soft);
+    }
+
+    .season-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--sage-light);
+      color: var(--moss);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 20px;
+    }
+
+    .season-badge svg { width: 14px; height: 14px; }
+
+    /* ── Training focus hero ── */
+    .focus-hero {
+      margin: 0 24px 16px;
+      background: linear-gradient(168deg, var(--sky) 0%, var(--sage-light) 50%, var(--paper-deep) 100%);
+      border-radius: var(--radius-lg);
+      padding: 22px 22px 18px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(107, 143, 113, 0.22);
+    }
+
+    .focus-hero svg.landscape {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: 90px;
+      opacity: 0.5;
+    }
+
+    .focus-inner { position: relative; z-index: 1; }
+
+    .focus-eyebrow {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--sage-deep);
+      margin-bottom: 6px;
+    }
+
+    .focus-title {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+
+    .focus-sub {
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.4;
+      margin-bottom: 0;
+    }
+
+    .focus-since {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--moss);
+      background: rgba(255, 252, 247, 0.65);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(107, 143, 113, 0.2);
+    }
+
+    /* ── Training verse ── */
+    .training-verse {
+      margin: 0 24px 24px;
+      background: var(--white);
+      border: 1.5px solid var(--earth-light);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      position: relative;
+    }
+
+    .training-verse::before {
+      content: '';
+      position: absolute;
+      top: 12px;
+      bottom: 12px;
+      left: 0;
+      width: 4px;
+      background: var(--earth);
+      border-radius: 0 2px 2px 0;
+    }
+
+    .verse-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--earth);
+      margin-bottom: 10px;
+    }
+
+    .verse-text {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 1.5;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+
+    .verse-ref {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-muted);
+    }
+
+    .verse-companion {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--paper-deep);
+      font-size: 12px;
+      font-style: italic;
+      color: var(--ink-muted);
+      line-height: 1.4;
+    }
+
+    /* ── Section headings ── */
+    .section-head {
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .section-link {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--sage-deep);
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Today's Trail ── */
+    .trail-stages {
+      margin: 0 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    .trail-stages::before {
+      content: '';
+      position: absolute;
+      left: 23px;
+      top: 28px;
+      bottom: 28px;
+      width: 2px;
+      background: var(--trail);
+      z-index: 0;
+    }
+
+    .stage {
+      display: flex;
+      gap: 14px;
+      padding: 10px 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .stage-marker {
+      width: 48px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stage-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--trail);
+      background: var(--paper);
+    }
+
+    .stage.past .stage-dot {
+      background: var(--sage);
+      border-color: var(--sage);
+    }
+
+    .stage.current .stage-dot {
+      width: 18px;
+      height: 18px;
+      border-color: var(--terracotta);
+      background: var(--terracotta-soft);
+      box-shadow: 0 0 0 3px rgba(196, 120, 90, 0.2);
+    }
+
+    .stage-time {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .stage.current .stage-time { color: var(--terracotta); }
+
+    .stage-card {
+      flex: 1;
+      background: var(--white);
+      border: 1.5px solid var(--paper-deep);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+
+    .stage.past .stage-card {
+      opacity: 0.88;
+      border-color: var(--sage-light);
+    }
+
+    .stage.current .stage-card {
+      border-color: var(--terracotta);
+      background: var(--white);
+    }
+
+    .stage.future .stage-card {
+      background: var(--paper);
+      border-style: dashed;
+      border-color: var(--earth-light);
+    }
+
+    .stage-name {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .stage-desc {
+      font-size: 12px;
+      color: var(--ink-muted);
+      line-height: 1.35;
+      margin-bottom: 8px;
+    }
+
+    .stage-snippet {
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.45;
+      font-style: italic;
+      padding-top: 8px;
+      border-top: 1px solid var(--paper-deep);
+    }
+
+    .stage-snippet strong {
+      font-style: normal;
+      font-weight: 600;
+      color: var(--earth);
+    }
+
+    .stage-invite {
+      font-size: 13px;
+      color: var(--terracotta);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .stage-quiet {
+      font-size: 12px;
+      color: var(--ink-muted);
+      font-style: italic;
+    }
+
+    /* ── Journey log ── */
+    .log-list {
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .log-entry {
+      background: var(--white);
+      border: 1.5px solid var(--paper-deep);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+
+    .log-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .log-date {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--earth);
+      text-transform: uppercase;
+    }
+
+    .log-type {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      background: var(--paper);
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .log-body {
+      font-size: 14px;
+      color: var(--ink-soft);
+      line-height: 1.45;
+    }
+
+    .log-body em {
+      font-family: 'Fraunces', Georgia, serif;
+      font-style: italic;
+      color: var(--ink);
+    }
+
+    /* ── Prayer requests ── */
+    .prayer-list {
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .prayer-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      background: var(--white);
+      border: 1.5px solid var(--paper-deep);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+
+    .prayer-mark {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--sage);
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .prayer-text {
+      font-size: 14px;
+      color: var(--ink-soft);
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    .prayer-since {
+      font-size: 11px;
+      color: var(--ink-muted);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ── Lessons learned ── */
+    .lessons {
+      margin: 0 24px 20px;
+      background: var(--moss);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+    }
+
+    .lessons-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 252, 247, 0.55);
+      margin-bottom: 14px;
+    }
+
+    .lesson-item {
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 252, 247, 0.12);
+    }
+
+    .lesson-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .lesson-item:first-of-type { padding-top: 0; }
+
+    .lesson-text {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 14px;
+      font-style: italic;
+      line-height: 1.45;
+      color: var(--paper);
+      margin-bottom: 4px;
+    }
+
+    .lesson-from {
+      font-family: 'Source Sans 3', sans-serif;
+      font-style: normal;
+      font-size: 11px;
+      color: rgba(255, 252, 247, 0.5);
+    }
+
+    /* ── Bottom nav ── */
+    .nav {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 12px 16px 28px;
+      background: var(--white);
+      border-top: 1.5px solid var(--paper-deep);
+      position: relative;
+      z-index: 2;
+      flex-shrink: 0;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.45;
+    }
+
+    .nav-item.active { opacity: 1; }
+
+    .nav-item svg { width: 24px; height: 24px; }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft);
+    }
+
+    .nav-item.active .nav-label { color: var(--sage-deep); }
+    .nav-item.active svg { stroke: var(--sage-deep); }
+  </style>
+</head>
+<body>
+
+  <div class="device">
+    <div class="screen">
+
+      <div class="content">
+
+        <header class="header">
+          <div class="header-top">
+            <div>
+              <div class="brand-label">Train for Godliness</div>
+              <div class="brand-name">Path</div>
+            </div>
+            <div class="compass" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <circle cx="14" cy="14" r="12" stroke="#8a8074" stroke-width="1.2"/>
+                <polygon points="14,6 16,14 14,22 12,14" fill="#c4785a"/>
+                <polygon points="14,6 16,14 14,13 12,14" fill="#6b8f71"/>
+                <circle cx="14" cy="14" r="1.5" fill="#2c2419"/>
+              </svg>
+            </div>
+          </div>
+          <div class="date-row">
+            <span class="date-text">Sunday, May 31</span>
+            <span class="season-badge">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M7 1C7 1 3 5 3 8.5a4 4 0 008 0C11 5 7 1 7 1z" fill="#4a6b50" opacity="0.7"/><path d="M7 12v1M5 13h4" stroke="#4a6b50" stroke-width="1.2" stroke-linecap="round"/></svg>
+              Year 3 · Early Summer
+            </span>
+          </div>
+        </header>
+
+        <!-- Current Training Focus -->
+        <section class="focus-hero" aria-label="Current training focus">
+          <svg class="landscape" viewBox="0 0 342 90" preserveAspectRatio="none" fill="none">
+            <path d="M0 55 Q50 35 110 50 T220 42 T342 58 L342 90 L0 90Z" fill="#6b8f71" opacity="0.18"/>
+            <path d="M0 70 Q90 48 180 62 T342 68 L342 90 L0 90Z" fill="#4a6b50" opacity="0.14"/>
+            <path d="M250 40 L256 18 L262 28 L268 12 L274 32 L280 40Z" fill="#3d5a42" opacity="0.25"/>
+            <path d="M70 48 L74 32 L78 40 L82 28 L86 48Z" fill="#3d5a42" opacity="0.18"/>
+          </svg>
+          <div class="focus-inner">
+            <p class="focus-eyebrow">Current training focus</p>
+            <h1 class="focus-title">Patience</h1>
+            <p class="focus-sub">A season of learning to wait, listen, and respond with grace.</p>
+            <span class="focus-since">Training since March 12</span>
+          </div>
+        </section>
+
+        <!-- Current Training Verse -->
+        <section class="training-verse" aria-label="Current training verse">
+          <div class="verse-label">Training verse</div>
+          <p class="verse-text">Everyone should be quick to listen, slow to speak, and slow to become angry.</p>
+          <p class="verse-ref">James 1:19</p>
+          <p class="verse-companion">Carried on the trail since March — return to it throughout the day.</p>
+        </section>
+
+        <!-- Today's Trail -->
+        <div class="section-head">
+          <h2 class="section-title">Today's trail</h2>
+        </div>
+
+        <div class="trail-stages">
+
+          <div class="stage past">
+            <div class="stage-marker">
+              <div class="stage-dot"></div>
+              <span class="stage-time">Morning</span>
+            </div>
+            <div class="stage-card">
+              <div class="stage-name">Prepare</div>
+              <div class="stage-desc">Set your heart before the day begins.</div>
+              <p class="stage-snippet">
+                <strong>Philippians 4:6–7</strong> stood out — "Do not be anxious about anything…"
+                <br><br>
+                Noted: I need patience most in conversations with my team today.
+              </p>
+            </div>
+          </div>
+
+          <div class="stage current">
+            <div class="stage-marker">
+              <div class="stage-dot"></div>
+              <span class="stage-time">Midday</span>
+            </div>
+            <div class="stage-card">
+              <div class="stage-name">Live</div>
+              <div class="stage-desc">Pause amid the day. Notice where God is at work.</div>
+              <p class="stage-invite">How are you doing? Have you remembered today's focus?</p>
+            </div>
+          </div>
+
+          <div class="stage future">
+            <div class="stage-marker">
+              <div class="stage-dot"></div>
+              <span class="stage-time">Evening</span>
+            </div>
+            <div class="stage-card">
+              <div class="stage-name">Reflect</div>
+              <div class="stage-desc">Review the day. Capture what matters.</div>
+              <p class="stage-quiet">Opens this evening — where did you see God at work?</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Journey Log -->
+        <div class="section-head">
+          <h2 class="section-title">Journey log</h2>
+          <span class="section-link">All entries</span>
+        </div>
+
+        <div class="log-list">
+          <article class="log-entry">
+            <div class="log-meta">
+              <span class="log-date">Sat, May 30 · Reflect</span>
+              <span class="log-type">Evening</span>
+            </div>
+            <p class="log-body">Hard conversation at work. I paused before responding — <em>that was patience</em>. Grateful for James 1:19 carrying me through.</p>
+          </article>
+          <article class="log-entry">
+            <div class="log-meta">
+              <span class="log-date">Sat, May 30 · Prepare</span>
+              <span class="log-type">Morning</span>
+            </div>
+            <p class="log-body">Read James 1. Key verse: v. 19. Struggling with impatience in traffic and at home — need to remember God is not in a hurry with me.</p>
+          </article>
+        </div>
+
+        <!-- Active Prayer Requests -->
+        <div class="section-head">
+          <h2 class="section-title">Active prayers</h2>
+          <span class="section-link">View all</span>
+        </div>
+
+        <div class="prayer-list">
+          <div class="prayer-item">
+            <div class="prayer-mark"></div>
+            <p class="prayer-text">Wisdom for leading my team through a difficult season</p>
+            <span class="prayer-since">Since Apr 3</span>
+          </div>
+          <div class="prayer-item">
+            <div class="prayer-mark"></div>
+            <p class="prayer-text">Healing for my mother's recovery</p>
+            <span class="prayer-since">Since Feb 18</span>
+          </div>
+        </div>
+
+        <!-- Lessons Learned -->
+        <section class="lessons" aria-label="Lessons learned">
+          <div class="lessons-label">Lessons learned</div>
+          <div class="lesson-item">
+            <p class="lesson-text">"Patience isn't passive — it's choosing to trust God's timing before I speak."</p>
+            <p class="lesson-from">From Reflect · May 28</p>
+          </div>
+          <div class="lesson-item">
+            <p class="lesson-text">"Anger often masks fear. When I pause, I can ask what I'm actually afraid of."</p>
+            <p class="lesson-from">From Live · May 22</p>
+          </div>
+        </section>
+
+      </div>
+
+      <nav class="nav" aria-label="Main navigation">
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#4a6b50" stroke-width="1.8" stroke-linecap="round"><path d="M4 20l8-16 8 16"/><circle cx="12" cy="17" r="1.5" fill="#4a6b50"/></svg>
+          <span class="nav-label">Trail</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8a8074" stroke-width="1.8" stroke-linecap="round"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h4M9 16h5"/></svg>
+          <span class="nav-label">Journal</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8a8074" stroke-width="1.8" stroke-linecap="round"><path d="M4 19h16M6 16l3-5 3 3 4-7 3 5"/><rect x="3" y="4" width="18" height="14" rx="1"/></svg>
+          <span class="nav-label">Archive</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8a8074" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          <span class="nav-label">Guide</span>
+        </div>
+      </nav>
+
+    </div>
+  </div>
+
+</body>
+</html>

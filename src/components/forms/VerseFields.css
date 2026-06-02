@@ -1,0 +1,33 @@
+.verse-fields {
+  margin-bottom: 24px;
+}
+
+.verse-fields__row {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--paper-deep);
+}
+
+.verse-fields__ref {
+  margin-bottom: 8px;
+}
+
+.verse-fields__text {
+  min-height: 64px;
+}
+
+.verse-fields__chapter-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.verse-fields__chapter-num {
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.verse-fields__add,
+.verse-fields__remove {
+  margin-top: 4px;
+}

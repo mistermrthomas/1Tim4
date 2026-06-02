@@ -1,0 +1,11 @@
+/* Path journal textures — topo lines and paper */
+
+:root {
+  --texture-topo: url('/assets/illustrations/topo-lines.svg');
+}
+
+.paper-surface {
+  background-color: var(--paper);
+  background-image: var(--texture-topo);
+  background-size: 200px 200px;
+}

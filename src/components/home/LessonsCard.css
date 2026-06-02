@@ -1,0 +1,39 @@
+.lessons-card {
+  padding: 18px 20px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  position: relative;
+}
+
+.lessons-card__label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin-bottom: 14px;
+}
+
+.lessons-card__item {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 252, 247, 0.12);
+}
+
+.lessons-card__item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.lessons-card__text {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.lessons-card__from {
+  font-size: 10px;
+  opacity: 0.45;
+}

@@ -1,0 +1,49 @@
+.hero-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+}
+
+.compass-art {
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 3px rgba(44, 36, 25, 0.2));
+}
+
+.compass-art--sm { width: 36px; height: 36px; }
+.compass-art--md { width: 56px; height: 56px; }
+.compass-art--lg { width: 80px; height: 80px; }
+
+.trail-marker-art {
+  width: 28px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.margin-flourish {
+  width: 100%;
+  max-width: 140px;
+  height: auto;
+  opacity: 0.55;
+}
+
+.topo-backdrop {
+  position: absolute;
+  inset: 0;
+  background-image: url('/assets/illustrations/topo-lines.svg');
+  background-size: 200px 200px;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.park-icon {
+  width: 28px;
+  height: auto;
+  opacity: 0.65;
+}
+
+.park-icon--peak {
+  width: 32px;
+}

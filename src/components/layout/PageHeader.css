@@ -1,0 +1,119 @@
+.page-header {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--earth-light);
+}
+
+.page-header__date-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.page-header__title--mobile {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+.page-header__profile {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border: 1px solid var(--earth-light);
+  background: var(--white);
+  color: var(--moss);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-header__profile:hover {
+  border-color: var(--earth);
+  background: var(--paper);
+}
+
+.page-header__date {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.page-header__badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border: 1px solid var(--sage-light);
+  background: var(--white);
+  color: var(--ink-soft);
+}
+
+.page-header__mode {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border: 1px solid;
+}
+
+.page-header__mode--demo {
+  background: var(--terracotta-soft);
+  border-color: var(--terracotta);
+  color: var(--terracotta);
+}
+
+.page-header__mode--new {
+  border-color: var(--earth-light);
+  color: var(--earth);
+}
+
+.sub-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--earth-light);
+}
+
+.sub-header__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sub-header__title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.sub-header__subtitle {
+  font-size: 14px;
+  font-style: italic;
+  color: var(--ink-muted);
+  margin-top: 8px;
+}
+
+@media (min-width: 900px) {
+  .page-header {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+
+  .page-header__title--mobile {
+    display: none;
+  }
+
+  .page-header__profile {
+    order: -1;
+    margin-right: 4px;
+  }
+}

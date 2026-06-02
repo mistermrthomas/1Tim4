@@ -1,0 +1,129 @@
+/* Integrated season band — content leads, artwork supports */
+
+.season-band {
+  display: grid;
+  grid-template-columns: 1fr;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--earth-light);
+  background: var(--white);
+  box-shadow: 0 1px 2px rgba(44, 36, 25, 0.06);
+}
+
+.season-band__content {
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid var(--earth-light);
+}
+
+.season-band__eyebrow,
+.season-band__verse-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sage-deep);
+  margin-bottom: 6px;
+}
+
+.season-band__title {
+  font-size: clamp(1.75rem, 5vw, 2.35rem);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
+.season-band__desc {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: 46ch;
+  margin-bottom: 10px;
+}
+
+.season-band__since {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+
+.season-band__verse {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--earth-light);
+}
+
+.season-band__verse-ref {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.season-band__verse-text {
+  font-family: var(--font-serif);
+  font-size: 0.88rem;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.season-band__art {
+  position: relative;
+  min-height: 120px;
+  max-height: 160px;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+.season-band__art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+}
+
+@media (min-width: 720px) {
+  .season-band {
+    grid-template-columns: minmax(0, 1.2fr) minmax(180px, 0.8fr);
+    min-height: 200px;
+    max-height: 240px;
+  }
+
+  .season-band__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px 24px 18px;
+    border-bottom: none;
+    border-right: 1px solid var(--earth-light);
+  }
+
+  .season-band__art {
+    min-height: 0;
+    max-height: none;
+    height: 100%;
+  }
+
+  .season-band__title {
+    font-size: 2.1rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .season-band__content {
+    padding: 18px 24px;
+  }
+
+  .season-band__verse {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+}

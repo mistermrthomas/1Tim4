@@ -1,0 +1,85 @@
+.prayer-add {
+  margin-bottom: 8px;
+}
+
+.prayer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.prayer-card {
+  padding: 16px 18px;
+}
+
+.prayer-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.prayer-card__status {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.prayer-card__status--active {
+  background: var(--sage-light);
+  color: var(--moss);
+}
+
+.prayer-card__status--partially_answered {
+  background: var(--terracotta-soft);
+  color: var(--terracotta);
+}
+
+.prayer-card__status--answered {
+  background: var(--paper-deep);
+  color: var(--ink-muted);
+}
+
+.prayer-card__since {
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+.prayer-card__text {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.prayer-card__notes {
+  margin-top: 10px;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink-muted);
+  line-height: 1.4;
+  padding-top: 10px;
+  border-top: 1px dashed var(--paper-deep);
+}
+
+.prayer-card__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.prayer-card__select {
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.prayer-card--answered {
+  opacity: 0.85;
+}

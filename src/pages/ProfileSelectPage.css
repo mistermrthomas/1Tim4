@@ -1,0 +1,124 @@
+.profile-select {
+  max-width: 520px;
+  margin: 0 auto;
+  padding-top: 12px;
+}
+
+.profile-select__banner {
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--earth);
+  min-height: 100px;
+  margin-bottom: 16px;
+  background: var(--ink);
+}
+
+.profile-select__banner img {
+  width: 100%;
+  height: 100%;
+  min-height: 100px;
+  object-fit: cover;
+}
+
+.profile-select__banner-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(44, 36, 25, 0.75) 0%,
+    rgba(44, 36, 25, 0.2) 70%
+  );
+}
+
+.profile-select__banner-label {
+  position: absolute;
+  left: 16px;
+  bottom: 14px;
+  z-index: 1;
+  color: var(--white);
+}
+
+.profile-select__title {
+  font-size: 1.65rem;
+  line-height: 1.1;
+  margin-top: 4px;
+}
+
+.profile-select__lead {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin-bottom: 18px;
+}
+
+.profile-select__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.profile-select__profile-btn {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--earth-light);
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+}
+
+.profile-select__profile-btn:hover {
+  border-color: var(--earth);
+  background: var(--paper);
+}
+
+.profile-select__profile-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.profile-select__profile-action {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sage-deep);
+}
+
+.profile-select__create-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.profile-select__create-row .text-input {
+  flex: 1;
+}
+
+.profile-select__create-btn {
+  width: auto;
+  flex-shrink: 0;
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+.profile-select__hint {
+  margin-top: 16px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+@media (min-width: 900px) {
+  .profile-select {
+    padding-top: 24px;
+    padding-bottom: 36px;
+  }
+}
