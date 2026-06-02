@@ -22,11 +22,12 @@
   margin-bottom: 10px;
 }
 
-.todays-reading__current {
-  font-family: var(--font-serif);
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--ink);
+.todays-reading .bible-chapter-link {
+  font-size: 1.15rem;
+}
+
+.page-content--home .todays-reading .bible-chapter-link {
+  font-size: 1.1rem;
 }
 
 .todays-reading__progress {

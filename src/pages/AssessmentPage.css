@@ -1,5 +1,12 @@
 .assessment-page {
   max-width: 640px;
+  overflow-x: hidden;
+  padding-bottom: 24px;
+}
+
+.assessment-section.card {
+  position: relative;
+  z-index: 1;
 }
 
 .assessment-banner {
@@ -79,9 +86,11 @@
   display: flex;
   gap: 4px;
   overflow-x: auto;
+  overflow-y: hidden;
   padding-bottom: 12px;
   margin-bottom: 12px;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .assessment-progress__step {
@@ -168,16 +177,35 @@
   gap: 8px;
 }
 
+.assessment-fruit-grid .chip {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
 .assessment-section__nav {
   display: flex;
   gap: 10px;
   margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px dashed var(--earth-light);
+  padding: 16px 0 calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--earth-light);
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  background: linear-gradient(to bottom, rgba(255, 252, 247, 0.92) 0%, var(--white) 24%);
+  touch-action: manipulation;
 }
 
 .assessment-section__nav .btn {
   flex: 1;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+.assessment-section__nav .btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
 }
 
 .assessment-results__header {
@@ -239,19 +267,6 @@
   margin-bottom: 12px;
 }
 
-.assessment-results__verse-ref {
-  font-size: 1.2rem;
-  margin: 6px 0;
-}
-
-.assessment-results__verse-text {
-  font-family: var(--font-serif);
-  font-size: 15px;
-  font-style: italic;
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
-
 .assessment-results__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -262,6 +277,10 @@
 .assessment-results__reading {
   font-size: 1.25rem;
   margin-top: 6px;
+}
+
+.assessment-results__reading.bible-chapter-link {
+  align-items: flex-start;
 }
 
 .assessment-results__emphasis {

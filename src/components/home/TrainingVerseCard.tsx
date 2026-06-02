@@ -1,5 +1,6 @@
 import type { TrainingVerse } from '../../types';
 import { formatSince } from '../../utils/date';
+import { ScriptureVerse } from '../shared/ScriptureVerse';
 import './TrainingVerseCard.css';
 
 export function TrainingVerseCard({ verse, compact }: { verse: TrainingVerse; compact?: boolean }) {
@@ -9,8 +10,7 @@ export function TrainingVerseCard({ verse, compact }: { verse: TrainingVerse; co
       aria-label="Training verse"
     >
       <p className="training-verse__label">Training verse</p>
-      <p className="training-verse__text serif">{verse.text}</p>
-      <p className="training-verse__ref">{verse.reference}</p>
+      <ScriptureVerse reference={verse.reference} text={verse.text} />
       {!compact && (
         <p className="training-verse__companion">
           Carried on the trail since {formatSince(verse.startedAt)}

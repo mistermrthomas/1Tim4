@@ -69,7 +69,11 @@ export function loadAppData(profileId: string): AppData {
 }
 
 export function saveAppData(profileId: string, data: AppData): void {
-  localStorage.setItem(dataKey(profileId), JSON.stringify(data));
+  try {
+    localStorage.setItem(dataKey(profileId), JSON.stringify(data));
+  } catch (err) {
+    console.error('Path: could not save data to this device.', err);
+  }
 }
 
 export function loadDemoData(profileId: string): AppData {

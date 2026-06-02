@@ -1,4 +1,5 @@
 import type { ReadingPlan } from '../../types';
+import { BibleChapterLink } from '../shared/BibleChapterLink';
 import './TodaysReading.css';
 
 interface TodaysReadingProps {
@@ -7,10 +8,10 @@ interface TodaysReadingProps {
 }
 
 export function TodaysReading({ plan, todayChapters }: TodaysReadingProps) {
-  const display =
+  const reading =
     todayChapters.length > 0
-      ? todayChapters.map((c) => `${c.book} ${c.chapter}`).join(', ')
-      : `${plan.currentBook} ${plan.currentChapter}`;
+      ? todayChapters[0]
+      : { book: plan.currentBook, chapter: plan.currentChapter };
 
   const completed = plan.chaptersCompletedInBook.length;
 
@@ -18,7 +19,7 @@ export function TodaysReading({ plan, todayChapters }: TodaysReadingProps) {
     <section className="todays-reading card" aria-label="Today's reading">
       <div className="todays-reading__head">
         <span className="eyebrow">Today&apos;s reading</span>
-        <span className="todays-reading__current">{display}</span>
+        <BibleChapterLink book={reading.book} chapter={reading.chapter} />
       </div>
       <p className="todays-reading__progress">
         {completed > 0

@@ -1,6 +1,7 @@
 import type { TrainingFocus, TrainingVerse } from '../../types';
 import { formatSince } from '../../utils/date';
 import { resolveFocusVisualKey } from '../../utils/focusVisuals';
+import { ScriptureVerse } from '../shared/ScriptureVerse';
 import { HeroArt } from '../illustrations/FieldGuideArt';
 import './FocusHero.css';
 
@@ -25,8 +26,7 @@ export function FocusHero({ focus, verse }: FocusHeroProps) {
         {verse && (
           <div className="season-band__verse" aria-label="Training verse">
             <p className="season-band__verse-label">Training verse</p>
-            <p className="season-band__verse-ref serif">{verse.reference}</p>
-            <p className="season-band__verse-text">{verse.text}</p>
+            <ScriptureVerse reference={verse.reference} text={verse.text} />
           </div>
         )}
       </div>

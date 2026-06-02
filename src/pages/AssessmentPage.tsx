@@ -15,6 +15,9 @@ import {
   profileToSuggestion,
 } from '../data/assessmentProfiles';
 import type { AssessmentFocusKey, AssessmentSuggestion } from '../types';
+import { bibleTranslationDisplay } from '../constants/bible';
+import { BibleChapterLink } from '../components/shared/BibleChapterLink';
+import { ScriptureVerse } from '../components/shared/ScriptureVerse';
 import { HeroArt } from '../components/illustrations/FieldGuideArt';
 import { SubPageHeader } from '../components/layout/PageHeader';
 import './AssessmentPage.css';
@@ -49,12 +52,19 @@ export function AssessmentPage() {
   );
   const [manualKey, setManualKey] = useState<AssessmentFocusKey | null>(null);
   const [showPicker, setShowPicker] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     if (spiritualAssessment?.status === 'accepted') {
       navigate('/', { replace: true });
     }
   }, [spiritualAssessment?.status, navigate]);
+
+  useEffect(() => {
+    if (phase === 'sections') {
+      window.scrollTo(0, 0);
+    }
+  }, [sectionIndex, phase]);
 
   const section = ASSESSMENT_SECTIONS[sectionIndex];
   const questions = useMemo(
@@ -87,26 +97,38 @@ export function AssessmentPage() {
   };
 
   const handleBack = () => {
-    if (sectionIndex === 0) {
-      setPhase('intro');
-      return;
+    if (isNavigating) return;
+    setIsNavigating(true);
+    try {
+      if (sectionIndex === 0) {
+        setPhase('intro');
+        return;
+      }
+      const prev = sectionIndex - 1;
+      setSectionIndex(prev);
+      saveAssessmentProgress(prev, answers);
+    } finally {
+      setIsNavigating(false);
     }
-    const prev = sectionIndex - 1;
-    setSectionIndex(prev);
-    saveAssessmentProgress(prev, answers);
   };
 
   const handleContinue = () => {
-    const isLast = sectionIndex >= ASSESSMENT_SECTIONS.length - 1;
-    if (isLast) {
-      const suggestion = completeAssessment(answers);
-      setResult(suggestion);
-      setPhase('results');
-      return;
+    if (isNavigating) return;
+    setIsNavigating(true);
+    try {
+      const isLast = sectionIndex >= ASSESSMENT_SECTIONS.length - 1;
+      if (isLast) {
+        const suggestion = completeAssessment(answers);
+        setResult(suggestion);
+        setPhase('results');
+        return;
+      }
+      const next = sectionIndex + 1;
+      setSectionIndex(next);
+      saveAssessmentProgress(next, answers);
+    } finally {
+      setIsNavigating(false);
     }
-    const next = sectionIndex + 1;
-    setSectionIndex(next);
-    saveAssessmentProgress(next, answers);
   };
 
   const handleAccept = () => {
@@ -193,10 +215,20 @@ export function AssessmentPage() {
         </div>
 
         <footer className="assessment-section__nav">
-          <button type="button" className="btn btn-secondary" onClick={handleBack}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleBack}
+            disabled={isNavigating}
+          >
             Back
           </button>
-          <button type="button" className="btn btn-primary" onClick={handleContinue}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleContinue}
+            disabled={isNavigating}
+          >
             {sectionIndex >= ASSESSMENT_SECTIONS.length - 1 ? 'Review your trail plan' : 'Continue'}
           </button>
         </footer>
@@ -284,6 +316,7 @@ function FruitQuestion({
             type="button"
             className={`chip${value === fruit ? ' chip--active' : ''}`}
             onClick={() => onChange(fruit)}
+            aria-pressed={value === fruit}
           >
             {fruit}
           </button>
@@ -334,14 +367,23 @@ function ResultsPanel({
 
       <section className="assessment-results__block card">
         <p className="eyebrow">Training verse</p>
-        <p className="assessment-results__verse-ref serif">{result.verseReference}</p>
-        <p className="assessment-results__verse-text">{result.verseText}</p>
+        <ScriptureVerse
+          reference={result.verseReference}
+          text={result.verseText}
+          translation={bibleTranslationDisplay(result.translation)}
+        />
       </section>
 
       <section className="assessment-results__grid">
         <div className="assessment-results__block card">
           <p className="eyebrow">Starting reading</p>
-          <p className="assessment-results__reading serif">{result.readingLabel}</p>
+          <BibleChapterLink
+            book={result.readingBook}
+            chapter={result.readingChapter}
+            className="assessment-results__reading"
+          >
+            {result.readingLabel}
+          </BibleChapterLink>
         </div>
         <div className="assessment-results__block card">
           <p className="eyebrow">Daily emphasis</p>

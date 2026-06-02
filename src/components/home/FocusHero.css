@@ -63,16 +63,8 @@
   margin-bottom: 4px;
 }
 
-.season-band__verse-text {
-  font-family: var(--font-serif);
-  font-size: 0.88rem;
-  font-style: italic;
-  line-height: 1.45;
-  color: var(--ink-soft);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.season-band__verse .scripture-verse__text {
+  font-size: 0.9rem;
 }
 
 .season-band__art {

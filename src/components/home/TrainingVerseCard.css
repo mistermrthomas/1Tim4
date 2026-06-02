@@ -14,23 +14,6 @@
   margin-bottom: 10px;
 }
 
-.training-verse__text {
-  font-size: 1.1rem;
-  line-height: 1.55;
-  color: var(--ink);
-  margin-bottom: 10px;
-}
-
-.training-verse--compact .training-verse__text {
-  font-size: 1rem;
-}
-
-.training-verse__ref {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-soft);
-}
-
 .training-verse__companion {
   margin-top: 12px;
   padding-top: 10px;

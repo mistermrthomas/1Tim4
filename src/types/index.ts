@@ -175,6 +175,7 @@ export interface AssessmentSuggestion {
   readingBook: string;
   readingChapter: number;
   dailyEmphasis: string;
+  translation: string;
 }
 
 export type SpiritualAssessmentStatus = 'in_progress' | 'completed' | 'accepted';

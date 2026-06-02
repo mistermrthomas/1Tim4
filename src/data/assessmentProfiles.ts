@@ -1,3 +1,4 @@
+import { MEMORIZATION_TRANSLATION } from '../constants/bible';
 import type { AssessmentFocusKey, AssessmentSuggestion, GrowthTheme } from '../types';
 import type { FocusVisualKey } from '../utils/focusVisuals';
 
@@ -31,11 +32,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: 'James 1:19',
-        text: 'Everyone should be quick to listen, slow to speak and slow to become angry.',
+        text: 'This you know, my beloved brothers and sisters. But everyone must be quick to hear, slow to speak, and slow to anger;',
       },
       {
         reference: 'Romans 12:12',
-        text: 'Be joyful in hope, patient in affliction, faithful in prayer.',
+        text: 'rejoicing in hope, persevering in tribulation, devoted to prayer,',
       },
     ],
   },
@@ -55,11 +56,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: 'Philippians 4:6-7',
-        text: 'Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God. And the peace of God, which transcends all understanding, will guard your hearts and your minds in Christ Jesus.',
+        text: 'Be anxious for nothing, but in everything by prayer and supplication with thanksgiving let your requests be made known to God. And the peace of God, which surpasses all comprehension, will guard your hearts and your minds in Christ Jesus.',
       },
       {
         reference: 'John 14:27',
-        text: 'Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid.',
+        text: 'Peace I leave with you; My peace I give to you; not as the world gives do I give to you. Do not let your heart be troubled, nor let it be fearful.',
       },
     ],
   },
@@ -79,11 +80,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: 'Galatians 5:22-23',
-        text: 'But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness, gentleness and self-control.',
+        text: 'But the fruit of the Spirit is love, joy, peace, patience, kindness, goodness, faithfulness, gentleness, self-control.',
       },
       {
         reference: '1 Corinthians 9:24-27',
-        text: 'Do you not know that in a race all the runners run, but only one gets the prize? Run in such a way as to get the prize. Everyone who competes in the games goes into strict training.',
+        text: 'Do you not know that those who run in a race all run, but only one receives the prize? Run in such a way that you may win. Everyone who competes in the games exercises self-control in all things.',
       },
     ],
   },
@@ -103,11 +104,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: 'Lamentations 3:22-23',
-        text: 'Because of the Lord\'s great love we are not consumed, for his compassions never fail. They are new every morning; great is your faithfulness.',
+        text: 'The Lord\'s lovingkindnesses indeed never cease, For His compassions never fail. They are new every morning; Great is Your faithfulness.',
       },
       {
         reference: 'Galatians 6:9',
-        text: 'Let us not become weary in doing good, for at the proper time we will reap a harvest if we do not give up.',
+        text: 'Let us not lose heart in doing good, for in due time we will reap if we do not grow weary.',
       },
     ],
   },
@@ -127,11 +128,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: 'Proverbs 15:1',
-        text: 'A gentle answer turns away wrath, but a harsh word stirs up anger.',
+        text: 'A gentle answer turns away wrath, But a harsh word stirs up anger.',
       },
       {
         reference: 'Philippians 4:5',
-        text: 'Let your gentleness be evident to all. The Lord is near.',
+        text: 'Let your gentle spirit be known to all. The Lord is near.',
       },
     ],
   },
@@ -151,11 +152,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: '1 Corinthians 13:4-7',
-        text: 'Love is patient, love is kind. It does not envy, it does not boast, it is not proud. It does not dishonor others, it is not self-seeking, it is not easily angered, it keeps no record of wrongs.',
+        text: 'Love is patient, love is kind and is not jealous; love does not brag and is not arrogant, does not act unbecomingly; it does not seek its own, is not provoked, does not take into account a wrong suffered,',
       },
       {
         reference: 'John 13:34-35',
-        text: 'A new command I give you: Love one another. As I have loved you, so you must love one another. By this everyone will know that you are my disciples, if you love one another.',
+        text: 'A new commandment I give to you, that you love one another, even as I have loved you, that you also love one another. By this all will know that you are My disciples, if you have love for one another.',
       },
     ],
   },
@@ -175,11 +176,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: 'Nehemiah 8:10',
-        text: 'Do not grieve, for the joy of the Lord is your strength.',
+        text: 'Do not be grieved, for the joy of the Lord is your strength.',
       },
       {
         reference: 'Philippians 4:4',
-        text: 'Rejoice in the Lord always. I will say it again: Rejoice!',
+        text: 'Rejoice in the Lord always; again I will say, rejoice!',
       },
     ],
   },
@@ -199,11 +200,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: 'Ephesians 4:32',
-        text: 'Be kind and compassionate to one another, forgiving each other, just as in Christ God forgave you.',
+        text: 'Be kind to one another, tender-hearted, forgiving each other, just as God in Christ also has forgiven you.',
       },
       {
         reference: 'Colossians 3:12',
-        text: 'Therefore, as God\'s chosen people, holy and dearly loved, clothe yourselves with compassion, kindness, humility, gentleness and patience.',
+        text: 'So, as those who have been chosen of God, holy and beloved, put on a heart of compassion, kindness, humility, gentleness and patience;',
       },
     ],
   },
@@ -223,11 +224,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: 'Micah 6:8',
-        text: 'He has shown you, O mortal, what is good. And what does the Lord require of you? To act justly and to love mercy and to walk humbly with your God.',
+        text: 'He has told you, O man, what is good; And what does the Lord require of you But to do justice, to love kindness, And to walk humbly with your God?',
       },
       {
         reference: 'Romans 12:9',
-        text: 'Love must be sincere. Hate what is evil; cling to what is good.',
+        text: 'Let love be without hypocrisy. Abhor what is evil; cling to what is good.',
       },
     ],
   },
@@ -247,11 +248,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: 'Proverbs 3:5-6',
-        text: 'Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight.',
+        text: 'Trust in the Lord with all your heart And do not lean on your own understanding. In all your ways acknowledge Him, And He will make your paths straight.',
       },
       {
         reference: 'Psalm 56:3',
-        text: 'When I am afraid, I put my trust in you.',
+        text: 'When I am afraid, I will put my trust in You.',
       },
     ],
   },
@@ -271,11 +272,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: '1 Thessalonians 5:16-18',
-        text: 'Rejoice always, pray continually, give thanks in all circumstances; for this is God\'s will for you in Christ Jesus.',
+        text: 'Rejoice always; pray without ceasing; in everything give thanks; for this is God\'s will for you in Christ Jesus.',
       },
       {
         reference: 'Philippians 4:6',
-        text: 'Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God.',
+        text: 'Be anxious for nothing, but in everything by prayer and supplication with thanksgiving let your requests be made known to God.',
       },
     ],
   },
@@ -295,11 +296,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: 'Matthew 6:25-34',
-        text: 'Therefore I tell you, do not worry about your life, what you will eat or drink; or about your body, what you will wear. Is not life more than food, and the body more than clothes?',
+        text: 'For this reason I say to you, do not be worried about your life, as to what you will eat or what you will drink; nor for your body, as to what you will put on. Is not life more than food, and the body more than clothing?',
       },
       {
         reference: 'Philippians 4:6',
-        text: 'Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God.',
+        text: 'Be anxious for nothing, but in everything by prayer and supplication with thanksgiving let your requests be made known to God.',
       },
     ],
   },
@@ -319,11 +320,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: 'Deuteronomy 6:6-7',
-        text: 'These commandments that I give you today are to be on your hearts. Impress them on your children. Talk about them when you sit at home and when you walk along the road.',
+        text: 'These words, which I am commanding you today, shall be on your heart. You shall teach them diligently to your sons and shall talk of them when you sit in your house and when you walk by the road and when you lie down and when you rise up.',
       },
       {
         reference: 'Ephesians 6:4',
-        text: 'Fathers, do not exasperate your children; instead, bring them up in the training and instruction of the Lord.',
+        text: 'Fathers, do not provoke your children to anger, but bring them up in the discipline and instruction of the Lord.',
       },
     ],
   },
@@ -343,11 +344,11 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     verses: [
       {
         reference: 'Colossians 3:23',
-        text: 'Whatever you do, work at it with all your heart, as working for the Lord, not for human masters.',
+        text: 'Whatever you do, do your work heartily, as for the Lord rather than for men,',
       },
       {
         reference: 'Proverbs 16:3',
-        text: 'Commit to the Lord whatever you do, and he will establish your plans.',
+        text: 'Commit your works to the Lord And your plans will be established.',
       },
     ],
   },
@@ -424,5 +425,6 @@ export function profileToSuggestion(
     readingBook: profile.readingBook,
     readingChapter: profile.readingChapter,
     dailyEmphasis: profile.dailyEmphasis,
+    translation: MEMORIZATION_TRANSLATION,
   };
 }

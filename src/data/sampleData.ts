@@ -17,7 +17,7 @@ export const sampleData: AppData = {
   trainingVerse: {
     id: verseId,
     reference: 'James 1:19',
-    text: 'Everyone should be quick to listen, slow to speak, and slow to become angry.',
+    text: 'This you know, my beloved brothers and sisters. But everyone must be quick to hear, slow to speak, and slow to anger;',
     startedAt: '2026-03-12',
     linkedFocusId: focusId,
     themes: ['patience', 'anger'],
@@ -26,7 +26,7 @@ export const sampleData: AppData = {
     {
       id: 'verse-phil-46',
       reference: 'Philippians 4:6',
-      text: 'Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God.',
+      text: 'Be anxious for nothing, but in everything by prayer and supplication with thanksgiving let your requests be made known to God.',
       startedAt: '2025-11-01',
       endedAt: '2026-03-11',
       themes: ['anxiety', 'prayer', 'peace'],
