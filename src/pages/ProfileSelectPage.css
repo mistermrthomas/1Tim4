@@ -1,14 +1,48 @@
-/* Full-bleed entry — artwork fills the screen, selector card floats on top */
+/* Full-bleed entry — artwork fills viewport, selector card centered, no page scroll */
+
+html:has(.page-content--profile-entry:not(.profile-select--embedded)),
+body:has(.page-content--profile-entry:not(.profile-select--embedded)) {
+  overflow: hidden;
+  height: 100%;
+  background: var(--ink);
+}
+
+#root:has(.page-content--profile-entry:not(.profile-select--embedded)) {
+  height: 100%;
+  overflow: hidden;
+}
 
 .page-content--profile-entry {
-  padding: 0;
-  margin: 0;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
   width: 100%;
   max-width: none;
-  min-height: 100vh;
-  min-height: 100dvh;
-  position: relative;
+  height: 100dvh;
+  height: 100svh;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
+}
+
+/* Switch profile inside app shell — fill main column only */
+.profile-select--embedded.page-content--profile-entry {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  height: 100%;
+}
+
+.app-shell__main:has(.profile-select--embedded) {
+  position: relative;
+  min-height: calc(100dvh - var(--nav-height));
+  overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .app-shell__main:has(.profile-select--embedded) {
+    min-height: 100dvh;
+  }
 }
 
 .profile-select__backdrop {
@@ -16,76 +50,83 @@
   inset: 0;
   z-index: 0;
   background: var(--ink);
+  overflow: hidden;
 }
 
 .profile-select__backdrop-art {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 40%;
+  object-position: center center;
+  transform: scale(1.06);
 }
 
 .profile-select__backdrop-scrim {
   position: absolute;
   inset: 0;
-  background: rgba(44, 36, 25, 0.28);
+  background: rgba(44, 36, 25, 0.22);
   pointer-events: none;
 }
 
 .profile-select__overlay {
   position: relative;
   z-index: 1;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
-  box-sizing: border-box;
+  padding: max(12px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  overflow: hidden;
 }
 
 .profile-select__card {
   width: 100%;
   max-width: 420px;
-  padding: 22px 20px 20px;
+  max-height: 100%;
+  padding: 20px 18px 18px;
   background: var(--white);
   border: 1px solid var(--earth-light);
   border-radius: 4px;
-  box-shadow:
-    0 4px 24px rgba(44, 36, 25, 0.18),
-    0 1px 0 rgba(44, 36, 25, 0.06);
+  box-shadow: 0 4px 24px rgba(44, 36, 25, 0.2);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .profile-select__header {
-  margin-bottom: 12px;
-  padding-bottom: 12px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--earth-light);
 }
 
 .profile-select__brand {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .profile-select__title {
-  font-size: 1.65rem;
+  font-size: 1.5rem;
   line-height: 1.1;
   color: var(--ink);
 }
 
 .profile-select__lead {
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--ink-soft);
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .profile-select__list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
 .profile-select__profile-btn {
@@ -94,7 +135,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   border: 1px solid var(--earth-light);
   background: var(--paper);
   border-radius: var(--radius-sm);
@@ -108,7 +149,7 @@
 }
 
 .profile-select__profile-name {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 600;
 }
 
@@ -148,38 +189,29 @@
 }
 
 .profile-select__cancel {
+  margin-top: 10px;
+}
+
+.profile-select__hint-in-card {
   margin-top: 12px;
-}
-
-.profile-select__hint {
-  margin-top: 16px;
-  max-width: 420px;
-  width: 100%;
-  font-size: 13px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--earth-light);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-muted);
   text-align: center;
-  color: rgba(255, 252, 247, 0.92);
-  text-shadow: 0 1px 3px rgba(44, 36, 25, 0.5);
-}
-
-.profile-select__hint-link {
-  color: var(--white);
-}
-
-.profile-select__hint-link:hover {
-  color: var(--paper);
 }
 
 @media (min-width: 900px) {
-  .page-content--profile-entry {
-    /* Fill main column when switching profile inside app shell */
-    min-height: 100vh;
-  }
-
   .profile-select__overlay {
-    padding: 40px 32px;
+    padding: 24px 32px;
   }
 
   .profile-select__card {
-    padding: 26px 24px 22px;
+    padding: 24px 22px 20px;
+  }
+
+  .profile-select__title {
+    font-size: 1.65rem;
   }
 }

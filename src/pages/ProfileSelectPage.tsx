@@ -45,7 +45,11 @@ export function ProfileSelectPage({ switching }: ProfileSelectPageProps) {
   };
 
   return (
-    <main className="profile-select page-content page-content--profile-entry">
+    <main
+      className={`profile-select page-content page-content--profile-entry${
+        switching ? ' profile-select--embedded' : ''
+      }`}
+    >
       <div className="profile-select__backdrop" aria-hidden="true">
         <HeroArt visualKey="default" alt="" className="profile-select__backdrop-art" />
         <div className="profile-select__backdrop-scrim" />
@@ -101,27 +105,26 @@ export function ProfileSelectPage({ switching }: ProfileSelectPageProps) {
           </form>
 
           {switching && (
-            <button type="button" className="btn btn-ghost profile-select__cancel" onClick={handleBack}>
-              Cancel
-            </button>
+            <>
+              <button type="button" className="btn btn-ghost profile-select__cancel" onClick={handleBack}>
+                Cancel
+              </button>
+              <p className="profile-select__hint-in-card">
+                <button
+                  type="button"
+                  className="section-link"
+                  onClick={() => {
+                    signOutProfile();
+                    navigate('/', { replace: true });
+                  }}
+                >
+                  Sign out of current profile
+                </button>
+                {' '}to return to this screen on next visit.
+              </p>
+            </>
           )}
         </article>
-
-        {switching && (
-          <p className="profile-select__hint">
-            <button
-              type="button"
-              className="section-link profile-select__hint-link"
-              onClick={() => {
-                signOutProfile();
-                navigate('/', { replace: true });
-              }}
-            >
-              Sign out of current profile
-            </button>
-            {' '}to return to this screen on next visit.
-          </p>
-        )}
       </div>
     </main>
   );
