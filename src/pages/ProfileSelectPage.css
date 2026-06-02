@@ -96,15 +96,20 @@
   display: flex;
   gap: 10px;
   margin-top: 8px;
+  align-items: stretch;
+  max-width: 100%;
 }
 
 .profile-select__create-row .text-input {
   flex: 1;
+  min-width: 0;
+  width: auto;
 }
 
-.profile-select__create-btn {
+.profile-select__create-row .profile-select__create-btn {
   width: auto;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  min-width: 4.5rem;
   padding-left: 18px;
   padding-right: 18px;
 }
