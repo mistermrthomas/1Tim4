@@ -25,24 +25,23 @@ body:has(.page-content--profile-entry:not(.profile-select--embedded)) {
   overflow: hidden;
 }
 
-/* Switch profile inside app shell — fill main column only */
+/* Switch profile — full-screen overlay above trail UI */
 .profile-select--embedded.page-content--profile-entry {
-  position: absolute;
-  z-index: 2;
+  position: fixed;
   inset: 0;
-  height: 100%;
+  z-index: 200;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  height: 100svh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 .app-shell__main:has(.profile-select--embedded) {
   position: relative;
-  min-height: calc(100dvh - var(--nav-height));
   overflow: hidden;
-}
-
-@media (min-width: 900px) {
-  .app-shell__main:has(.profile-select--embedded) {
-    min-height: 100dvh;
-  }
 }
 
 .profile-select__backdrop {

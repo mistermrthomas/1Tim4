@@ -38,8 +38,8 @@ function AppRoutes() {
   return (
     <AppProvider profileId={activeProfile.id} key={activeProfile.id}>
       <Routes>
-        <Route path="/profiles" element={<ProfileSelectPage switching />} />
         <Route element={<AppShell />}>
+          <Route path="/profiles" element={<ProfileSelectPage switching />} />
           <Route path="/" element={<HomePage />} />
           <Route path="/prepare" element={<PreparePage />} />
           <Route path="/live" element={<LivePage />} />

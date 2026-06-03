@@ -40,7 +40,7 @@ export function ProfileSelectPage({ switching }: ProfileSelectPageProps) {
 
   const handleBack = () => {
     if (switching) {
-      navigate(-1);
+      navigate('/', { replace: true });
     }
   };
 
