@@ -4,6 +4,24 @@
   padding-bottom: 24px;
 }
 
+.assessment-plan-loading {
+  margin-top: 20px;
+  padding: 16px 18px;
+  border: 1px dashed var(--earth-light);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+}
+
+.assessment-plan-loading__title {
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+
+.assessment-results__ai-note {
+  margin-top: 10px;
+  max-width: 42ch;
+}
+
 .assessment-section.card {
   position: relative;
   z-index: 1;

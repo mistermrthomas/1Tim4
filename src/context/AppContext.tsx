@@ -32,7 +32,11 @@ import type {
 } from '../types';
 import { ASSESSMENT_SECTION_COUNT } from '../constants/assessment';
 import { SERVING_SECTION_COUNT } from '../constants/servingAssessment';
-import { generateAssessmentPlan } from '../utils/generateAssessmentPlan';
+import { fetchAiAssessmentGuidance } from '../services/assessmentAi';
+import {
+  buildSuggestionForFocus,
+  generateAssessmentPlan,
+} from '../utils/generateAssessmentPlan';
 import { generateServingPlan } from '../utils/generateServingPlan';
 import { advanceReadingPlan } from '../utils/readingPlan';
 import { buildReadingPlanFromSource } from '../utils/readingPlanFromProfile';
@@ -410,9 +414,19 @@ export function AppProvider({
   );
 
   const completeAssessment = useCallback(
-    (answers: Record<string, string>): AssessmentSuggestion => {
+    async (answers: Record<string, string>): Promise<AssessmentSuggestion> => {
       const merged = { ...data.spiritualAssessment?.answers, ...answers };
-      const suggestion = generateAssessmentPlan(merged);
+      const rulePlan = generateAssessmentPlan(merged);
+      let suggestion: AssessmentSuggestion = { ...rulePlan, guidanceSource: 'rules' };
+
+      const ai = await fetchAiAssessmentGuidance(merged, rulePlan);
+      if (ai) {
+        suggestion = {
+          ...buildSuggestionForFocus(ai.focusKey, merged, ai.whyFocus),
+          guidanceSource: 'ai',
+        };
+      }
+
       const next = structuredClone(data);
       next.spiritualAssessment = {
         status: 'completed',

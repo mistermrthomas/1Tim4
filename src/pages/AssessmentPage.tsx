@@ -53,6 +53,7 @@ export function AssessmentPage() {
   const [manualKey, setManualKey] = useState<AssessmentFocusKey | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [planLoading, setPlanLoading] = useState(false);
 
   useEffect(() => {
     if (spiritualAssessment?.status === 'accepted') {
@@ -113,20 +114,30 @@ export function AssessmentPage() {
   };
 
   const handleContinue = () => {
-    if (isNavigating) return;
+    if (isNavigating || planLoading) return;
     setIsNavigating(true);
     try {
       const isLast = sectionIndex >= ASSESSMENT_SECTIONS.length - 1;
       if (isLast) {
-        const suggestion = completeAssessment(answers);
-        setResult(suggestion);
-        setPhase('results');
+        void finishAssessment();
         return;
       }
       const next = sectionIndex + 1;
       setSectionIndex(next);
       saveAssessmentProgress(next, answers);
     } finally {
+      setIsNavigating(false);
+    }
+  };
+
+  const finishAssessment = async () => {
+    setPlanLoading(true);
+    try {
+      const suggestion = await completeAssessment(answers);
+      setResult(suggestion);
+      setPhase('results');
+    } finally {
+      setPlanLoading(false);
       setIsNavigating(false);
     }
   };
@@ -218,12 +229,21 @@ export function AssessmentPage() {
           )}
         </div>
 
+        {planLoading && (
+          <div className="assessment-plan-loading" role="status" aria-live="polite">
+            <p className="assessment-plan-loading__title serif">Mapping your trail plan</p>
+            <p className="assessment-plan-loading__hint field-hint">
+              Reading your intake responses… This usually takes a few seconds.
+            </p>
+          </div>
+        )}
+
         <footer className="assessment-section__nav">
           <button
             type="button"
             className="btn btn-secondary"
             onClick={handleBack}
-            disabled={isNavigating}
+            disabled={isNavigating || planLoading}
           >
             Back
           </button>
@@ -231,9 +251,13 @@ export function AssessmentPage() {
             type="button"
             className="btn btn-primary"
             onClick={handleContinue}
-            disabled={isNavigating}
+            disabled={isNavigating || planLoading}
           >
-            {sectionIndex >= ASSESSMENT_SECTIONS.length - 1 ? 'Review your trail plan' : 'Continue'}
+            {planLoading
+              ? 'Preparing your plan…'
+              : sectionIndex >= ASSESSMENT_SECTIONS.length - 1
+                ? 'Review your trail plan'
+                : 'Continue'}
           </button>
         </footer>
       </article>
@@ -356,6 +380,11 @@ function ResultsPanel({
           Based on your answers — not a one-size-fits-all result. Accept this plan or choose a
           different focus below.
         </p>
+        {result.guidanceSource === 'ai' && (
+          <p className="field-hint assessment-results__ai-note">
+            Trail guidance was shaped from your intake responses.
+          </p>
+        )}
       </header>
 
       <div className="assessment-results__hero card">

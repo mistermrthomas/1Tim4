@@ -1,0 +1,32 @@
+/** Question copy for AI prompts (mirrors src/constants/assessment.ts). */
+export const ASSESSMENT_QUESTION_LABELS: Record<string, string> = {
+  'season-thoughts': 'What is occupying most of your thoughts right now?',
+  'season-joy': 'What brings you the most joy right now?',
+  'season-stress': 'What causes you the most stress right now?',
+  'season-prayer': 'What are you praying about most often?',
+  'season-uncertain': 'What area of life feels most uncertain right now?',
+  'god-scripture': 'How consistent is your Scripture reading currently?',
+  'god-prayer': 'How consistent is your prayer life currently?',
+  'god-close': 'When do you feel closest to God?',
+  'god-far': 'When do you feel furthest from God?',
+  'god-teaching': 'Is there anything you feel God has been teaching you recently?',
+  'growth-most-need': 'What Fruit of the Spirit do you most need right now?',
+  'growth-most-natural': 'Which Fruit of the Spirit seems to come most naturally?',
+  'growth-most-difficult': 'Which Fruit of the Spirit feels most difficult?',
+  'growth-six-months': 'What would you most like God to change in you over the next six months?',
+  'relations-satisfied': 'Where are you most satisfied right now?',
+  'relations-challenged': 'Where do you feel most challenged?',
+  'relations-attention': 'Is there a relationship that needs attention?',
+  'relations-roles': 'How are you doing as a spouse, parent, friend, coworker, or church member?',
+  'focus-frustration': 'What frustrates you most often?',
+  'focus-repent': 'What do you find yourself repenting of most often?',
+  'focus-worry': 'What do you worry about most often?',
+  'focus-habit': 'What habit would you most like to change?',
+  'focus-obedience': 'What area of obedience do you tend to avoid?',
+  'reflect-friend': 'If someone who knows you well described your spiritual life today, what would they say?',
+  'reflect-children-thankful':
+    'If your children copied your spiritual life exactly, what would make you thankful?',
+  'reflect-children-concern':
+    'If your children copied your spiritual life exactly, what would concern you?',
+  'reflect-one-year': 'One year from now, what would you hope has changed?',
+};

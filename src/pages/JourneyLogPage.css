@@ -1,3 +1,30 @@
+.journal-filters {
+  margin-bottom: 24px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.journal-filters__title {
+  margin-bottom: 12px;
+}
+
+.journal-filters__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.journal-filters__grid .field {
+  margin-bottom: 12px;
+}
+
+.journal-filters__grid .field:last-child {
+  margin-bottom: 0;
+}
+
 .journal-list {
   display: flex;
   flex-direction: column;
@@ -12,7 +39,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 8px;
+  min-width: 0;
+}
+
+.journal-entry__head > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .journal-entry__date {

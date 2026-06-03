@@ -110,3 +110,7 @@ Set in Vercel (and `.env.local` for dev):
 See [docs/CLOUD_SYNC.md](docs/CLOUD_SYNC.md) for Supabase setup (SQL migration, Apple, Google, redirect URLs).
 
 Without these variables the app runs **local-only** (still fully usable).
+
+### Optional: AI assessment guidance
+
+Set `OPENAI_API_KEY` on Vercel (server-side only). See [docs/AI_ASSESSMENT.md](docs/AI_ASSESSMENT.md). Without it, intake uses the built-in rule-based planner.

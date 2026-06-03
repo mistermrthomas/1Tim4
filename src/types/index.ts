@@ -178,6 +178,8 @@ export interface AssessmentSuggestion {
   focusDescription: string;
   focusThemes: GrowthTheme[];
   whyFocus: string;
+  /** How the personalized "why" was produced */
+  guidanceSource?: 'ai' | 'rules';
   verseReference: string;
   verseText: string;
   readingLabel: string;
@@ -300,7 +302,7 @@ export interface AppContextValue {
   spiritualAssessment: SpiritualAssessment | null;
   startAssessment: () => void;
   saveAssessmentProgress: (sectionIndex: number, answers: Record<string, string>) => void;
-  completeAssessment: (answers: Record<string, string>) => AssessmentSuggestion;
+  completeAssessment: (answers: Record<string, string>) => Promise<AssessmentSuggestion>;
   acceptAssessmentPlan: (plan: {
     focusTitle: string;
     focusDescription: string;

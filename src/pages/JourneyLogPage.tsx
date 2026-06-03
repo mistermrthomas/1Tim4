@@ -61,42 +61,71 @@ export function JourneyLogPage() {
         subtitle="A chronological record of your trail."
       />
 
-      <div className="card" style={{ marginBottom: 24 }}>
-        <div className="eyebrow" style={{ marginBottom: 12 }}>Filter entries</div>
-        <div className="field" style={{ marginBottom: 12 }}>
-          <label className="field-label">From date</label>
-          <input type="date" className="text-input" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-        </div>
-        <div className="field" style={{ marginBottom: 12 }}>
-          <label className="field-label">To date</label>
-          <input type="date" className="text-input" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
-        </div>
-        <div className="field" style={{ marginBottom: 12 }}>
-          <label className="field-label">Bible book</label>
-          <select className="select-input" value={book} onChange={(e) => setBook(e.target.value)}>
-            <option value="">All books</option>
-            {books.map((b) => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
-        </div>
-        <div className="field" style={{ marginBottom: 12 }}>
-          <label className="field-label">Training focus</label>
-          <select className="select-input" value={focusId} onChange={(e) => setFocusId(e.target.value)}>
-            <option value="">All focuses</option>
-            {focusOptions.map((f) => (
-              <option key={f.id} value={f.id}>{f.title}</option>
-            ))}
-          </select>
-        </div>
-        <div className="field" style={{ marginBottom: 0 }}>
-          <label className="field-label">Growth theme</label>
-          <select className="select-input" value={theme} onChange={(e) => setTheme(e.target.value as GrowthTheme | '')}>
-            <option value="">All themes</option>
-            {themes.map((t) => (
-              <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
-            ))}
-          </select>
+      <div className="card journal-filters">
+        <div className="journal-filters__title eyebrow">Filter entries</div>
+        <div className="journal-filters__grid">
+          <div className="field">
+            <label className="field-label" htmlFor="journal-date-from">From date</label>
+            <input
+              id="journal-date-from"
+              type="date"
+              className="text-input"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+            />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="journal-date-to">To date</label>
+            <input
+              id="journal-date-to"
+              type="date"
+              className="text-input"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+            />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="journal-book">Bible book</label>
+            <select
+              id="journal-book"
+              className="select-input"
+              value={book}
+              onChange={(e) => setBook(e.target.value)}
+            >
+              <option value="">All books</option>
+              {books.map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="journal-focus">Training focus</label>
+            <select
+              id="journal-focus"
+              className="select-input"
+              value={focusId}
+              onChange={(e) => setFocusId(e.target.value)}
+            >
+              <option value="">All focuses</option>
+              {focusOptions.map((f) => (
+                <option key={f.id} value={f.id}>{f.title}</option>
+              ))}
+            </select>
+          </div>
+          <div className="field journal-filters__field--full">
+            <label className="field-label" htmlFor="journal-theme">Growth theme</label>
+            <select
+              id="journal-theme"
+              className="select-input"
+              value={theme}
+              onChange={(e) => setTheme(e.target.value as GrowthTheme | '')}
+            >
+              <option value="">All themes</option>
+              {themes.map((t) => (
+                <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 

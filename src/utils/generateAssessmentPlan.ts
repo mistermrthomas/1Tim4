@@ -341,6 +341,19 @@ function truncate(text: string, max: number): string {
   return `${t.slice(0, max - 1).trim()}…`;
 }
 
+/** Build a full plan from a focus key and personalized guidance (AI or rule-based). */
+export function buildSuggestionForFocus(
+  focusKey: AssessmentFocusKey,
+  answers: Record<string, string>,
+  whyFocus: string,
+): AssessmentSuggestion {
+  const key = normalizeFocusKey(focusKey);
+  const profile = FOCUS_PROFILES[key];
+  const corpus = normalizeText(answers);
+  const verseIndex = pickVerseIndex(key, corpus);
+  return profileToSuggestion(profile, whyFocus, verseIndex);
+}
+
 export function generateAssessmentPlan(answers: Record<string, string>): AssessmentSuggestion {
   const scores = emptyScores();
   const corpus = normalizeText(answers);
@@ -362,8 +375,7 @@ export function generateAssessmentPlan(answers: Record<string, string>): Assessm
 
   const { winner, runnerUp } = pickFocus(scores, answers);
   const profile = FOCUS_PROFILES[winner];
-  const verseIndex = pickVerseIndex(winner, corpus);
   const whyFocus = buildWhyFocus(profile, answers, signals, runnerUp);
 
-  return profileToSuggestion(profile, whyFocus, verseIndex);
+  return buildSuggestionForFocus(winner, answers, whyFocus);
 }

@@ -154,7 +154,17 @@ button, input, textarea, select {
   box-shadow: none;
 }
 
-.field { margin-bottom: 18px; }
+.field {
+  margin-bottom: 18px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.field > .text-input,
+.field > .select-input,
+.field > .text-area {
+  display: block;
+}
 
 .field-label {
   display: block;
@@ -173,6 +183,7 @@ button, input, textarea, select {
 .text-input,
 .text-area,
 .select-input {
+  display: block;
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -184,6 +195,35 @@ button, input, textarea, select {
   font-size: 15px;
   line-height: 1.45;
   color: var(--ink);
+}
+
+/* iOS Safari: date/time pickers ignore width without these overrides */
+.text-input[type='date'],
+.text-input[type='time'],
+.text-input[type='datetime-local'],
+.text-input[type='month'],
+.text-input[type='week'] {
+  -webkit-min-logical-width: 0;
+  min-width: 0;
+  overflow: hidden;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.text-input[type='date']::-webkit-date-and-time-value,
+.text-input[type='time']::-webkit-date-and-time-value,
+.text-input[type='datetime-local']::-webkit-date-and-time-value {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.select-input {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .text-input:focus,
