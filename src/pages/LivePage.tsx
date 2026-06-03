@@ -51,7 +51,13 @@ export function LivePage() {
         subtitle="Pause amid the day — your training verse and focus are here first."
       />
 
-      {data.trainingVerse && <TrainingVerseCard verse={data.trainingVerse} compact />}
+      {data.trainingVerse && (
+        <TrainingVerseCard
+          verse={data.trainingVerse}
+          compact
+          trainingFocusTitle={data.trainingFocus?.title}
+        />
+      )}
 
       {data.trainingFocus && (
         <div className="card" style={{ marginBottom: 16 }}>

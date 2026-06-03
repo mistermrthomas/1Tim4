@@ -2,6 +2,7 @@ import type { TrainingFocus, TrainingVerse } from '../../types';
 import { formatSince } from '../../utils/date';
 import { resolveFocusVisualKey } from '../../utils/focusVisuals';
 import { ScriptureVerse } from '../shared/ScriptureVerse';
+import { GoDeeperPanel } from '../study/GoDeeperPanel';
 import { HeroArt } from '../illustrations/FieldGuideArt';
 import './FocusHero.css';
 
@@ -27,6 +28,11 @@ export function FocusHero({ focus, verse }: FocusHeroProps) {
           <div className="season-band__verse" aria-label="Training verse">
             <p className="season-band__verse-label">Training verse</p>
             <ScriptureVerse reference={verse.reference} text={verse.text} />
+            <GoDeeperPanel
+              reference={verse.reference}
+              verseText={verse.text}
+              trainingFocusTitle={focus.title}
+            />
           </div>
         )}
       </div>

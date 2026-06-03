@@ -1,4 +1,5 @@
 import type { ChapterReference, ReadingPlan } from '../../types';
+import { GoDeeperPanel } from '../study/GoDeeperPanel';
 import { BibleChapterLink } from '../shared/BibleChapterLink';
 import { hydrateReadingPlan } from '../../utils/readingPlanFromProfile';
 import { formatReadingProgressLabel } from '../../utils/readingPlanFromProfile';
@@ -94,11 +95,13 @@ export function StandoutVerseField({
   why,
   onReferenceChange,
   onWhyChange,
+  trainingFocusTitle,
 }: {
   reference: string;
   why: string;
   onReferenceChange: (v: string) => void;
   onWhyChange: (v: string) => void;
+  trainingFocusTitle?: string;
 }) {
   return (
     <div className="prepare-block card standout-verse">
@@ -124,6 +127,13 @@ export function StandoutVerseField({
         onChange={(e) => onWhyChange(e.target.value)}
         rows={4}
       />
+      {reference.trim().length >= 4 && (
+        <GoDeeperPanel
+          reference={reference}
+          trainingFocusTitle={trainingFocusTitle}
+          compact
+        />
+      )}
     </div>
   );
 }

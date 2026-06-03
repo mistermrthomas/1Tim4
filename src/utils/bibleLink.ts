@@ -21,8 +21,8 @@ const YOUVERSION_BOOK: Record<string, string> = {
   '1 Thessalonians': '1TH',
 };
 
-/** YouVersion version id for NIV (US) */
-const YOUVERSION_VERSION_ID = '59';
+/** YouVersion version id for NASB */
+const YOUVERSION_VERSION_ID = '100';
 
 export function getBibleChapterUrl(
   book: string,

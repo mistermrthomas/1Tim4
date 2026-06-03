@@ -94,6 +94,7 @@ export function PreparePage() {
             why={standoutWhy}
             onReferenceChange={setStandoutRef}
             onWhyChange={setStandoutWhy}
+            trainingFocusTitle={data.trainingFocus?.title}
           />
         </section>
 

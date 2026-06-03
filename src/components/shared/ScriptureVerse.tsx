@@ -1,4 +1,4 @@
-import { MEMORIZATION_TRANSLATION_LABEL } from '../../constants/bible';
+import { BIBLE_TRANSLATION_LABEL } from '../../constants/bible';
 import './ScriptureVerse.css';
 
 interface ScriptureVerseProps {
@@ -10,7 +10,7 @@ interface ScriptureVerseProps {
 export function ScriptureVerse({
   reference,
   text,
-  translation = MEMORIZATION_TRANSLATION_LABEL,
+  translation = BIBLE_TRANSLATION_LABEL,
 }: ScriptureVerseProps) {
   return (
     <blockquote className="scripture-verse">

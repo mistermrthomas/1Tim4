@@ -30,6 +30,7 @@ import './pages/GuidePage.css';
 import './pages/AssessmentPage.css';
 import './pages/ProfileSelectPage.css';
 import './components/auth/CloudSignIn.css';
+import './components/study/GoDeeperPanel.css';
 
 function AppRoutes({ cloudReloadKey }: { cloudReloadKey: number }) {
   const { activeProfile } = useProfile();

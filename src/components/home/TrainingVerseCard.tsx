@@ -1,9 +1,18 @@
 import type { TrainingVerse } from '../../types';
 import { formatSince } from '../../utils/date';
 import { ScriptureVerse } from '../shared/ScriptureVerse';
+import { GoDeeperPanel } from '../study/GoDeeperPanel';
 import './TrainingVerseCard.css';
 
-export function TrainingVerseCard({ verse, compact }: { verse: TrainingVerse; compact?: boolean }) {
+export function TrainingVerseCard({
+  verse,
+  compact,
+  trainingFocusTitle,
+}: {
+  verse: TrainingVerse;
+  compact?: boolean;
+  trainingFocusTitle?: string;
+}) {
   return (
     <section
       className={`training-verse${compact ? ' training-verse--compact' : ''}`}
@@ -11,6 +20,12 @@ export function TrainingVerseCard({ verse, compact }: { verse: TrainingVerse; co
     >
       <p className="training-verse__label">Training verse</p>
       <ScriptureVerse reference={verse.reference} text={verse.text} />
+      <GoDeeperPanel
+        reference={verse.reference}
+        verseText={verse.text}
+        trainingFocusTitle={trainingFocusTitle}
+        compact
+      />
       {!compact && (
         <p className="training-verse__companion">
           Carried on the trail since {formatSince(verse.startedAt)}

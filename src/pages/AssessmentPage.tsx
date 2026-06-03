@@ -17,6 +17,7 @@ import {
 import type { AssessmentFocusKey, AssessmentSuggestion } from '../types';
 import { bibleTranslationDisplay } from '../constants/bible';
 import { BibleChapterLink } from '../components/shared/BibleChapterLink';
+import { GoDeeperPanel } from '../components/study/GoDeeperPanel';
 import { ScriptureVerse } from '../components/shared/ScriptureVerse';
 import { HeroArt } from '../components/illustrations/FieldGuideArt';
 import { SubPageHeader } from '../components/layout/PageHeader';
@@ -405,6 +406,12 @@ function ResultsPanel({
           reference={result.verseReference}
           text={result.verseText}
           translation={bibleTranslationDisplay(result.translation)}
+        />
+        <GoDeeperPanel
+          reference={result.verseReference}
+          verseText={result.verseText}
+          trainingFocusTitle={result.focusTitle}
+          compact
         />
       </section>
 

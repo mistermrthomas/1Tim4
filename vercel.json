@@ -2,6 +2,9 @@
   "functions": {
     "api/assessment-plan.ts": {
       "maxDuration": 30
+    },
+    "api/go-deeper.ts": {
+      "maxDuration": 30
     }
   },
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]

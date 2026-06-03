@@ -1,0 +1,95 @@
+.go-deeper {
+  margin-top: 12px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.go-deeper--compact {
+  margin-top: 8px;
+}
+
+.go-deeper__trigger {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.go-deeper__panel {
+  margin-top: 12px;
+  padding: 14px 16px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.go-deeper__section {
+  margin-bottom: 14px;
+}
+
+.go-deeper__section:last-of-type {
+  margin-bottom: 8px;
+}
+
+.go-deeper__heading {
+  margin-bottom: 6px;
+}
+
+.go-deeper__text {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.go-deeper__reflect {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.go-deeper__words {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.go-deeper__word-term {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.go-deeper__word-original {
+  font-size: 13px;
+  color: var(--earth);
+}
+
+.go-deeper__word-gloss {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.go-deeper__cross {
+  font-size: 13px;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+
+.go-deeper__link-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.go-deeper__disclaimer {
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.go-deeper__close {
+  margin-top: 8px;
+}
+
+.go-deeper__error {
+  color: var(--terracotta);
+  margin-bottom: 10px;
+}

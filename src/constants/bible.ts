@@ -1,20 +1,21 @@
-/** Translation for training / memorization verses */
-export const MEMORIZATION_TRANSLATION = 'NASB';
+/** Default translation across Path (display, links, memorization). */
+export const BIBLE_TRANSLATION = 'NASB';
 
-export const MEMORIZATION_TRANSLATION_LABEL = 'New American Standard Bible (NASB)';
+export const BIBLE_TRANSLATION_LABEL = 'New American Standard Bible (NASB)';
 
-/** Translation for chapter reading links (YouVersion / Bible Gateway) */
-export const BIBLE_TRANSLATION = 'NIV';
+/** @deprecated Use BIBLE_TRANSLATION — kept for imports */
+export const MEMORIZATION_TRANSLATION = BIBLE_TRANSLATION;
 
-export const BIBLE_TRANSLATION_LABEL = 'New International Version (NIV)';
+/** @deprecated Use BIBLE_TRANSLATION_LABEL */
+export const MEMORIZATION_TRANSLATION_LABEL = BIBLE_TRANSLATION_LABEL;
 
 const TRANSLATION_LABELS: Record<string, string> = {
-  NASB: MEMORIZATION_TRANSLATION_LABEL,
-  NIV: BIBLE_TRANSLATION_LABEL,
+  NASB: BIBLE_TRANSLATION_LABEL,
+  NIV: 'New International Version (NIV)',
 };
 
 /** Display label for stored translation codes (e.g. from older assessments). */
 export function bibleTranslationDisplay(code?: string | null): string {
-  if (!code) return MEMORIZATION_TRANSLATION_LABEL;
+  if (!code) return BIBLE_TRANSLATION_LABEL;
   return TRANSLATION_LABELS[code] ?? code;
 }

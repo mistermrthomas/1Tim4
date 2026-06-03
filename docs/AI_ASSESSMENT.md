@@ -1,4 +1,23 @@
-# AI assessment guidance (optional)
+# AI study features (optional)
+
+Uses the same `OPENAI_API_KEY` on Vercel for both features below.
+
+---
+
+## Go deeper (passage study)
+
+On **training verse**, **Prepare standout verse**, **Live**, and **assessment results**, tap **Go deeper** for:
+
+- Historical **setting** and passage **background**
+- **Key words** (Greek/Hebrew when relevant)
+- Related passages and a **reflection** question
+- Links to **Blue Letter Bible** and **Bible Gateway (NASB)**
+
+Uses `POST /api/go-deeper`. Disable with `VITE_GO_DEEPER_AI=false` (links still work).
+
+---
+
+## Assessment guidance
 
 After the spiritual intake, Path can call a **server-side** OpenAI model to choose a training focus and write personalized **whyFocus** text. Scripture, reading plan, and daily emphasis still come from curated profiles in the app — the model does not invent verses.
 
