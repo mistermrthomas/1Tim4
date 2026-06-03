@@ -5,10 +5,13 @@ import { SubPageHeader } from '../components/layout/PageHeader';
 import { QuestionField } from '../components/forms/QuestionField';
 import { ChapterChecklist, StandoutVerseField } from '../components/forms/VerseFields';
 import { PREPARE_QUESTIONS, getRotatingQuestions, type Question } from '../constants/questions';
+import { DictationTextArea } from '../components/forms/DictationTextArea';
 import { fetchChapterReadingQuestions } from '../services/readingQuestions';
 import { dayOfYear } from '../utils/date';
+import { initialPrepareQuestionVisibleCount } from '../utils/prepareQuestions';
 import { hydrateReadingPlan } from '../utils/readingPlanFromProfile';
 import type { ChapterReference, VerseReference, QuestionResponse } from '../types';
+import '../components/forms/DictationTextArea.css';
 import './PreparePage.css';
 
 function initialStandout(existing: { standoutVerses?: VerseReference[]; keyVerses?: VerseReference[] }) {
@@ -105,6 +108,22 @@ export function PreparePage() {
 
   const activeQuestions = chapterQuestions ?? fallbackQuestions;
 
+  const [visibleQuestionCount, setVisibleQuestionCount] = useState(() =>
+    initialPrepareQuestionVisibleCount(
+      fallbackQuestions,
+      existing?.responses,
+    ),
+  );
+
+  useEffect(() => {
+    setVisibleQuestionCount(
+      initialPrepareQuestionVisibleCount(activeQuestions, existing?.responses),
+    );
+  }, [activeQuestions, existing?.responses]);
+
+  const visibleQuestions = activeQuestions.slice(0, visibleQuestionCount);
+  const hiddenQuestionCount = Math.max(0, activeQuestions.length - visibleQuestionCount);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const responses: QuestionResponse[] = activeQuestions
@@ -182,7 +201,7 @@ export function PreparePage() {
               Start a passage from the trail home to get chapter-specific questions.
             </p>
           )}
-          {activeQuestions.map((q) => (
+          {visibleQuestions.map((q) => (
             <QuestionField
               key={q.id}
               question={q}
@@ -190,18 +209,47 @@ export function PreparePage() {
               onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
             />
           ))}
+          {hiddenQuestionCount > 0 && (
+            <div className="prepare-page__more-questions">
+              <button
+                type="button"
+                className="btn btn-secondary prepare-page__more-btn"
+                onClick={() =>
+                  setVisibleQuestionCount((c) =>
+                    Math.min(c + 1, activeQuestions.length),
+                  )
+                }
+              >
+                Answer another question
+                {hiddenQuestionCount > 1 ? ` (${hiddenQuestionCount} left)` : ''}
+              </button>
+              {hiddenQuestionCount > 2 && (
+                <button
+                  type="button"
+                  className="section-link prepare-page__show-all"
+                  onClick={() => setVisibleQuestionCount(activeQuestions.length)}
+                >
+                  Show all {activeQuestions.length} questions
+                </button>
+              )}
+            </div>
+          )}
+          {visibleQuestions.length > 0 && hiddenQuestionCount === 0 && activeQuestions.length > 2 && (
+            <p className="field-hint prepare-page__enough-note">
+              Two questions is enough for today — you&apos;ve opened the rest if you want them.
+            </p>
+          )}
         </section>
 
         <div className="field prepare-page__notes">
           <label className="field-label" htmlFor="notes">
             Notes <span className="prepare-page__optional">(optional)</span>
           </label>
-          <textarea
+          <DictationTextArea
             id="notes"
-            className="text-area"
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Anything else from your reading..."
+            onChange={setNotes}
+            placeholder="Anything else from your reading…"
             rows={3}
           />
         </div>

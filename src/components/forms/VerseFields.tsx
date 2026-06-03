@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { ChapterReference, ReadingPlan } from '../../types';
+import { DictationTextArea } from './DictationTextArea';
 import { GoDeeperPanel } from '../study/GoDeeperPanel';
 import { BibleChapterLink } from '../shared/BibleChapterLink';
 import { hydrateReadingPlan } from '../../utils/readingPlanFromProfile';
@@ -123,12 +124,12 @@ export function StandoutVerseField({
       <label className="field-label standout-verse__why-label" htmlFor="standout-why">
         Why did it stand out?
       </label>
-      <textarea
+      <DictationTextArea
         id="standout-why"
-        className="text-area standout-verse__why"
-        placeholder="A sentence or two — what the Spirit highlighted for you today"
+        className="standout-verse__why"
+        placeholder="A sentence or two — type or dictate"
         value={why}
-        onChange={(e) => onWhyChange(e.target.value)}
+        onChange={onWhyChange}
         rows={4}
       />
       {reference.trim().length >= 4 && (

@@ -1,0 +1,47 @@
+.dictation-field {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dictation-field__input {
+  width: 100%;
+}
+
+.dictation-field__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.dictation-field__mic {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--earth-light);
+  background: var(--paper);
+  color: var(--moss);
+  cursor: pointer;
+}
+
+.dictation-field__mic--active {
+  background: var(--sage-light);
+  border-color: var(--sage);
+  color: var(--moss);
+}
+
+.dictation-field__listening {
+  color: var(--sage-deep);
+  font-weight: 600;
+}
+
+.dictation-field__error {
+  margin-top: 6px;
+  color: var(--terracotta);
+}
+
+.dictation-field__unsupported {
+  font-size: 12px;
+}

@@ -1,4 +1,5 @@
 import type { Question } from '../../constants/questions';
+import { DictationTextArea } from './DictationTextArea';
 
 interface QuestionFieldProps {
   question: Question;
@@ -10,12 +11,12 @@ export function QuestionField({ question, value, onChange }: QuestionFieldProps)
   return (
     <div className="field question-field">
       <label className="field-label" htmlFor={question.id}>{question.text}</label>
-      <textarea
+      <DictationTextArea
         id={question.id}
-        className="text-area"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
         rows={3}
+        placeholder="Type or tap Dictate…"
       />
     </div>
   );
