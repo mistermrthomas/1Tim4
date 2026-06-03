@@ -349,7 +349,8 @@ function ResultsPanel({
         <p className="eyebrow">Your suggested training plan</p>
         <h1 className="assessment-results__title serif">Trail plan ready</h1>
         <p className="assessment-results__lead">
-          Based on your intake conversation — accept this plan or choose a different focus below.
+          Based on your answers — not a one-size-fits-all result. Accept this plan or choose a
+          different focus below.
         </p>
       </header>
 

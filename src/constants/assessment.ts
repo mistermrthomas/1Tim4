@@ -112,5 +112,5 @@ export const ASSESSMENT_SECTION_COUNT = ASSESSMENT_SECTIONS.length;
 export const ASSESSMENT_INTRO = {
   title: 'Begin your trail',
   subtitle: 'Initial spiritual assessment',
-  lead: 'This is not a test or a score. It is an intake conversation — like mapping the path ahead before your first season of training.',
+  lead: 'This is not a test or a score. Your answers shape a personalized trail plan — like mapping the path ahead before your first season of training.',
 };
