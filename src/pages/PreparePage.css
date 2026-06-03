@@ -34,27 +34,6 @@
   color: var(--ink-muted);
 }
 
-.prepare-page__more-questions {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.prepare-page__more-btn {
-  width: 100%;
-}
-
-.prepare-page__show-all {
-  text-align: center;
-  font-size: 14px;
-}
-
-.prepare-page__enough-note {
-  margin-top: 4px;
-}
-
 .prepare-page .field,
 .prepare-page .question-field {
   min-width: 0;

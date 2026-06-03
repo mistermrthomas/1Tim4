@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { SubPageHeader } from '../components/layout/PageHeader';
 import { TrainingVerseCard } from '../components/home/TrainingVerseCard';
-import { QuestionField } from '../components/forms/QuestionField';
-import { LIVE_QUESTIONS } from '../constants/questions';
+import { ProgressiveQuestionFields } from '../components/forms/ProgressiveQuestionFields';
+import '../components/forms/ProgressiveQuestionFields.css';
+import { LIVE_QUESTIONS, getRotatingQuestions } from '../constants/questions';
+import { dayOfYear } from '../utils/date';
 import type { QuestionResponse } from '../types';
 
 export function LivePage() {
@@ -13,7 +15,10 @@ export function LivePage() {
   const existing = todayEntry.live;
   const prepare = todayEntry.prepare;
 
-  const questions = LIVE_QUESTIONS;
+  const questions = useMemo(
+    () => getRotatingQuestions(LIVE_QUESTIONS, 4, dayOfYear() + 1),
+    [],
+  );
 
   const [answers, setAnswers] = useState<Record<string, string>>(() => {
     const map: Record<string, string> = {};
@@ -48,7 +53,7 @@ export function LivePage() {
     <main className="page-content page-content--form">
       <SubPageHeader
         title="Live"
-        subtitle="Pause amid the day — your training verse and focus are here first."
+        subtitle="Pause amid the day — your training verse and focus first, then a short check-in."
       />
 
       {data.trainingVerse && (
@@ -83,14 +88,13 @@ export function LivePage() {
       )}
 
       <form onSubmit={handleSubmit}>
-        {questions.map((q) => (
-          <QuestionField
-            key={q.id}
-            question={q}
-            value={answers[q.id] ?? ''}
-            onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
-          />
-        ))}
+        <ProgressiveQuestionFields
+          questions={questions}
+          answers={answers}
+          onAnswerChange={(id, v) => setAnswers((prev) => ({ ...prev, [id]: v }))}
+          existingResponses={existing?.responses}
+          sectionHint="Two quick questions to start — add more only if you want."
+        />
 
         <div className="form-actions">
           <button type="submit" className="btn btn-primary">

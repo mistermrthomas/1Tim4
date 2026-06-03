@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { SubPageHeader } from '../components/layout/PageHeader';
 import { TrainingVerseCard } from '../components/home/TrainingVerseCard';
-import { QuestionField } from '../components/forms/QuestionField';
+import { DictationTextArea } from '../components/forms/DictationTextArea';
+import { ProgressiveQuestionFields } from '../components/forms/ProgressiveQuestionFields';
+import '../components/forms/DictationTextArea.css';
+import '../components/forms/ProgressiveQuestionFields.css';
 import { REFLECT_QUESTIONS, getRotatingQuestions } from '../constants/questions';
 import { dayOfYear } from '../utils/date';
 import type { QuestionResponse } from '../types';
@@ -14,7 +17,7 @@ export function ReflectPage() {
   const existing = todayEntry.reflect;
 
   const questions = useMemo(
-    () => getRotatingQuestions(REFLECT_QUESTIONS, 5, dayOfYear() + 3),
+    () => getRotatingQuestions(REFLECT_QUESTIONS, 4, dayOfYear() + 3),
     [],
   );
 
@@ -65,23 +68,21 @@ export function ReflectPage() {
       )}
 
       <form onSubmit={handleSubmit}>
-        {questions.map((q) => (
-          <QuestionField
-            key={q.id}
-            question={q}
-            value={answers[q.id] ?? ''}
-            onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
-          />
-        ))}
+        <ProgressiveQuestionFields
+          questions={questions}
+          answers={answers}
+          onAnswerChange={(id, v) => setAnswers((prev) => ({ ...prev, [id]: v }))}
+          existingResponses={existing?.responses}
+          sectionHint="Two questions is enough — open more if the day calls for it."
+        />
 
         <div className="field">
           <label className="field-label" htmlFor="lesson">Lesson learned today</label>
           <p className="field-hint">Optional — capture an insight worth remembering</p>
-          <textarea
+          <DictationTextArea
             id="lesson"
-            className="text-area"
             value={lessonText}
-            onChange={(e) => setLessonText(e.target.value)}
+            onChange={setLessonText}
             placeholder="What truth emerged from today?"
             rows={3}
           />

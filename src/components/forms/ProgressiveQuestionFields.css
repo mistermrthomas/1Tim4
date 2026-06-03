@@ -1,0 +1,24 @@
+.progressive-questions__hint {
+  margin-bottom: 14px;
+}
+
+.progressive-questions__more {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.progressive-questions__more-btn {
+  width: 100%;
+}
+
+.progressive-questions__show-all {
+  text-align: center;
+  font-size: 14px;
+}
+
+.progressive-questions__enough {
+  margin-top: 4px;
+}
