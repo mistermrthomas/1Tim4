@@ -1,0 +1,83 @@
+.trail-reminders__master {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.trail-reminders__master input {
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--trail-green);
+}
+
+.trail-reminders__master strong {
+  display: block;
+  font-size: 15px;
+}
+
+.trail-reminders__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trail-reminders__list--dim {
+  opacity: 0.55;
+}
+
+.trail-reminders__item {
+  padding: 14px 16px;
+  margin: 0;
+}
+
+.trail-reminders__item-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.trail-reminders__item-toggle input {
+  margin-top: 3px;
+  accent-color: var(--trail-green);
+}
+
+.trail-reminders__item-toggle strong {
+  display: block;
+  font-size: 15px;
+}
+
+.trail-reminders__time {
+  padding-left: 30px;
+}
+
+.trail-reminders__time input[type='time'] {
+  width: 100%;
+  max-width: 160px;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  background: var(--paper);
+}
+
+.trail-reminders__cron-hint {
+  margin-top: 12px;
+}
+
+.trail-reminders__status {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.trail-reminders__status--error {
+  color: var(--rust, #8b4513);
+}

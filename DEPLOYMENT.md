@@ -114,3 +114,7 @@ Without these variables the app runs **local-only** (still fully usable).
 ### Optional: AI assessment guidance
 
 Set `OPENAI_API_KEY` on Vercel (server-side only). See [docs/AI_ASSESSMENT.md](docs/AI_ASSESSMENT.md). Without it, intake uses the built-in rule-based planner.
+
+### Optional: trail push reminders
+
+See [docs/PUSH_NOTIFICATIONS.md](docs/PUSH_NOTIFICATIONS.md) for VAPID keys, Supabase `path_push_subscriptions`, and `CRON_SECRET`. Users configure times under **Guide → Trail reminders**.

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_NAME, TAGLINE } from '../constants/brand';
 import { CloudSignIn } from '../components/auth/CloudSignIn';
+import { TrailRemindersSettings } from '../components/settings/TrailRemindersSettings';
 import { useApp } from '../context/AppContext';
 import { useProfile } from '../context/ProfileContext';
 import { SubPageHeader } from '../components/layout/PageHeader';
@@ -274,6 +275,13 @@ export function GuidePage() {
           </Link>
         )}
       </section>
+
+      {activeProfile && (
+        <TrailRemindersSettings
+          profileId={activeProfile.id}
+          profileName={activeProfile.name}
+        />
+      )}
 
       <section className="guide-section">
         <h2 className="section-title">Profile</h2>
