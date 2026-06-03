@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_NAME, TAGLINE } from '../constants/brand';
 import { useApp } from '../context/AppContext';
+import { useProfile } from '../context/ProfileContext';
 import { SubPageHeader } from '../components/layout/PageHeader';
 import type { GrowthTheme } from '../types';
 import './GuidePage.css';
@@ -13,6 +14,7 @@ const themeOptions: GrowthTheme[] = [
 ];
 
 export function GuidePage() {
+  const { activeProfile } = useProfile();
   const {
     data,
     appMode,
@@ -21,7 +23,12 @@ export function GuidePage() {
     archiveTrainingVerse,
     loadDemoData,
     startFreshTrail,
+    exportTrailBackup,
+    importTrailBackup,
+    resetSpiritualAssessment,
+    servingDiscovery,
   } = useApp();
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const [focusTitle, setFocusTitle] = useState('');
   const [focusDesc, setFocusDesc] = useState('');
@@ -175,6 +182,90 @@ export function GuidePage() {
           <button type="button" className="btn btn-secondary" style={{ marginTop: 10, width: '100%' }} onClick={archiveTrainingVerse}>
             Archive current verse
           </button>
+        )}
+      </section>
+
+      <section className="guide-section">
+        <h2 className="section-title">Back up your trail</h2>
+        <p className="guide-section__desc">
+          Everything lives in this browser until you export. Save a backup file after your assessment
+          or anytime your journal grows — you can import it later on this device.
+        </p>
+        <div className="guide-data-actions card" style={{ padding: 16 }}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => exportTrailBackup(activeProfile?.name ?? 'trail')}
+          >
+            Export backup
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => importInputRef.current?.click()}
+          >
+            Import backup
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="application/json,.json"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void importTrailBackup(file);
+              e.target.value = '';
+            }}
+          />
+          {data.lastBackupAt && (
+            <p className="field-hint" style={{ marginTop: 10, textAlign: 'center' }}>
+              Last export: {new Date(data.lastBackupAt).toLocaleString()}
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section className="guide-section">
+        <h2 className="section-title">Serving discovery</h2>
+        <p className="guide-section__desc">
+          A separate, practical intake — not a gifts test — about where you help best, what drains you,
+          and the kinds of work that fit your personality.
+        </p>
+        <Link to="/serving" className="btn btn-primary" style={{ width: '100%' }}>
+          {servingDiscovery?.status === 'completed'
+            ? 'Review serving discovery'
+            : servingDiscovery?.status === 'in_progress'
+              ? 'Resume serving discovery'
+              : 'Start serving discovery'}
+        </Link>
+      </section>
+
+      <section className="guide-section">
+        <h2 className="section-title">Spiritual assessment</h2>
+        <p className="guide-section__desc">
+          Restart the initial intake if you lost your plan or want a fresh suggestion. Your journal
+          entries stay; only the assessment and suggested plan reset.
+        </p>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          style={{ width: '100%' }}
+          onClick={() => {
+            if (
+              window.confirm(
+                'Restart the spiritual assessment? Your journal and prayers stay, but you will need to complete intake again.',
+              )
+            ) {
+              resetSpiritualAssessment();
+            }
+          }}
+        >
+          Restart spiritual assessment
+        </button>
+        {data.spiritualAssessment?.status === 'in_progress' && (
+          <Link to="/assessment" className="btn btn-ghost" style={{ width: '100%', marginTop: 8 }}>
+            Resume assessment in progress
+          </Link>
         )}
       </section>
 

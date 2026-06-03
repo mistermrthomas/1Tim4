@@ -13,6 +13,7 @@ export const PREPARE_QUESTIONS: Question[] = [
 ];
 
 export const LIVE_QUESTIONS: Question[] = [
+  { id: 'live-focus-today', text: 'How are you living out your training focus so far today?' },
   { id: 'live-doing', text: 'How are you doing?' },
   { id: 'live-challenge', text: 'What challenge are you facing?' },
   { id: 'live-focus', text: 'Have you remembered today\'s focus?' },

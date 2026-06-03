@@ -59,9 +59,9 @@ export function loadAppData(profileId: string): AppData {
       return mode === 'demo' ? structuredClone(sampleData) : createEmptyAppData();
     }
     const data = parsed as AppData;
-    if (data.spiritualAssessment === undefined) {
-      data.spiritualAssessment = null;
-    }
+    if (data.spiritualAssessment === undefined) data.spiritualAssessment = null;
+    if (data.servingDiscovery === undefined) data.servingDiscovery = null;
+    if (!data.onboardingProgress) data.onboardingProgress = {};
     return data;
   } catch {
     return mode === 'demo' ? structuredClone(sampleData) : createEmptyAppData();

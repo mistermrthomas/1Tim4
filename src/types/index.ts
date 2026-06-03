@@ -192,6 +192,51 @@ export interface SpiritualAssessment {
   acceptedVerseReference?: string;
 }
 
+export type ServingLaneKey =
+  | 'encouraging'
+  | 'practical'
+  | 'organize'
+  | 'teach'
+  | 'creative'
+  | 'hospitality'
+  | 'support'
+  | 'mentor'
+  | 'lead';
+
+export interface ServingLaneResult {
+  key: ServingLaneKey;
+  title: string;
+  score: number;
+  summary: string;
+}
+
+export interface ServingSuggestion {
+  primaryLane: ServingLaneKey;
+  primaryTitle: string;
+  headline: string;
+  whySummary: string;
+  lanes: ServingLaneResult[];
+  strengths: string[];
+  watchouts: string[];
+}
+
+export type ServingDiscoveryStatus = 'in_progress' | 'completed';
+
+export interface ServingDiscovery {
+  status: ServingDiscoveryStatus;
+  startedAt: string;
+  completedAt?: string;
+  sectionIndex: number;
+  answers: Record<string, string>;
+  suggestion?: ServingSuggestion;
+}
+
+export interface OnboardingProgress {
+  dismissed?: boolean;
+  backupExported?: boolean;
+  homeScreenAdded?: boolean;
+}
+
 export interface AppData {
   version: 1;
   journeyStartedAt: string;
@@ -205,6 +250,9 @@ export interface AppData {
   readingLog: ReadingLogEntry[];
   readingPlan: ReadingPlan;
   spiritualAssessment: SpiritualAssessment | null;
+  servingDiscovery?: ServingDiscovery | null;
+  onboardingProgress?: OnboardingProgress;
+  lastBackupAt?: string;
 }
 
 export type AppMode = 'new' | 'demo' | 'live';
@@ -246,6 +294,15 @@ export interface AppContextValue {
     readingBook: string;
     readingChapter: number;
   }) => void;
+  resetSpiritualAssessment: () => void;
+  exportTrailBackup: (profileName: string) => void;
+  importTrailBackup: (file: File) => Promise<void>;
+  servingDiscovery: ServingDiscovery | null;
+  startServingDiscovery: () => void;
+  saveServingProgress: (sectionIndex: number, answers: Record<string, string>) => void;
+  completeServingDiscovery: (answers: Record<string, string>) => ServingSuggestion;
+  dismissOnboardingChecklist: () => void;
+  markOnboardingItem: (key: keyof OnboardingProgress, value?: boolean) => void;
 }
 
 export interface JourneyLogFilters {

@@ -17,15 +17,25 @@ import type {
   JourneyStage,
   LessonLearned,
   LiveEntry,
+  OnboardingProgress,
   PrayerStatus,
   PrepareEntry,
   ReflectEntry,
+  ServingSuggestion,
   SpiritualAssessment,
   TrainingFocus,
   TrainingVerse,
 } from '../types';
 import { ASSESSMENT_SECTION_COUNT } from '../constants/assessment';
+import { SERVING_SECTION_COUNT } from '../constants/servingAssessment';
 import { generateAssessmentPlan } from '../utils/generateAssessmentPlan';
+import { generateServingPlan } from '../utils/generateServingPlan';
+import { advanceReadingPlan } from '../utils/readingPlan';
+import {
+  buildTrailBackup,
+  downloadTrailBackup,
+  parseTrailBackup,
+} from '../utils/trailBackup';
 import { isAppDataEmpty } from '../data/emptyData';
 import {
   getAppMode,
@@ -151,12 +161,10 @@ export function AppProvider({
             date: today,
           });
         }
-        if (next.readingPlan.currentBook === ch.book) {
-          if (!next.readingPlan.chaptersCompletedInBook.includes(ch.chapter)) {
-            next.readingPlan.chaptersCompletedInBook.push(ch.chapter);
-          }
-          next.readingPlan.currentChapter = ch.chapter;
-        }
+      }
+
+      if (entry.chaptersRead.length > 0) {
+        next.readingPlan = advanceReadingPlan(next.readingPlan, entry.chaptersRead);
       }
 
       persist(next);
@@ -453,9 +461,120 @@ export function AppProvider({
         suggestion: assessment.suggestion ?? generateAssessmentPlan(assessment.answers),
       };
 
+      next.onboardingProgress = {
+        ...next.onboardingProgress,
+        dismissed: false,
+      };
+
       persist(next);
     },
     [data, today, persist],
+  );
+
+  const resetSpiritualAssessment = useCallback(() => {
+    const next = structuredClone(data);
+    next.spiritualAssessment = null;
+    persist(next, { promoteLive: false });
+  }, [data, persist]);
+
+  const exportTrailBackup = useCallback(
+    (profileName: string) => {
+      const backup = buildTrailBackup(profileId, profileName, data);
+      downloadTrailBackup(backup);
+      const next = structuredClone(data);
+      next.lastBackupAt = backup.exportedAt;
+      next.onboardingProgress = { ...next.onboardingProgress, backupExported: true };
+      persist(next, { promoteLive: false });
+    },
+    [profileId, data, persist],
+  );
+
+  const importTrailBackup = useCallback(
+    async (file: File) => {
+      const text = await file.text();
+      const backup = parseTrailBackup(text);
+      if (backup.profileId !== profileId) {
+        if (
+          !window.confirm(
+            `This backup belongs to "${backup.profileName}". Import it into your current profile anyway?`,
+          )
+        ) {
+          return;
+        }
+      }
+      if (
+        !window.confirm(
+          'Import will replace your current trail data on this device. Continue?',
+        )
+      ) {
+        return;
+      }
+      setData(backup.appData);
+      saveAppData(profileId, backup.appData);
+      const mode = getAppMode(profileId);
+      setAppModeState(mode === 'demo' ? 'demo' : isAppDataEmpty(backup.appData) ? 'new' : 'live');
+    },
+    [profileId],
+  );
+
+  const dismissOnboardingChecklist = useCallback(() => {
+    const next = structuredClone(data);
+    next.onboardingProgress = { ...next.onboardingProgress, dismissed: true };
+    persist(next, { promoteLive: false });
+  }, [data, persist]);
+
+  const markOnboardingItem = useCallback(
+    (key: keyof OnboardingProgress, value = true) => {
+      const next = structuredClone(data);
+      next.onboardingProgress = { ...next.onboardingProgress, [key]: value };
+      persist(next, { promoteLive: false });
+    },
+    [data, persist],
+  );
+
+  const startServingDiscovery = useCallback(() => {
+    const next = structuredClone(data);
+    next.servingDiscovery = {
+      status: 'in_progress',
+      startedAt: new Date().toISOString(),
+      sectionIndex: 0,
+      answers: {},
+    };
+    persist(next, { promoteLive: false });
+  }, [data, persist]);
+
+  const saveServingProgress = useCallback(
+    (sectionIndex: number, answers: Record<string, string>) => {
+      const next = structuredClone(data);
+      const existing = next.servingDiscovery;
+      next.servingDiscovery = {
+        status: 'in_progress',
+        startedAt: existing?.startedAt ?? new Date().toISOString(),
+        sectionIndex,
+        answers: { ...existing?.answers, ...answers },
+      };
+      persist(next, { promoteLive: false });
+    },
+    [data, persist],
+  );
+
+  const completeServingDiscovery = useCallback(
+    (answers: Record<string, string>): ServingSuggestion => {
+      const merged = { ...data.servingDiscovery?.answers, ...answers };
+      const suggestion = generateServingPlan(merged);
+      const next = structuredClone(data);
+      next.servingDiscovery = {
+        status: 'completed',
+        startedAt: data.servingDiscovery?.startedAt ?? new Date().toISOString(),
+        completedAt: new Date().toISOString(),
+        sectionIndex: SERVING_SECTION_COUNT - 1,
+        answers: merged,
+        suggestion,
+      };
+      persist(next, { promoteLive: false });
+      return suggestion;
+    },
+    [data, persist],
   );
 
   const value = useMemo<AppContextValue>(
@@ -485,6 +604,15 @@ export function AppProvider({
       saveAssessmentProgress,
       completeAssessment,
       acceptAssessmentPlan,
+      resetSpiritualAssessment,
+      exportTrailBackup,
+      importTrailBackup,
+      servingDiscovery: data.servingDiscovery ?? null,
+      startServingDiscovery,
+      saveServingProgress,
+      completeServingDiscovery,
+      dismissOnboardingChecklist,
+      markOnboardingItem,
     }),
     [
       data,
@@ -510,6 +638,15 @@ export function AppProvider({
       saveAssessmentProgress,
       completeAssessment,
       acceptAssessmentPlan,
+      resetSpiritualAssessment,
+      exportTrailBackup,
+      importTrailBackup,
+      data.servingDiscovery,
+      startServingDiscovery,
+      saveServingProgress,
+      completeServingDiscovery,
+      dismissOnboardingChecklist,
+      markOnboardingItem,
     ],
   );
 

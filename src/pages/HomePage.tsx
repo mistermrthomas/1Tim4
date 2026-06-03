@@ -7,6 +7,9 @@ import { JourneyLogPreview } from '../components/home/JourneyLogPreview';
 import { PrayerPreview } from '../components/home/PrayerPreview';
 import { LessonsCard } from '../components/home/LessonsCard';
 import { HomeOnboarding } from '../components/home/HomeOnboarding';
+import { TrailContinueCta } from '../components/home/TrailContinueCta';
+import { FirstWeekChecklist } from '../components/home/FirstWeekChecklist';
+import { getTodaysTrailStep } from '../utils/todaysTrail';
 import './HomePage.css';
 
 export function HomePage() {
@@ -24,6 +27,7 @@ export function HomePage() {
   const logItems = getJourneyLog();
   const todayChapters = todayEntry.prepare?.chaptersRead ?? [];
   const showOnboarding = isEmpty && appMode !== 'demo';
+  const trailStep = getTodaysTrailStep(todayEntry);
 
   return (
     <main className="page-content page-content--home">
@@ -33,6 +37,8 @@ export function HomePage() {
         <HomeOnboarding />
       ) : (
         <div className="home-dashboard">
+          <FirstWeekChecklist />
+          <TrailContinueCta step={trailStep} />
           <section className="home-fold" aria-label="Today on the trail">
             <div className="home-fold__season">
               {focus ? (

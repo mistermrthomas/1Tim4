@@ -1,0 +1,34 @@
+.trail-continue {
+  margin-bottom: 16px;
+  border-color: var(--sage-light);
+  background: linear-gradient(180deg, var(--white) 0%, var(--sage-light) 120%);
+}
+
+.trail-continue__eyebrow {
+  margin-bottom: 6px;
+}
+
+.trail-continue__progress {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 12px;
+}
+
+.trail-continue__title {
+  font-size: 1.2rem;
+  margin-bottom: 6px;
+}
+
+.trail-continue__lead {
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.trail-continue__cta {
+  width: 100%;
+}
+
+.trail-continue--done {
+  background: var(--paper);
+}

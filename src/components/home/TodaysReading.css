@@ -30,6 +30,10 @@
   font-size: 1.1rem;
 }
 
+.todays-reading__next {
+  margin-top: 8px;
+}
+
 .todays-reading__progress {
   font-size: 13px;
   color: var(--ink-muted);

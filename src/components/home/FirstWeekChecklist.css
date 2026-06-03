@@ -1,0 +1,79 @@
+.first-week {
+  margin-bottom: 20px;
+  border-color: var(--earth-light);
+}
+
+.first-week__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.first-week__count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sage-deep);
+}
+
+.first-week__lead {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+}
+
+.first-week__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.first-week__item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.first-week__item--done .first-week__label {
+  color: var(--ink-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--earth-light);
+}
+
+.first-week__check {
+  flex-shrink: 0;
+  width: 22px;
+  font-weight: 700;
+  color: var(--sage-deep);
+  margin-top: 2px;
+}
+
+.first-week__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+.first-week__hint {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-muted);
+}
+
+.first-week__action {
+  display: inline-block;
+  margin-top: 6px;
+}
+
+.first-week__backup-note {
+  margin-bottom: 8px;
+}
+
+.first-week__dismiss {
+  width: 100%;
+}

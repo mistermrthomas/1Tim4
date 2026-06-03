@@ -20,6 +20,8 @@ export function createEmptyAppData(): AppData {
       chaptersCompletedInBook: [],
     },
     spiritualAssessment: null,
+    servingDiscovery: null,
+    onboardingProgress: {},
   };
 }
 

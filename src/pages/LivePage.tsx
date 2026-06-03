@@ -48,20 +48,23 @@ export function LivePage() {
     <main className="page-content page-content--form">
       <SubPageHeader
         title="Live"
-        subtitle="Pause amid the day. Notice where God is at work."
+        subtitle="Pause amid the day — your training verse and focus are here first."
       />
+
+      {data.trainingVerse && <TrainingVerseCard verse={data.trainingVerse} compact />}
 
       {data.trainingFocus && (
         <div className="card" style={{ marginBottom: 16 }}>
-          <div className="eyebrow">Current focus</div>
+          <div className="eyebrow">Training focus</div>
           <p className="serif" style={{ fontSize: 20, fontWeight: 600, marginTop: 4 }}>
             {data.trainingFocus.title}
           </p>
+          {data.trainingFocus.description && (
+            <p style={{ fontSize: 14, color: 'var(--ink-soft)', marginTop: 8, lineHeight: 1.45 }}>
+              {data.trainingFocus.description}
+            </p>
+          )}
         </div>
-      )}
-
-      {data.trainingVerse && (
-        <TrainingVerseCard verse={data.trainingVerse} compact />
       )}
 
       {morningSnippet && (

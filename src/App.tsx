@@ -11,12 +11,15 @@ import { PrayerPage } from './pages/PrayerPage';
 import { ArchivePage } from './pages/ArchivePage';
 import { GuidePage } from './pages/GuidePage';
 import { AssessmentPage } from './pages/AssessmentPage';
+import { ServingAssessmentPage } from './pages/ServingAssessmentPage';
 import { ProfileSelectPage } from './pages/ProfileSelectPage';
 import './styles/global.css';
 import './components/illustrations/FieldGuideArt.css';
 import './components/layout/AppShell.css';
 import './components/layout/SideNav.css';
 import './pages/HomePage.css';
+import './components/home/TrailContinueCta.css';
+import './components/home/FirstWeekChecklist.css';
 import './pages/JourneyLogPage.css';
 import './pages/PrayerPage.css';
 import './pages/ArchivePage.css';
@@ -49,6 +52,7 @@ function AppRoutes() {
           <Route path="/archive" element={<ArchivePage />} />
           <Route path="/guide" element={<GuidePage />} />
           <Route path="/assessment" element={<AssessmentPage />} />
+          <Route path="/serving" element={<ServingAssessmentPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
