@@ -57,20 +57,19 @@ function migrateLegacySingleUserData(targetProfileId: string): void {
   }
 }
 
-/** Ensures Michael and Bailey example profiles exist; migrates legacy data to Michael if present. */
+/** Ensures registry exists; migrates legacy single-user data to the first profile created. */
 export function ensureProfilesInitialized(): ProfilesRegistry {
-  let registry = loadRegistry();
+  const registry = loadRegistry();
 
-  if (registry.profiles.length === 0) {
-    const michael = createProfileRecord('Michael');
-    const bailey = createProfileRecord('Bailey');
-    registry.profiles = [michael, bailey];
-
-    const legacyData =
-      localStorage.getItem(LEGACY_DATA_KEY) ?? localStorage.getItem(LEGACY_TIMOTHY_DATA_KEY);
-    if (legacyData) {
-      migrateLegacySingleUserData(michael.id);
-    }
+  const legacyData =
+    localStorage.getItem(LEGACY_DATA_KEY) ?? localStorage.getItem(LEGACY_TIMOTHY_DATA_KEY);
+  if (legacyData && registry.profiles.length === 0) {
+    const first = createProfileRecord('Traveler');
+    registry.profiles = [first];
+    migrateLegacySingleUserData(first.id);
+    registry.activeProfileId = first.id;
+    saveRegistry(registry);
+    return registry;
   }
 
   saveRegistry(registry);

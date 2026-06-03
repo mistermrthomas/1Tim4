@@ -13,36 +13,37 @@ interface ProfileSelectPageProps {
 export function ProfileSelectPage({ switching }: ProfileSelectPageProps) {
   const navigate = useNavigate();
   const { profiles, selectProfile, createAndSelectProfile, signOutProfile } = useProfile();
-  const [newName, setNewName] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
+
+  const handleBegin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setError('Enter your name to continue.');
+      return;
+    }
+    const existing = profiles.find((p) => p.name.toLowerCase() === trimmed.toLowerCase());
+    if (existing) {
+      selectProfile(existing.id);
+    } else {
+      createAndSelectProfile(trimmed);
+    }
+    setName('');
+    navigate('/', { replace: true });
+  };
 
   const handleSelect = (profileId: string) => {
     selectProfile(profileId);
     navigate('/', { replace: true });
   };
 
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    const trimmed = newName.trim();
-    if (!trimmed) {
-      setError('Enter a name for this profile.');
-      return;
-    }
-    if (profiles.some((p) => p.name.toLowerCase() === trimmed.toLowerCase())) {
-      setError('A profile with this name already exists.');
-      return;
-    }
-    createAndSelectProfile(trimmed);
-    setNewName('');
-    navigate('/', { replace: true });
+  const handleBack = () => {
+    if (switching) navigate('/', { replace: true });
   };
 
-  const handleBack = () => {
-    if (switching) {
-      navigate('/', { replace: true });
-    }
-  };
+  const isFirstVisit = !switching && profiles.length === 0;
 
   return (
     <main
@@ -60,49 +61,84 @@ export function ProfileSelectPage({ switching }: ProfileSelectPageProps) {
           <header className="profile-select__header">
             <p className="profile-select__brand eyebrow">{APP_NAME}</p>
             <h1 className="profile-select__title serif">
-              {switching ? 'Switch profile' : 'Choose your path'}
+              {switching ? 'Switch profile' : isFirstVisit ? 'Welcome' : 'Welcome back'}
             </h1>
           </header>
 
           <p className="profile-select__lead">
             {switching
-              ? 'Each profile keeps its own assessment, training plan, journal, and prayers on this device.'
-              : 'Select a profile to begin. Michael and Bailey are ready for independent testing — each with separate data.'}
+              ? 'Each person on this device keeps a private trail — assessment, journal, and prayers stay separate.'
+              : isFirstVisit
+                ? 'A companion for walking with God and documenting formation over time. Your trail saves automatically on this device as you go.'
+                : 'Continue your trail or start under another name on this device.'}
           </p>
 
-          <ul className="profile-select__list">
-            {profiles.map((profile) => (
-              <li key={profile.id}>
-                <button
-                  type="button"
-                  className="profile-select__profile-btn"
-                  onClick={() => handleSelect(profile.id)}
-                >
-                  <span className="profile-select__profile-name serif">{profile.name}</span>
-                  <span className="profile-select__profile-action">
-                    {switching ? 'Switch' : 'Continue'}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-
-          <form className="profile-select__create" onSubmit={handleCreate}>
-            <p className="field-label">Create another profile</p>
-            <div className="profile-select__create-row">
+          {isFirstVisit ? (
+            <form className="profile-select__welcome-form" onSubmit={handleBegin}>
+              <label className="field-label" htmlFor="profile-name">
+                What&apos;s your name?
+              </label>
               <input
+                id="profile-name"
                 className="text-input"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Name"
-                aria-label="New profile name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your first name"
+                autoComplete="name"
+                autoFocus
               />
-              <button type="submit" className="btn btn-secondary profile-select__create-btn">
-                Add
+              {error && <p className="field-hint profile-select__error">{error}</p>}
+              <button type="submit" className="btn btn-primary profile-select__begin-btn">
+                Begin
               </button>
-            </div>
-            {error && <p className="field-hint profile-select__error">{error}</p>}
-          </form>
+            </form>
+          ) : (
+            <>
+              {!switching && (
+                <form className="profile-select__welcome-form" onSubmit={handleBegin}>
+                  <label className="field-label" htmlFor="profile-name-return">
+                    New here? What&apos;s your name?
+                  </label>
+                  <div className="profile-select__create-row">
+                    <input
+                      id="profile-name-return"
+                      className="text-input"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="First name"
+                      autoComplete="name"
+                    />
+                    <button type="submit" className="btn btn-secondary profile-select__create-btn">
+                      Begin
+                    </button>
+                  </div>
+                  {error && <p className="field-hint profile-select__error">{error}</p>}
+                </form>
+              )}
+
+              {profiles.length > 0 && (
+                <>
+                  <p className="field-label profile-select__list-label">
+                    {switching ? 'Choose a profile' : 'Or continue as'}
+                  </p>
+                  <ul className="profile-select__list">
+                    {profiles.map((profile) => (
+                      <li key={profile.id}>
+                        <button
+                          type="button"
+                          className="profile-select__profile-btn"
+                          onClick={() => handleSelect(profile.id)}
+                        >
+                          <span className="profile-select__profile-name serif">{profile.name}</span>
+                          <span className="profile-select__profile-action">Continue</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </>
+          )}
 
           {switching && (
             <>
@@ -118,9 +154,9 @@ export function ProfileSelectPage({ switching }: ProfileSelectPageProps) {
                     navigate('/', { replace: true });
                   }}
                 >
-                  Sign out of current profile
+                  Sign out
                 </button>
-                {' '}to return to this screen on next visit.
+                {' '}to show the welcome screen again.
               </p>
             </>
           )}

@@ -1,5 +1,7 @@
 import type { ChapterReference, ReadingPlan } from '../../types';
 import { BibleChapterLink } from '../shared/BibleChapterLink';
+import { hydrateReadingPlan } from '../../utils/readingPlanFromProfile';
+import { formatReadingProgressLabel } from '../../utils/readingPlanFromProfile';
 import './VerseFields.css';
 
 function chapterKey(c: ChapterReference): string {
@@ -21,6 +23,7 @@ export function ChapterChecklist({
   onChange: (chapters: ChapterReference[]) => void;
   priorChapters?: ChapterReference[];
 }) {
+  const hydrated = hydrateReadingPlan(plan);
   const options: ChapterReference[] = [];
   const seen = new Set<string>();
 
@@ -32,7 +35,12 @@ export function ChapterChecklist({
     options.push({ book: c.book, chapter: c.chapter });
   };
 
-  addOption({ book: plan.currentBook, chapter: plan.currentChapter });
+  if (hydrated.currentBook) {
+    for (let ch = hydrated.startChapter; ch <= hydrated.endChapter; ch++) {
+      addOption({ book: hydrated.currentBook, chapter: ch });
+    }
+  }
+  addOption({ book: hydrated.currentBook, chapter: hydrated.currentChapter });
   for (const c of priorChapters) addOption(c);
 
   const toggle = (c: ChapterReference, checked: boolean) => {
@@ -55,7 +63,8 @@ export function ChapterChecklist({
   return (
     <div className="prepare-block card chapter-checklist">
       <p className="field-label">Chapter(s) read</p>
-      <p className="field-hint">Check each chapter you completed in today&apos;s reading.</p>
+      <p className="field-hint">{formatReadingProgressLabel(hydrated)}</p>
+      <p className="field-hint">Check each chapter you read today (in order).</p>
       <ul className="chapter-checklist__list">
         {options.map((c) => {
           const checked = isChapterSelected(selected, c);

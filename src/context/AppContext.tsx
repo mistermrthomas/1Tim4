@@ -12,6 +12,7 @@ import type {
   AssessmentSuggestion,
   DailyEntry,
   GrowthTheme,
+  ReadingScopeMode,
   JourneyLogFilters,
   JourneyLogItem,
   JourneyStage,
@@ -31,6 +32,7 @@ import { SERVING_SECTION_COUNT } from '../constants/servingAssessment';
 import { generateAssessmentPlan } from '../utils/generateAssessmentPlan';
 import { generateServingPlan } from '../utils/generateServingPlan';
 import { advanceReadingPlan } from '../utils/readingPlan';
+import { buildReadingPlanFromSource } from '../utils/readingPlanFromProfile';
 import {
   buildTrailBackup,
   downloadTrailBackup,
@@ -411,6 +413,10 @@ export function AppProvider({
       verseText: string;
       readingBook: string;
       readingChapter: number;
+      readingStartChapter: number;
+      readingEndChapter: number;
+      readingScope: ReadingScopeMode;
+      readingAnchorLabel?: string;
     }) => {
       const next = structuredClone(data);
       const now = new Date().toISOString();
@@ -440,11 +446,14 @@ export function AppProvider({
         themes: plan.focusThemes,
       };
 
-      next.readingPlan = {
-        currentBook: plan.readingBook,
-        currentChapter: plan.readingChapter,
-        chaptersCompletedInBook: [],
-      };
+      next.readingPlan = buildReadingPlanFromSource({
+        readingBook: plan.readingBook,
+        readingStartChapter: plan.readingStartChapter,
+        readingEndChapter: plan.readingEndChapter,
+        readingScope: plan.readingScope,
+        readingAnchorChapter: plan.readingChapter,
+        readingAnchorLabel: plan.readingAnchorLabel ?? `${plan.readingBook} ${plan.readingChapter}`,
+      });
 
       const assessment: SpiritualAssessment = next.spiritualAssessment ?? {
         status: 'in_progress',

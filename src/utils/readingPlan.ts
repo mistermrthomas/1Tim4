@@ -1,4 +1,5 @@
 import type { ChapterReference, ReadingPlan } from '../types';
+import { hydrateReadingPlan } from './readingPlanFromProfile';
 
 /** Chapter counts for common reading-plan books (NASB trail defaults). */
 export const BOOK_CHAPTER_COUNT: Record<string, number> = {
@@ -29,50 +30,65 @@ export function formatChapterLabel(book: string, chapter: number): string {
   return `${book} ${chapter}`;
 }
 
-export function getNextChapter(book: string, chapter: number): ChapterReference | null {
+export function getNextChapterInPlan(
+  plan: ReadingPlan,
+  book: string,
+  chapter: number,
+): ChapterReference | null {
+  const p = hydrateReadingPlan(plan);
   const trimmed = book.trim();
-  if (!trimmed || chapter < 1) return null;
-  const max = getChapterCount(trimmed);
-  if (max && chapter < max) {
-    return { book: trimmed, chapter: chapter + 1 };
-  }
-  return null;
+  if (!trimmed || chapter < 1 || trimmed !== p.currentBook) return null;
+
+  const end = p.endChapter;
+  if (chapter >= end) return null;
+  return { book: trimmed, chapter: chapter + 1 };
 }
 
-/** After logging chapters read, advance today's pointer to the next unread chapter. */
+/** After logging chapters read, advance to the next chapter within the plan scope. */
 export function advanceReadingPlan(
   plan: ReadingPlan,
   chaptersRead: ChapterReference[],
 ): ReadingPlan {
-  if (!plan.currentBook) return plan;
+  const base = hydrateReadingPlan(plan);
+  if (!base.currentBook) return base;
 
-  const completed = new Set(plan.chaptersCompletedInBook);
-  let currentBook = plan.currentBook;
-  let currentChapter = plan.currentChapter;
+  const completed = new Set(base.chaptersCompletedInBook);
+  let currentChapter = base.currentChapter;
 
   for (const ch of chaptersRead) {
     if (!ch.book || ch.chapter < 1) continue;
-    if (ch.book === currentBook) {
+    if (ch.book === base.currentBook) {
       completed.add(ch.chapter);
       if (ch.chapter >= currentChapter) {
-        const next = getNextChapter(currentBook, ch.chapter);
-        if (next) {
-          currentChapter = next.chapter;
-        } else {
-          currentChapter = ch.chapter;
-        }
+        const next = getNextChapterInPlan(base, ch.book, ch.chapter);
+        currentChapter = next ? next.chapter : Math.min(ch.chapter, base.endChapter);
       }
     }
   }
 
+  if (currentChapter < base.startChapter) {
+    currentChapter = base.startChapter;
+  }
+
   return {
-    currentBook,
+    ...base,
     currentChapter,
     chaptersCompletedInBook: [...completed].sort((a, b) => a - b),
   };
 }
 
 export function getUpcomingChapter(plan: ReadingPlan): ChapterReference | null {
-  if (!plan.currentBook || plan.currentChapter < 1) return null;
-  return { book: plan.currentBook, chapter: plan.currentChapter };
+  const p = hydrateReadingPlan(plan);
+  if (!p.currentBook || p.currentChapter < 1) return null;
+  if (p.currentChapter > p.endChapter) return null;
+  return { book: p.currentBook, chapter: p.currentChapter };
+}
+
+export function isReadingPlanComplete(plan: ReadingPlan): boolean {
+  const p = hydrateReadingPlan(plan);
+  if (!p.currentBook) return false;
+  for (let c = p.startChapter; c <= p.endChapter; c++) {
+    if (!p.chaptersCompletedInBook.includes(c)) return false;
+  }
+  return true;
 }

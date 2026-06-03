@@ -28,8 +28,8 @@ export function FirstWeekChecklist() {
   const items = [
     {
       id: 'backup',
-      label: 'Back up your trail',
-      hint: 'Export a file so you never lose your assessment or journal.',
+      label: 'Optional: save a backup file',
+      hint: 'Your trail already saves on this device. Export only if you want a copy in Files or iCloud.',
       done: !!progress.backupExported || !!data.lastBackupAt,
       action: 'export' as const,
     },
@@ -85,7 +85,7 @@ export function FirstWeekChecklist() {
         </p>
       </div>
       <p className="first-week__lead">
-        A short checklist to get oriented. Everything stays on this device until you export a backup.
+        A short checklist to get oriented. Your trail saves automatically on this device as you use Path.
       </p>
       <ul className="first-week__list">
         {items.map((item) => (

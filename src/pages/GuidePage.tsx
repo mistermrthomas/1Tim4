@@ -186,18 +186,23 @@ export function GuidePage() {
       </section>
 
       <section className="guide-section">
-        <h2 className="section-title">Back up your trail</h2>
+        <h2 className="section-title">Your data on this device</h2>
         <p className="guide-section__desc">
-          Everything lives in this browser until you export. Save a backup file after your assessment
-          or anytime your journal grows — you can import it later on this device.
+          Path saves your trail automatically in this browser as you go — no export needed for normal
+          use. If you clear Safari data, get a new phone, or want a copy in iCloud, use the optional
+          backup below. Sync across devices with Google, Apple, or GitHub sign-in is planned — see{' '}
+          <a href="https://github.com/mistermrthomas/1Tim4/blob/main/docs/CLOUD_SYNC.md" target="_blank" rel="noopener noreferrer">
+            cloud sync notes
+          </a>
+          .
         </p>
         <div className="guide-data-actions card" style={{ padding: 16 }}>
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-secondary"
             onClick={() => exportTrailBackup(activeProfile?.name ?? 'trail')}
           >
-            Export backup
+            Export backup file (optional)
           </button>
           <button
             type="button"

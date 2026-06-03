@@ -160,6 +160,22 @@ body:has(.page-content--profile-entry:not(.profile-select--embedded)) {
   color: var(--sage-deep);
 }
 
+.profile-select__welcome-form {
+  margin-bottom: 16px;
+}
+
+.profile-select__welcome-form .text-input {
+  margin-bottom: 12px;
+}
+
+.profile-select__begin-btn {
+  width: 100%;
+}
+
+.profile-select__list-label {
+  margin-bottom: 8px;
+}
+
 .profile-select__create-row {
   display: flex;
   gap: 10px;

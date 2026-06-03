@@ -1,6 +1,11 @@
 import { MEMORIZATION_TRANSLATION } from '../constants/bible';
-import type { AssessmentFocusKey, AssessmentSuggestion, GrowthTheme } from '../types';
+import type { AssessmentFocusKey, AssessmentSuggestion, GrowthTheme, ReadingScopeMode } from '../types';
 import type { FocusVisualKey } from '../utils/focusVisuals';
+import {
+  buildReadingPlanFromSource,
+  formatReadingProgressLabel,
+  resolveEndChapter,
+} from '../utils/readingPlanFromProfile';
 
 export interface FocusProfile {
   key: AssessmentFocusKey;
@@ -9,9 +14,14 @@ export interface FocusProfile {
   themes: GrowthTheme[];
   keywords: string[];
   dailyEmphasis: string;
+  /** Display label for the thematic chapter (training connection) */
   readingLabel: string;
   readingBook: string;
+  /** Thematic chapter — daily reading still starts at readingStartChapter */
   readingChapter: number;
+  readingStartChapter: number;
+  readingEndChapter: number;
+  readingScope: ReadingScopeMode;
   verses: { reference: string; text: string }[];
 }
 
@@ -29,6 +39,9 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
     readingLabel: 'James 1',
     readingBook: 'James',
     readingChapter: 1,
+    readingStartChapter: 1,
+    readingEndChapter: 5,
+    readingScope: 'whole_book',
     verses: [
       {
         reference: 'James 1:19',
@@ -50,9 +63,12 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
       'fear', 'unsettled', 'turmoil', 'quiet',
     ],
     dailyEmphasis: 'Pause to name what you can entrust to God before acting.',
-    readingLabel: 'Philippians 4',
+    readingLabel: 'Themes from Philippians 4',
     readingBook: 'Philippians',
     readingChapter: 4,
+    readingStartChapter: 1,
+    readingEndChapter: 4,
+    readingScope: 'chapter_range',
     verses: [
       {
         reference: 'Philippians 4:6-7',
@@ -74,9 +90,12 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
       'indulg', 'avoid', 'obedien', 'sin', 'repent',
     ],
     dailyEmphasis: 'Choose one small act of restraint before the moment you usually give in.',
-    readingLabel: 'Galatians 5',
+    readingLabel: 'Themes from Galatians 5',
     readingBook: 'Galatians',
     readingChapter: 5,
+    readingStartChapter: 1,
+    readingEndChapter: 6,
+    readingScope: 'whole_book',
     verses: [
       {
         reference: 'Galatians 5:22-23',
@@ -98,9 +117,12 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
       'show up', 'follow through', 'promise', 'steadfast',
     ],
     dailyEmphasis: 'Keep one small promise to God or another person today.',
-    readingLabel: 'Lamentations 3',
+    readingLabel: 'Themes from Lamentations 3',
     readingBook: 'Lamentations',
     readingChapter: 3,
+    readingStartChapter: 1,
+    readingEndChapter: 3,
+    readingScope: 'chapter_range',
     verses: [
       {
         reference: 'Lamentations 3:22-23',
@@ -122,9 +144,12 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
       'sarcasm', 'bite', 'volume',
     ],
     dailyEmphasis: 'Lower your voice or soften your tone in one conversation today.',
-    readingLabel: 'Proverbs 15',
+    readingLabel: 'Themes from Proverbs 15',
     readingBook: 'Proverbs',
     readingChapter: 15,
+    readingStartChapter: 1,
+    readingEndChapter: 5,
+    readingScope: 'chapter_range',
     verses: [
       {
         reference: 'Proverbs 15:1',
@@ -146,9 +171,12 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
       'marriage', 'spouse', 'neighbor',
     ],
     dailyEmphasis: 'Look for one concrete way to love someone before they ask.',
-    readingLabel: '1 Corinthians 13',
+    readingLabel: 'Themes from 1 Corinthians 13',
     readingBook: '1 Corinthians',
     readingChapter: 13,
+    readingStartChapter: 12,
+    readingEndChapter: 14,
+    readingScope: 'chapter_range',
     verses: [
       {
         reference: '1 Corinthians 13:4-7',
@@ -170,9 +198,12 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
       'heaviness', 'sad', 'dull', 'flat',
     ],
     dailyEmphasis: 'Name one gift from God aloud before the day ends.',
-    readingLabel: 'Philippians 4',
+    readingLabel: 'Themes from Philippians 4',
     readingBook: 'Philippians',
     readingChapter: 4,
+    readingStartChapter: 1,
+    readingEndChapter: 4,
+    readingScope: 'chapter_range',
     verses: [
       {
         reference: 'Nehemiah 8:10',
@@ -194,9 +225,12 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
       'neighbor', 'coworker',
     ],
     dailyEmphasis: 'Offer one kindness you could easily skip today.',
-    readingLabel: 'Ephesians 4',
+    readingLabel: 'Themes from Ephesians 4',
     readingBook: 'Ephesians',
     readingChapter: 4,
+    readingStartChapter: 1,
+    readingEndChapter: 4,
+    readingScope: 'chapter_range',
     verses: [
       {
         reference: 'Ephesians 4:32',
@@ -218,9 +252,12 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
       'hypocris', 'shortcut',
     ],
     dailyEmphasis: 'Do one hidden act of integrity no one will applaud.',
-    readingLabel: 'Micah 6',
+    readingLabel: 'Themes from Micah 6',
     readingBook: 'Micah',
     readingChapter: 6,
+    readingStartChapter: 1,
+    readingEndChapter: 7,
+    readingScope: 'whole_book',
     verses: [
       {
         reference: 'Micah 6:8',
@@ -242,9 +279,12 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
       'let go', 'faith', 'doubt',
     ],
     dailyEmphasis: 'When worry rises, speak one truth about God\'s character before problem-solving.',
-    readingLabel: 'Proverbs 3',
+    readingLabel: 'Themes from Proverbs 3',
     readingBook: 'Proverbs',
     readingChapter: 3,
+    readingStartChapter: 1,
+    readingEndChapter: 6,
+    readingScope: 'chapter_range',
     verses: [
       {
         reference: 'Proverbs 3:5-6',
@@ -266,9 +306,12 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
       'distant from god', 'dry', 'discipline',
     ],
     dailyEmphasis: 'Protect ten unhurried minutes to speak and listen with God.',
-    readingLabel: '1 Thessalonians 5',
+    readingLabel: 'Themes from 1 Thessalonians 5',
     readingBook: '1 Thessalonians',
     readingChapter: 5,
+    readingStartChapter: 1,
+    readingEndChapter: 5,
+    readingScope: 'whole_book',
     verses: [
       {
         reference: '1 Thessalonians 5:16-18',
@@ -290,9 +333,12 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
       'overthink', 'catastroph',
     ],
     dailyEmphasis: 'When anxiety rises, pray before you plan.',
-    readingLabel: 'Matthew 6',
+    readingLabel: 'Themes from Matthew 6',
     readingBook: 'Matthew',
     readingChapter: 6,
+    readingStartChapter: 5,
+    readingEndChapter: 7,
+    readingScope: 'chapter_range',
     verses: [
       {
         reference: 'Matthew 6:25-34',
@@ -314,9 +360,12 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
       'husband', 'wife', 'son', 'daughter', 'household',
     ],
     dailyEmphasis: 'Bless one person in your home with presence, not only tasks.',
-    readingLabel: 'Deuteronomy 6',
+    readingLabel: 'Themes from Deuteronomy 6',
     readingBook: 'Deuteronomy',
     readingChapter: 6,
+    readingStartChapter: 4,
+    readingEndChapter: 8,
+    readingScope: 'chapter_range',
     verses: [
       {
         reference: 'Deuteronomy 6:6-7',
@@ -338,9 +387,12 @@ export const FOCUS_PROFILES: Record<AssessmentFocusKey, FocusProfile> = {
       'workplace', 'deadline', 'project',
     ],
     dailyEmphasis: 'Offer today\'s work to God before you begin the first task.',
-    readingLabel: 'Colossians 3',
+    readingLabel: 'Themes from Colossians 3',
     readingBook: 'Colossians',
     readingChapter: 3,
+    readingStartChapter: 1,
+    readingEndChapter: 4,
+    readingScope: 'chapter_range',
     verses: [
       {
         reference: 'Colossians 3:23',
@@ -413,6 +465,19 @@ export function profileToSuggestion(
   verseIndex = 0,
 ): AssessmentSuggestion {
   const verse = profile.verses[verseIndex] ?? profile.verses[0];
+  const endChapter = resolveEndChapter(
+    profile.readingBook,
+    profile.readingScope,
+    profile.readingEndChapter,
+  );
+  const planStub = {
+    readingBook: profile.readingBook,
+    readingStartChapter: profile.readingStartChapter,
+    readingEndChapter: endChapter,
+    readingScope: profile.readingScope,
+    readingAnchorChapter: profile.readingChapter,
+    readingAnchorLabel: profile.readingLabel,
+  };
   return {
     focusKey: profile.key,
     focusTitle: profile.title,
@@ -424,6 +489,12 @@ export function profileToSuggestion(
     readingLabel: profile.readingLabel,
     readingBook: profile.readingBook,
     readingChapter: profile.readingChapter,
+    readingStartChapter: profile.readingStartChapter,
+    readingEndChapter: endChapter,
+    readingScope: profile.readingScope,
+    readingProgressLabel: formatReadingProgressLabel(
+      buildReadingPlanFromSource(planStub),
+    ),
     dailyEmphasis: profile.dailyEmphasis,
     translation: MEMORIZATION_TRANSLATION,
   };

@@ -141,6 +141,10 @@ export function AssessmentPage() {
       verseText: displayResult.verseText,
       readingBook: displayResult.readingBook,
       readingChapter: displayResult.readingChapter,
+      readingStartChapter: displayResult.readingStartChapter,
+      readingEndChapter: displayResult.readingEndChapter,
+      readingScope: displayResult.readingScope,
+      readingAnchorLabel: displayResult.readingLabel,
     });
     navigate('/', { replace: true });
   };
@@ -377,14 +381,23 @@ function ResultsPanel({
 
       <section className="assessment-results__grid">
         <div className="assessment-results__block card">
-          <p className="eyebrow">Starting reading</p>
+          <p className="eyebrow">Daily reading</p>
           <BibleChapterLink
             book={result.readingBook}
-            chapter={result.readingChapter}
+            chapter={result.readingStartChapter}
             className="assessment-results__reading"
           >
-            {result.readingLabel}
+            {result.readingBook} {result.readingStartChapter}
+            {result.readingEndChapter > result.readingStartChapter
+              ? ` (through ${result.readingEndChapter})`
+              : ''}
           </BibleChapterLink>
+          <p className="field-hint" style={{ marginTop: 8 }}>
+            {result.readingProgressLabel}
+          </p>
+          <p className="field-hint" style={{ marginTop: 4 }}>
+            Training connection: {result.readingLabel}
+          </p>
         </div>
         <div className="assessment-results__block card">
           <p className="eyebrow">Daily emphasis</p>

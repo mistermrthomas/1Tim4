@@ -117,12 +117,21 @@ export interface ReadingLogEntry {
   date: string;
 }
 
+/** How far the daily reading progresses through a book */
+export type ReadingScopeMode = 'whole_book' | 'chapter_range';
+
 /** Current reading position for "Today's Reading" display */
 export interface ReadingPlan {
   currentBook: string;
   currentChapter: number;
-  /** Chapters read in current book */
   chaptersCompletedInBook: number[];
+  /** Read from startChapter through endChapter (inclusive), in order */
+  scopeMode?: ReadingScopeMode;
+  startChapter?: number;
+  endChapter?: number;
+  /** Thematic chapter tied to training focus (not necessarily where reading starts) */
+  anchorChapter?: number;
+  anchorLabel?: string;
 }
 
 export interface JourneyLogItem {
@@ -173,7 +182,12 @@ export interface AssessmentSuggestion {
   verseText: string;
   readingLabel: string;
   readingBook: string;
+  /** Thematic chapter (verse context) — reading still starts at readingStartChapter */
   readingChapter: number;
+  readingStartChapter: number;
+  readingEndChapter: number;
+  readingScope: ReadingScopeMode;
+  readingProgressLabel: string;
   dailyEmphasis: string;
   translation: string;
 }
@@ -293,6 +307,10 @@ export interface AppContextValue {
     verseText: string;
     readingBook: string;
     readingChapter: number;
+    readingStartChapter: number;
+    readingEndChapter: number;
+    readingScope: ReadingScopeMode;
+    readingAnchorLabel?: string;
   }) => void;
   resetSpiritualAssessment: () => void;
   exportTrailBackup: (profileName: string) => void;

@@ -30,7 +30,9 @@
   font-size: 1.1rem;
 }
 
-.todays-reading__next {
+.todays-reading__next,
+.todays-reading__theme,
+.todays-reading__logged {
   margin-top: 8px;
 }
 
