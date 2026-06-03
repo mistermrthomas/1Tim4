@@ -51,8 +51,13 @@ export const sampleData: AppData = {
       prepare: {
         completedAt: '2026-05-30T07:15:00',
         chaptersRead: [{ book: 'James', chapter: 1 }],
-        keyVerses: [{ reference: 'James 1:19', text: 'Everyone should be quick to listen, slow to speak, and slow to become angry.' }],
-        standoutVerses: [{ reference: 'James 1:2-3', text: 'Consider it pure joy, my brothers and sisters, whenever you face trials of many kinds...' }],
+        keyVerses: [],
+        standoutVerses: [
+          {
+            reference: 'James 1:19',
+            text: 'I keep reacting before I listen — this verse names what I need to practice today.',
+          },
+        ],
         notes: 'Need patience most in conversations with my team today.',
         responses: [
           { questionId: 'prepare-god', questionText: 'What did I learn about God?', answer: 'God is patient with my growth — I can extend that to others.' },

@@ -1,33 +1,62 @@
-.verse-fields {
-  margin-bottom: 24px;
+.prepare-block {
+  margin-bottom: 20px;
+  min-width: 0;
+  max-width: 100%;
 }
 
-.verse-fields__row {
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px dashed var(--paper-deep);
-}
-
-.verse-fields__ref {
-  margin-bottom: 8px;
-}
-
-.verse-fields__text {
-  min-height: 64px;
-}
-
-.verse-fields__chapter-row {
+.chapter-checklist__list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
   display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.verse-fields__chapter-num {
-  width: 80px;
-  flex-shrink: 0;
+.chapter-checklist__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
 }
 
-.verse-fields__add,
-.verse-fields__remove {
+.chapter-checklist__input {
+  width: 20px;
+  height: 20px;
   margin-top: 4px;
+  flex-shrink: 0;
+  accent-color: var(--moss);
+  touch-action: manipulation;
+}
+
+.chapter-checklist__label {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.chapter-checklist__label .bible-chapter-link {
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.standout-verse__ref {
+  margin-bottom: 14px;
+  max-width: 100%;
+}
+
+.standout-verse__why-label {
+  margin-top: 4px;
+}
+
+.standout-verse__why {
+  min-height: 100px;
+  max-width: 100%;
+}
+
+.standout-verse .text-input,
+.standout-verse .text-area {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }

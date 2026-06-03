@@ -1,131 +1,120 @@
-import type { VerseReference, ChapterReference } from '../../types';
+import type { ChapterReference, ReadingPlan } from '../../types';
+import { BibleChapterLink } from '../shared/BibleChapterLink';
 import './VerseFields.css';
 
-interface VerseFieldsProps {
-  keyVerses: VerseReference[];
-  standoutVerses: VerseReference[];
-  onKeyVersesChange: (verses: VerseReference[]) => void;
-  onStandoutVersesChange: (verses: VerseReference[]) => void;
+function chapterKey(c: ChapterReference): string {
+  return `${c.book}:${c.chapter}`;
 }
 
-export function VerseFields({
-  keyVerses,
-  standoutVerses,
-  onKeyVersesChange,
-  onStandoutVersesChange,
-}: VerseFieldsProps) {
-  return (
-    <>
-      <VerseList
-        label="Key verse(s)"
-        hint="Verses you want to carry today"
-        verses={keyVerses}
-        onChange={onKeyVersesChange}
-      />
-      <VerseList
-        label="Verses that stood out"
-        hint="What caught your attention in today's reading"
-        verses={standoutVerses}
-        onChange={onStandoutVersesChange}
-      />
-    </>
-  );
+function isChapterSelected(selected: ChapterReference[], c: ChapterReference): boolean {
+  return selected.some((s) => s.book === c.book && s.chapter === c.chapter);
 }
 
-function VerseList({
-  label,
-  hint,
-  verses,
+export function ChapterChecklist({
+  plan,
+  selected,
   onChange,
+  priorChapters = [],
 }: {
-  label: string;
-  hint: string;
-  verses: VerseReference[];
-  onChange: (v: VerseReference[]) => void;
+  plan: ReadingPlan;
+  selected: ChapterReference[];
+  onChange: (chapters: ChapterReference[]) => void;
+  priorChapters?: ChapterReference[];
 }) {
-  const update = (index: number, field: keyof VerseReference, value: string) => {
-    const next = [...verses];
-    next[index] = { ...next[index], [field]: value };
-    onChange(next);
+  const options: ChapterReference[] = [];
+  const seen = new Set<string>();
+
+  const addOption = (c: ChapterReference) => {
+    if (!c.book || c.chapter < 1) return;
+    const key = chapterKey(c);
+    if (seen.has(key)) return;
+    seen.add(key);
+    options.push({ book: c.book, chapter: c.chapter });
   };
 
-  const add = () => onChange([...verses, { reference: '', text: '' }]);
-  const remove = (index: number) => onChange(verses.filter((_, i) => i !== index));
+  addOption({ book: plan.currentBook, chapter: plan.currentChapter });
+  for (const c of priorChapters) addOption(c);
+
+  const toggle = (c: ChapterReference, checked: boolean) => {
+    if (checked) {
+      onChange([...selected.filter((s) => chapterKey(s) !== chapterKey(c)), c]);
+    } else {
+      onChange(selected.filter((s) => !(s.book === c.book && s.chapter === c.chapter)));
+    }
+  };
+
+  if (options.length === 0) {
+    return (
+      <div className="prepare-block card">
+        <p className="field-label">Chapter read</p>
+        <p className="field-hint">Set a starting book on your trail plan (Guide or assessment) to track reading here.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="verse-fields">
-      <label className="field-label">{label}</label>
-      <p className="field-hint">{hint}</p>
-      {verses.map((v, i) => (
-        <div key={i} className="verse-fields__row">
-          <input
-            className="text-input verse-fields__ref"
-            placeholder="Reference (e.g. James 1:19)"
-            value={v.reference}
-            onChange={(e) => update(i, 'reference', e.target.value)}
-          />
-          <textarea
-            className="text-area verse-fields__text"
-            placeholder="Verse text (optional)"
-            value={v.text}
-            onChange={(e) => update(i, 'text', e.target.value)}
-            rows={2}
-          />
-          {verses.length > 1 && (
-            <button type="button" className="btn-ghost verse-fields__remove" onClick={() => remove(i)}>
-              Remove
-            </button>
-          )}
-        </div>
-      ))}
-      <button type="button" className="btn-ghost verse-fields__add" onClick={add}>
-        + Add verse
-      </button>
+    <div className="prepare-block card chapter-checklist">
+      <p className="field-label">Chapter(s) read</p>
+      <p className="field-hint">Check each chapter you completed in today&apos;s reading.</p>
+      <ul className="chapter-checklist__list">
+        {options.map((c) => {
+          const checked = isChapterSelected(selected, c);
+          const id = `chapter-${chapterKey(c)}`;
+          return (
+            <li key={chapterKey(c)} className="chapter-checklist__item">
+              <input
+                id={id}
+                type="checkbox"
+                className="chapter-checklist__input"
+                checked={checked}
+                onChange={(e) => toggle(c, e.target.checked)}
+              />
+              <label htmlFor={id} className="chapter-checklist__label">
+                <BibleChapterLink book={c.book} chapter={c.chapter} />
+              </label>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
 
-export function ChapterField({
-  chapters,
-  onChange,
+export function StandoutVerseField({
+  reference,
+  why,
+  onReferenceChange,
+  onWhyChange,
 }: {
-  chapters: ChapterReference[];
-  onChange: (c: ChapterReference[]) => void;
+  reference: string;
+  why: string;
+  onReferenceChange: (v: string) => void;
+  onWhyChange: (v: string) => void;
 }) {
-  const update = (index: number, field: keyof ChapterReference, value: string | number) => {
-    const next = [...chapters];
-    next[index] = { ...next[index], [field]: value };
-    onChange(next);
-  };
-
   return (
-    <div className="verse-fields">
-      <label className="field-label">Chapter(s) read</label>
-      {chapters.map((c, i) => (
-        <div key={i} className="verse-fields__chapter-row">
-          <input
-            className="text-input"
-            placeholder="Book"
-            value={c.book}
-            onChange={(e) => update(i, 'book', e.target.value)}
-          />
-          <input
-            className="text-input verse-fields__chapter-num"
-            type="number"
-            min={1}
-            placeholder="Ch."
-            value={c.chapter || ''}
-            onChange={(e) => update(i, 'chapter', parseInt(e.target.value, 10) || 0)}
-          />
-        </div>
-      ))}
-      <button
-        type="button"
-        className="btn-ghost verse-fields__add"
-        onClick={() => onChange([...chapters, { book: '', chapter: 0 }])}
-      >
-        + Add chapter
-      </button>
+    <div className="prepare-block card standout-verse">
+      <label className="field-label" htmlFor="standout-ref">
+        What verse stood out?
+      </label>
+      <p className="field-hint">After you read, note one passage and why it caught your attention.</p>
+      <input
+        id="standout-ref"
+        className="text-input standout-verse__ref"
+        placeholder="Reference (e.g. Philippians 4:6)"
+        value={reference}
+        onChange={(e) => onReferenceChange(e.target.value)}
+      />
+      <label className="field-label standout-verse__why-label" htmlFor="standout-why">
+        Why did it stand out?
+      </label>
+      <textarea
+        id="standout-why"
+        className="text-area standout-verse__why"
+        placeholder="A sentence or two — what the Spirit highlighted for you today"
+        value={why}
+        onChange={(e) => onWhyChange(e.target.value)}
+        rows={4}
+      />
     </div>
   );
 }

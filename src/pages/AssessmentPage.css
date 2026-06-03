@@ -84,13 +84,10 @@
 
 .assessment-progress {
   display: flex;
-  gap: 4px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  flex-wrap: wrap;
+  gap: 6px;
   padding-bottom: 12px;
   margin-bottom: 12px;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
 }
 
 .assessment-progress__step {

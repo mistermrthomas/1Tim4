@@ -8,7 +8,7 @@ interface QuestionFieldProps {
 
 export function QuestionField({ question, value, onChange }: QuestionFieldProps) {
   return (
-    <div className="field">
+    <div className="field question-field">
       <label className="field-label" htmlFor={question.id}>{question.text}</label>
       <textarea
         id={question.id}

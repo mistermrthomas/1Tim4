@@ -1,0 +1,47 @@
+.prepare-page {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+.prepare-page__form {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.prepare-page__section {
+  margin-bottom: 28px;
+  min-width: 0;
+}
+
+.prepare-page__section-title {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+.prepare-page__section-lead {
+  margin: -4px 0 16px;
+}
+
+.prepare-page__notes {
+  min-width: 0;
+}
+
+.prepare-page__optional {
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+.prepare-page .field,
+.prepare-page .question-field {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.prepare-page .text-input,
+.prepare-page .text-area {
+  max-width: 100%;
+  min-width: 0;
+}

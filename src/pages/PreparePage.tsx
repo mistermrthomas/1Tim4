@@ -3,10 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { SubPageHeader } from '../components/layout/PageHeader';
 import { QuestionField } from '../components/forms/QuestionField';
-import { ChapterField, VerseFields } from '../components/forms/VerseFields';
+import { ChapterChecklist, StandoutVerseField } from '../components/forms/VerseFields';
 import { PREPARE_QUESTIONS, getRotatingQuestions } from '../constants/questions';
 import { dayOfYear } from '../utils/date';
 import type { ChapterReference, VerseReference, QuestionResponse } from '../types';
+import './PreparePage.css';
+
+function initialStandout(existing: { standoutVerses?: VerseReference[]; keyVerses?: VerseReference[] }) {
+  const standout = existing.standoutVerses?.[0];
+  if (standout?.reference || standout?.text) {
+    return { reference: standout.reference ?? '', why: standout.text ?? '' };
+  }
+  const legacy = existing.keyVerses?.[0];
+  if (legacy?.reference || legacy?.text) {
+    return { reference: legacy.reference ?? '', why: legacy.text ?? '' };
+  }
+  return { reference: '', why: '' };
+}
 
 export function PreparePage() {
   const { todayEntry, savePrepare, data } = useApp();
@@ -18,17 +31,12 @@ export function PreparePage() {
     [],
   );
 
-  const [chapters, setChapters] = useState<ChapterReference[]>(
-    existing?.chaptersRead.length
-      ? existing.chaptersRead
-      : [{ book: data.readingPlan.currentBook, chapter: data.readingPlan.currentChapter }],
+  const [chaptersRead, setChaptersRead] = useState<ChapterReference[]>(
+    existing?.chaptersRead ?? [],
   );
-  const [keyVerses, setKeyVerses] = useState<VerseReference[]>(
-    existing?.keyVerses.length ? existing.keyVerses : [{ reference: '', text: '' }],
-  );
-  const [standoutVerses, setStandoutVerses] = useState<VerseReference[]>(
-    existing?.standoutVerses.length ? existing.standoutVerses : [{ reference: '', text: '' }],
-  );
+  const initial = initialStandout(existing ?? {});
+  const [standoutRef, setStandoutRef] = useState(initial.reference);
+  const [standoutWhy, setStandoutWhy] = useState(initial.why);
   const [notes, setNotes] = useState(existing?.notes ?? '');
   const [answers, setAnswers] = useState<Record<string, string>>(() => {
     const map: Record<string, string> = {};
@@ -49,10 +57,14 @@ export function PreparePage() {
         answer: answers[q.id].trim(),
       }));
 
+    const standoutVerses: VerseReference[] = standoutRef.trim()
+      ? [{ reference: standoutRef.trim(), text: standoutWhy.trim() }]
+      : [];
+
     savePrepare({
-      chaptersRead: chapters.filter((c) => c.book && c.chapter > 0),
-      keyVerses: keyVerses.filter((v) => v.reference.trim()),
-      standoutVerses: standoutVerses.filter((v) => v.reference.trim()),
+      chaptersRead: chaptersRead.filter((c) => c.book && c.chapter > 0),
+      keyVerses: [],
+      standoutVerses,
       notes: notes.trim(),
       responses,
     });
@@ -60,24 +72,52 @@ export function PreparePage() {
   };
 
   return (
-    <main className="page-content page-content--form">
+    <main className="page-content page-content--form prepare-page">
       <SubPageHeader
         title="Prepare"
-        subtitle="Set your heart before the day begins."
+        subtitle="Read first, then name what stood out and answer a few morning questions."
       />
 
-      <form onSubmit={handleSubmit}>
-        <ChapterField chapters={chapters} onChange={setChapters} />
+      <form className="prepare-page__form" onSubmit={handleSubmit}>
+        <section className="prepare-page__section" aria-labelledby="prepare-reading-heading">
+          <h2 id="prepare-reading-heading" className="prepare-page__section-title">
+            Reading
+          </h2>
+          <ChapterChecklist
+            plan={data.readingPlan}
+            selected={chaptersRead}
+            onChange={setChaptersRead}
+            priorChapters={existing?.chaptersRead}
+          />
+          <StandoutVerseField
+            reference={standoutRef}
+            why={standoutWhy}
+            onReferenceChange={setStandoutRef}
+            onWhyChange={setStandoutWhy}
+          />
+        </section>
 
-        <VerseFields
-          keyVerses={keyVerses}
-          standoutVerses={standoutVerses}
-          onKeyVersesChange={setKeyVerses}
-          onStandoutVersesChange={setStandoutVerses}
-        />
+        <section className="prepare-page__section" aria-labelledby="prepare-questions-heading">
+          <h2 id="prepare-questions-heading" className="prepare-page__section-title">
+            Morning questions
+          </h2>
+          <p className="prepare-page__section-lead field-hint">
+            These follow your reading so your answers can reflect what you heard from Scripture.
+          </p>
+          {questions.map((q) => (
+            <QuestionField
+              key={q.id}
+              question={q}
+              value={answers[q.id] ?? ''}
+              onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
+            />
+          ))}
+        </section>
 
-        <div className="field">
-          <label className="field-label" htmlFor="notes">Notes</label>
+        <div className="field prepare-page__notes">
+          <label className="field-label" htmlFor="notes">
+            Notes <span className="prepare-page__optional">(optional)</span>
+          </label>
           <textarea
             id="notes"
             className="text-area"
@@ -87,19 +127,6 @@ export function PreparePage() {
             rows={3}
           />
         </div>
-
-        <div className="section-head" style={{ marginTop: 28 }}>
-          <h2 className="section-title">Morning questions</h2>
-        </div>
-
-        {questions.map((q) => (
-          <QuestionField
-            key={q.id}
-            question={q}
-            value={answers[q.id] ?? ''}
-            onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
-          />
-        ))}
 
         <div className="form-actions">
           <button type="submit" className="btn btn-primary">

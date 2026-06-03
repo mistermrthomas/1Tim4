@@ -53,7 +53,7 @@ export function HomeOnboarding() {
       <section className="welcome-cover__trail">
         <h2 className="welcome-cover__subtitle serif">The daily trail</h2>
         <div className="welcome-cover__stages">
-          <StageCard time="Morning" name="Prepare" desc="Read, reflect, set your heart." to="/prepare" />
+          <StageCard time="Morning" name="Prepare" desc="Read Scripture, then reflect and set your heart." to="/prepare" />
           <StageCard time="Midday" name="Live" desc="Pause. Remember your focus." to="/live" />
           <StageCard time="Evening" name="Reflect" desc="Review. Capture what matters." to="/reflect" />
         </div>
