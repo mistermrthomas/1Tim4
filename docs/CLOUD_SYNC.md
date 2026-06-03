@@ -1,5 +1,7 @@
 # Cloud sync with Supabase (Apple + Google)
 
+**New to setup?** Use the ordered checklist: [LOGIN_SETUP_CHECKLIST.md](./LOGIN_SETUP_CHECKLIST.md).
+
 Path saves **automatically on this device** and, when you sign in, **syncs to your Supabase account** so you can open the same trail on another iPhone, iPad, or browser.
 
 ## What you need
