@@ -17,6 +17,12 @@ Uses `POST /api/go-deeper`. Disable with `VITE_GO_DEEPER_AI=false` (links still 
 
 ---
 
+## Chapter questions (Prepare)
+
+After quick-start reading, **Prepare** can request questions for the chapter you read via `POST /api/reading-questions` (same `OPENAI_API_KEY`). Disable with `VITE_READING_QUESTIONS_AI=false` — generic morning questions remain.
+
+---
+
 ## Assessment guidance
 
 After the spiritual intake, Path can call a **server-side** OpenAI model to choose a training focus and write personalized **whyFocus** text. Scripture, reading plan, and daily emphasis still come from curated profiles in the app — the model does not invent verses.

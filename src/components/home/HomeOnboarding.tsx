@@ -14,7 +14,7 @@ export function HomeOnboarding() {
     if (spiritualAssessment?.status === 'completed') {
       return { label: 'Review your suggested plan', to: '/assessment' };
     }
-    return { label: 'Start first training plan', to: '/assessment' };
+    return { label: 'Take the full intake (optional)', to: '/assessment' };
   })();
 
   return (
@@ -32,20 +32,31 @@ export function HomeOnboarding() {
         <p className="welcome-cover__eyebrow">Welcome, traveler</p>
         <h1 className="welcome-cover__title serif">Begin your journey</h1>
         <p className="welcome-cover__lead">
-          A companion for walking with God and documenting spiritual formation over time.
-          Start with a brief intake conversation, not a test — then begin your first
-          training season on the path ahead.
+          Start reading Scripture today — then reflect in Prepare. The full intake is
+          optional whenever you want a personalized training season.
         </p>
       </header>
 
+      <section className="welcome-cover__intake card welcome-cover__intake--primary">
+        <p className="welcome-cover__intake-label eyebrow">Quick start</p>
+        <h2 className="welcome-cover__intake-title serif">Start reading now</h2>
+        <p className="welcome-cover__intake-desc">
+          Pick a passage (or get a suggestion), open it in your Bible app, then answer
+          follow-up questions tied to what you read.
+        </p>
+        <Link to="/quick-start" className="btn btn-primary welcome-cover__intake-cta">
+          Choose a passage
+        </Link>
+      </section>
+
       <section className="welcome-cover__intake card">
-        <p className="welcome-cover__intake-label eyebrow">New trail</p>
+        <p className="welcome-cover__intake-label eyebrow">Full trail plan</p>
         <h2 className="welcome-cover__intake-title serif">Initial spiritual assessment</h2>
         <p className="welcome-cover__intake-desc">
-          Six trail markers covering your season, walk with God, growth, relationships,
-          and reflection — ending with a suggested training focus, verse, and reading.
+          Six trail markers — season, walk with God, growth, relationships — ending with
+          a suggested focus, verse, and reading plan.
         </p>
-        <Link to={assessmentCta.to} className="btn btn-primary welcome-cover__intake-cta">
+        <Link to={assessmentCta.to} className="btn btn-secondary welcome-cover__intake-cta">
           {assessmentCta.label}
         </Link>
       </section>
@@ -60,7 +71,7 @@ export function HomeOnboarding() {
       </section>
 
       <footer className="welcome-cover__actions">
-        <Link to="/guide" className="btn btn-secondary">Set focus manually in Guide</Link>
+        <Link to="/guide" className="btn btn-ghost">Set focus manually in Guide</Link>
         <button type="button" className="btn btn-ghost" onClick={loadDemoData}>
           Explore demo expedition
         </button>

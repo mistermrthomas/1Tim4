@@ -26,6 +26,8 @@ export function createEmptyAppData(): AppData {
 }
 
 export function isAppDataEmpty(data: AppData): boolean {
+  if (data.readingPlan?.currentBook?.trim()) return false;
+  if (data.trailStartMode) return false;
   return (
     !data.trainingFocus &&
     !data.trainingVerse &&

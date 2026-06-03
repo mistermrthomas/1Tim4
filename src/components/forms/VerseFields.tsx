@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { ChapterReference, ReadingPlan } from '../../types';
 import { GoDeeperPanel } from '../study/GoDeeperPanel';
 import { BibleChapterLink } from '../shared/BibleChapterLink';
@@ -56,7 +57,10 @@ export function ChapterChecklist({
     return (
       <div className="prepare-block card">
         <p className="field-label">Chapter read</p>
-        <p className="field-hint">Set a starting book on your trail plan (Guide or assessment) to track reading here.</p>
+        <p className="field-hint">
+          <Link to="/quick-start" className="section-link">Start reading</Link>
+          {' '}to pick a passage, or set a plan in Guide / assessment.
+        </p>
       </div>
     );
   }

@@ -253,10 +253,14 @@ export interface OnboardingProgress {
   homeScreenAdded?: boolean;
 }
 
+export type TrailStartMode = 'quick_read' | 'quick_path' | 'assessment';
+
 export interface AppData {
   version: 1;
   /** ISO timestamp — last known sync with cloud (for merge on other devices) */
   cloudSyncedAt?: string;
+  /** How the user began — assessment intake vs quick reading / path pick */
+  trailStartMode?: TrailStartMode | null;
   journeyStartedAt: string;
   trainingFocus: TrainingFocus | null;
   trainingFocusHistory: TrainingFocus[];
@@ -325,6 +329,9 @@ export interface AppContextValue {
   completeServingDiscovery: (answers: Record<string, string>) => ServingSuggestion;
   dismissOnboardingChecklist: () => void;
   markOnboardingItem: (key: keyof OnboardingProgress, value?: boolean) => void;
+  quickStartPassage: (book: string, chapter: number) => void;
+  quickStartWithPath: (focusKey: AssessmentFocusKey) => void;
+  getSuggestedPassage: () => { book: string; chapter: number; label: string; hint: string };
 }
 
 export interface JourneyLogFilters {

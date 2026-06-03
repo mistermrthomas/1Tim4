@@ -99,11 +99,14 @@ export function GuidePage() {
         <section className="guide-section guide-section--intake">
           <h2 className="section-title">Begin new trail</h2>
           <p className="guide-section__desc">
-            New to {APP_NAME}? Start with the initial spiritual assessment — an intake conversation
-            that suggests your first training focus, verse, and reading.
+            Start reading right away, or take the full intake for a personalized focus, verse, and
+            reading plan.
           </p>
-          <Link to="/assessment" className="btn btn-primary" style={{ width: '100%' }}>
-            Start first training plan
+          <Link to="/quick-start" className="btn btn-primary" style={{ width: '100%' }}>
+            Start reading now
+          </Link>
+          <Link to="/assessment" className="btn btn-secondary" style={{ width: '100%', marginTop: 10 }}>
+            Take spiritual assessment
           </Link>
           {data.spiritualAssessment?.status === 'in_progress' && (
             <p className="field-hint" style={{ marginTop: 10, textAlign: 'center' }}>

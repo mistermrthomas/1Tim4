@@ -1,0 +1,78 @@
+.quick-start-page {
+  max-width: 640px;
+}
+
+.quick-start__suggest-title {
+  font-size: 1.35rem;
+  margin: 8px 0;
+}
+
+.quick-start__suggest-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.quick-start__open {
+  margin-top: 12px;
+}
+
+.quick-start__list {
+  margin-top: 16px;
+}
+
+.quick-start__passages {
+  list-style: none;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quick-start__passage-btn {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid var(--earth-light);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  cursor: pointer;
+  min-width: 0;
+}
+
+.quick-start__passage-btn:hover {
+  border-color: var(--sage);
+  background: var(--white);
+}
+
+.quick-start__passage-label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.quick-start__passage-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--ink-muted);
+  line-height: 1.4;
+}
+
+.quick-start__paths {
+  margin-top: 16px;
+}
+
+.quick-start__path-grid {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.quick-start__footer {
+  margin-top: 20px;
+}

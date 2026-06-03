@@ -1,11 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { SubPageHeader } from '../components/layout/PageHeader';
 import { QuestionField } from '../components/forms/QuestionField';
 import { ChapterChecklist, StandoutVerseField } from '../components/forms/VerseFields';
-import { PREPARE_QUESTIONS, getRotatingQuestions } from '../constants/questions';
+import { PREPARE_QUESTIONS, getRotatingQuestions, type Question } from '../constants/questions';
+import { fetchChapterReadingQuestions } from '../services/readingQuestions';
 import { dayOfYear } from '../utils/date';
+import { hydrateReadingPlan } from '../utils/readingPlanFromProfile';
 import type { ChapterReference, VerseReference, QuestionResponse } from '../types';
 import './PreparePage.css';
 
@@ -26,10 +28,16 @@ export function PreparePage() {
   const navigate = useNavigate();
   const existing = todayEntry.prepare;
 
-  const questions = useMemo(
+  const fallbackQuestions = useMemo(
     () => getRotatingQuestions(PREPARE_QUESTIONS, 4, dayOfYear()),
     [],
   );
+
+  const [chapterQuestions, setChapterQuestions] = useState<Question[] | null>(null);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [questionsSource, setQuestionsSource] = useState<'ai' | 'default'>('default');
+
+  const hydratedPlan = useMemo(() => hydrateReadingPlan(data.readingPlan), [data.readingPlan]);
 
   const [chaptersRead, setChaptersRead] = useState<ChapterReference[]>(
     existing?.chaptersRead ?? [],
@@ -40,16 +48,66 @@ export function PreparePage() {
   const [notes, setNotes] = useState(existing?.notes ?? '');
   const [answers, setAnswers] = useState<Record<string, string>>(() => {
     const map: Record<string, string> = {};
-    for (const q of questions) {
+    for (const q of fallbackQuestions) {
       const found = existing?.responses.find((r) => r.questionId === q.id);
       map[q.id] = found?.answer ?? '';
     }
     return map;
   });
 
+  const focusChapter = useMemo(() => {
+    if (chaptersRead.length > 0) {
+      const last = chaptersRead[chaptersRead.length - 1];
+      return { book: last.book, chapter: last.chapter };
+    }
+    if (hydratedPlan.currentBook) {
+      return { book: hydratedPlan.currentBook, chapter: hydratedPlan.currentChapter };
+    }
+    return null;
+  }, [chaptersRead, hydratedPlan.currentBook, hydratedPlan.currentChapter]);
+
+  useEffect(() => {
+    if (!focusChapter?.book || !focusChapter.chapter) {
+      setChapterQuestions(null);
+      setQuestionsSource('default');
+      return;
+    }
+
+    let cancelled = false;
+    setQuestionsLoading(true);
+    void fetchChapterReadingQuestions(
+      focusChapter.book,
+      focusChapter.chapter,
+      data.trainingFocus?.title,
+    ).then((qs) => {
+      if (cancelled) return;
+      if (qs?.length) {
+        setChapterQuestions(qs);
+        setQuestionsSource('ai');
+        setAnswers((prev) => {
+          const next = { ...prev };
+          for (const q of qs) {
+            if (next[q.id] === undefined) next[q.id] = '';
+          }
+          return next;
+        });
+      } else {
+        setChapterQuestions(null);
+        setQuestionsSource('default');
+      }
+      setQuestionsLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [focusChapter?.book, focusChapter?.chapter, data.trainingFocus?.title]);
+
+  const activeQuestions = chapterQuestions ?? fallbackQuestions;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const responses: QuestionResponse[] = questions
+    const responses: QuestionResponse[] = activeQuestions
       .filter((q) => answers[q.id]?.trim())
       .map((q) => ({
         questionId: q.id,
@@ -75,7 +133,7 @@ export function PreparePage() {
     <main className="page-content page-content--form prepare-page">
       <SubPageHeader
         title="Prepare"
-        subtitle="Read first, then name what stood out and answer a few morning questions."
+        subtitle="Read first, then name what stood out and answer questions about your reading."
       />
 
       <form className="prepare-page__form" onSubmit={handleSubmit}>
@@ -100,12 +158,31 @@ export function PreparePage() {
 
         <section className="prepare-page__section" aria-labelledby="prepare-questions-heading">
           <h2 id="prepare-questions-heading" className="prepare-page__section-title">
-            Morning questions
+            Questions after reading
           </h2>
-          <p className="prepare-page__section-lead field-hint">
-            These follow your reading so your answers can reflect what you heard from Scripture.
-          </p>
-          {questions.map((q) => (
+          {focusChapter && (
+            <p className="prepare-page__section-lead field-hint">
+              {questionsLoading && 'Preparing questions for your chapter…'}
+              {!questionsLoading && questionsSource === 'ai' && (
+                <>
+                  Based on <strong>{focusChapter.book} {focusChapter.chapter}</strong> — tied to
+                  what you read today.
+                </>
+              )}
+              {!questionsLoading && questionsSource === 'default' && (
+                <>
+                  General morning questions
+                  {focusChapter.book ? ` (read ${focusChapter.book} ${focusChapter.chapter} first)` : ''}.
+                </>
+              )}
+            </p>
+          )}
+          {!focusChapter && (
+            <p className="prepare-page__section-lead field-hint">
+              Start a passage from the trail home to get chapter-specific questions.
+            </p>
+          )}
+          {activeQuestions.map((q) => (
             <QuestionField
               key={q.id}
               question={q}

@@ -16,6 +16,7 @@ import { GuidePage } from './pages/GuidePage';
 import { AssessmentPage } from './pages/AssessmentPage';
 import { ServingAssessmentPage } from './pages/ServingAssessmentPage';
 import { ProfileSelectPage } from './pages/ProfileSelectPage';
+import { QuickStartPage } from './pages/QuickStartPage';
 import './styles/global.css';
 import './components/illustrations/FieldGuideArt.css';
 import './components/layout/AppShell.css';
@@ -31,6 +32,7 @@ import './pages/AssessmentPage.css';
 import './pages/ProfileSelectPage.css';
 import './components/auth/CloudSignIn.css';
 import './components/study/GoDeeperPanel.css';
+import './pages/QuickStartPage.css';
 
 function AppRoutes({ cloudReloadKey }: { cloudReloadKey: number }) {
   const { activeProfile } = useProfile();
@@ -60,6 +62,7 @@ function AppRoutes({ cloudReloadKey }: { cloudReloadKey: number }) {
           <Route path="/prayer" element={<PrayerPage />} />
           <Route path="/archive" element={<ArchivePage />} />
           <Route path="/guide" element={<GuidePage />} />
+          <Route path="/quick-start" element={<QuickStartPage />} />
           <Route path="/assessment" element={<AssessmentPage />} />
           <Route path="/serving" element={<ServingAssessmentPage />} />
         </Route>

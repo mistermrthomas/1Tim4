@@ -5,6 +5,9 @@
     },
     "api/go-deeper.ts": {
       "maxDuration": 30
+    },
+    "api/reading-questions.ts": {
+      "maxDuration": 30
     }
   },
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]

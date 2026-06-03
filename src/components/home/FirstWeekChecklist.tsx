@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useProfile } from '../../context/ProfileContext';
+import { hasStartedTrail } from '../../utils/quickStartPlan';
 import './FirstWeekChecklist.css';
 
 export function FirstWeekChecklist() {
@@ -18,7 +19,7 @@ export function FirstWeekChecklist() {
   } = useApp();
 
   const progress = data.onboardingProgress ?? {};
-  if (spiritualAssessment?.status !== 'accepted' || progress.dismissed) {
+  if (!hasStartedTrail(data) || progress.dismissed) {
     return null;
   }
 
@@ -28,6 +29,14 @@ export function FirstWeekChecklist() {
   const servingDone = servingDiscovery?.status === 'completed';
 
   const items = [
+    {
+      id: 'assessment',
+      label: 'Optional: complete spiritual intake',
+      hint: 'Personalized focus, verse, and reading plan — skip if you quick-started.',
+      done: spiritualAssessment?.status === 'accepted',
+      action: 'link' as const,
+      to: '/assessment',
+    },
     {
       id: 'cloud',
       label: isCloudConfigured ? 'Sign in to sync across devices' : 'Cloud sync (when enabled)',

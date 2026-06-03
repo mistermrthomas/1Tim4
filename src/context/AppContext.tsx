@@ -9,9 +9,12 @@ import {
 } from 'react';
 import { useAuth } from './AuthContext';
 import { scheduleCloudTrailPush } from '../services/cloudTrailSync';
+import { pickSuggestedPassage } from '../constants/quickStart';
+import { FOCUS_PROFILES, profileToSuggestion } from '../data/assessmentProfiles';
 import type {
   AppContextValue,
   AppData,
+  AssessmentFocusKey,
   AssessmentSuggestion,
   DailyEntry,
   GrowthTheme,
@@ -40,6 +43,8 @@ import {
 import { generateServingPlan } from '../utils/generateServingPlan';
 import { advanceReadingPlan } from '../utils/readingPlan';
 import { buildReadingPlanFromSource } from '../utils/readingPlanFromProfile';
+import { buildPassageReadingPlan } from '../utils/quickStartPlan';
+import { dayOfYear } from '../utils/date';
 import {
   buildTrailBackup,
   downloadTrailBackup,
@@ -512,11 +517,83 @@ export function AppProvider({
         ...next.onboardingProgress,
         dismissed: false,
       };
+      next.trailStartMode = 'assessment';
 
       persist(next);
     },
     [data, today, persist],
   );
+
+  const applyPlanFromSuggestion = useCallback(
+    (next: AppData, suggestion: AssessmentSuggestion) => {
+      if (next.trainingFocus) {
+        next.trainingFocus.endedAt = today;
+        next.trainingFocusHistory.push(next.trainingFocus);
+      }
+      next.trainingFocus = {
+        id: createId(),
+        title: suggestion.focusTitle,
+        description: suggestion.focusDescription,
+        startedAt: today,
+        themes: suggestion.focusThemes,
+      };
+
+      if (next.trainingVerse) {
+        next.trainingVerse.endedAt = today;
+        next.trainingVerseArchive.push(next.trainingVerse);
+      }
+      next.trainingVerse = {
+        id: createId(),
+        reference: suggestion.verseReference,
+        text: suggestion.verseText,
+        startedAt: today,
+        linkedFocusId: next.trainingFocus.id,
+        themes: suggestion.focusThemes,
+      };
+
+      next.readingPlan = buildReadingPlanFromSource({
+        readingBook: suggestion.readingBook,
+        readingStartChapter: suggestion.readingStartChapter,
+        readingEndChapter: suggestion.readingEndChapter,
+        readingScope: suggestion.readingScope,
+        readingAnchorChapter: suggestion.readingChapter,
+        readingAnchorLabel: suggestion.readingLabel,
+      });
+    },
+    [today],
+  );
+
+  const quickStartPassage = useCallback(
+    (book: string, chapter: number) => {
+      const next = structuredClone(data);
+      next.readingPlan = buildPassageReadingPlan(book, chapter);
+      next.trailStartMode = 'quick_read';
+      next.onboardingProgress = { ...next.onboardingProgress, dismissed: false };
+      persist(next);
+    },
+    [data, persist],
+  );
+
+  const quickStartWithPath = useCallback(
+    (focusKey: AssessmentFocusKey) => {
+      const profile = FOCUS_PROFILES[focusKey];
+      const suggestion = profileToSuggestion(
+        profile,
+        `You chose ${profile.title} as your path — begin reading and reflecting at your own pace.`,
+      );
+      const next = structuredClone(data);
+      applyPlanFromSuggestion(next, suggestion);
+      next.trailStartMode = 'quick_path';
+      next.onboardingProgress = { ...next.onboardingProgress, dismissed: false };
+      persist(next);
+    },
+    [data, persist, applyPlanFromSuggestion],
+  );
+
+  const getSuggestedPassage = useCallback(() => {
+    const p = pickSuggestedPassage(dayOfYear() + data.journeyStartedAt.length);
+    return { book: p.book, chapter: p.chapter, label: p.label, hint: p.hint };
+  }, [data.journeyStartedAt.length]);
 
   const resetSpiritualAssessment = useCallback(() => {
     const next = structuredClone(data);
@@ -660,6 +737,9 @@ export function AppProvider({
       completeServingDiscovery,
       dismissOnboardingChecklist,
       markOnboardingItem,
+      quickStartPassage,
+      quickStartWithPath,
+      getSuggestedPassage,
     }),
     [
       data,
@@ -694,6 +774,9 @@ export function AppProvider({
       completeServingDiscovery,
       dismissOnboardingChecklist,
       markOnboardingItem,
+      quickStartPassage,
+      quickStartWithPath,
+      getSuggestedPassage,
     ],
   );
 
