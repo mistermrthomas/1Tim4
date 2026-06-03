@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
+import { AuthProvider } from './context/AuthContext';
 import { ProfileProvider, useProfile } from './context/ProfileContext';
+import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { AppShell } from './components/layout/AppShell';
 import { HomePage } from './pages/HomePage';
 import { PreparePage } from './pages/PreparePage';
@@ -26,8 +29,9 @@ import './pages/ArchivePage.css';
 import './pages/GuidePage.css';
 import './pages/AssessmentPage.css';
 import './pages/ProfileSelectPage.css';
+import './components/auth/CloudSignIn.css';
 
-function AppRoutes() {
+function AppRoutes({ cloudReloadKey }: { cloudReloadKey: number }) {
   const { activeProfile } = useProfile();
 
   if (!activeProfile) {
@@ -39,7 +43,11 @@ function AppRoutes() {
   }
 
   return (
-    <AppProvider profileId={activeProfile.id} key={activeProfile.id}>
+    <AppProvider
+      profileId={activeProfile.id}
+      profileName={activeProfile.name}
+      key={`${activeProfile.id}-${cloudReloadKey}`}
+    >
       <Routes>
         <Route element={<AppShell />}>
           <Route path="/profiles" element={<ProfileSelectPage switching />} />
@@ -61,11 +69,18 @@ function AppRoutes() {
 }
 
 export default function App() {
+  const [cloudReloadKey, setCloudReloadKey] = useState(0);
+
   return (
     <ProfileProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <AuthProvider onActiveProfileShouldReload={() => setCloudReloadKey((k) => k + 1)}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
+            <Route path="*" element={<AppRoutes cloudReloadKey={cloudReloadKey} />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </ProfileProvider>
   );
 }

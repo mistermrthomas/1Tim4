@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { useProfile } from '../../context/ProfileContext';
 import './FirstWeekChecklist.css';
 
 export function FirstWeekChecklist() {
   const { activeProfile } = useProfile();
+  const { user, isCloudConfigured } = useAuth();
   const {
     data,
     todayEntry,
@@ -27,9 +29,19 @@ export function FirstWeekChecklist() {
 
   const items = [
     {
+      id: 'cloud',
+      label: isCloudConfigured ? 'Sign in to sync across devices' : 'Cloud sync (when enabled)',
+      hint: isCloudConfigured
+        ? 'Apple or Google — keeps assessment and journal on your account.'
+        : 'Add Supabase keys in deployment settings.',
+      done: !!user,
+      action: 'link' as const,
+      to: '/guide',
+    },
+    {
       id: 'backup',
-      label: 'Optional: save a backup file',
-      hint: 'Your trail already saves on this device. Export only if you want a copy in Files or iCloud.',
+      label: 'Optional: export a backup file',
+      hint: 'Extra copy in Files or iCloud — not required if cloud sync is on.',
       done: !!progress.backupExported || !!data.lastBackupAt,
       action: 'export' as const,
     },

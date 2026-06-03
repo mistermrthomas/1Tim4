@@ -1,49 +1,139 @@
-# Cloud sync & sign-in (optional)
+# Cloud sync with Supabase (Apple + Google)
 
-Path **already saves automatically** on each phone or browser — every journal entry, assessment answer, and prayer is written to **local storage** as you go. You do not need to export a file for day-to-day use on the same device.
+Path saves **automatically on this device** and, when you sign in, **syncs to your Supabase account** so you can open the same trail on another iPhone, iPad, or browser.
 
-Export/import in **Guide** is only a safety net (new phone, cleared Safari data, or sharing a backup file).
+## What you need
 
-## Why sign-in is different
+1. A [Supabase](https://supabase.com) project (free tier is fine)
+2. **Apple** and/or **Google** auth enabled in Supabase
+3. Environment variables on **Vercel** and locally (`.env.local`)
 
-**Cross-device sync** (iPhone + iPad, or replacing a lost phone) needs:
+```bash
+VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_public_key
+```
 
-1. A **login** so the server knows whose data is whose  
-2. A **cloud database** to store your trail  
+Find URL and anon key in Supabase → **Project Settings → API**.
 
-That is not built into the static Vercel deploy alone — it requires a small backend.
+---
 
-## Recommended approach: Supabase
+## Step 1 — Create the database table
 
-[Supabase](https://supabase.com) (free tier) provides:
+In Supabase → **SQL Editor**, run the migration file:
 
-| Feature | Providers |
-|--------|-----------|
-| Auth | Google, GitHub, Apple (via OAuth), email magic link |
-| Database | Postgres row per profile with JSON trail data |
-| Client | `@supabase/supabase-js` in the React app |
+`supabase/migrations/20260531000000_path_profile_trails.sql`
 
-### High-level setup (when you are ready)
+This creates `path_profile_trails` with row-level security so each user only sees their own data.
 
-1. Create a Supabase project  
-2. Enable Auth providers (Google + GitHub are easiest on web; Apple needs extra Apple Developer config)  
-3. Create a `trails` table: `user_id`, `profile_id`, `data` (jsonb), `updated_at`  
-4. Add to Vercel env: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`  
-5. App changes: sign-in screen → on save, debounced upsert to Supabase → on load, fetch latest  
+---
 
-**Login is required for sync** — without it, the app stays local-only (current behavior).
+## Step 2 — Auth redirect URLs
 
-## Does it require Apple / Google / GitHub?
+Supabase → **Authentication → URL Configuration**
 
-- **Same device only:** No login needed.  
-- **Sync across devices or recover after data loss without a backup file:** Yes — pick one or more OAuth providers users already trust.
+**Site URL** (production):
 
-GitHub is convenient for you as the developer; Google and Apple are better for non-technical family members.
+`https://1-tim4.vercel.app`
 
-## Until cloud sync ships
+**Redirect URLs** (add all):
 
-- Use **Export backup** in Guide after completing the assessment  
-- Store the `.json` file in iCloud Drive or email it to yourself  
-- **Import backup** on a new device  
+- `https://1-tim4.vercel.app/auth/callback`
+- `http://localhost:5173/auth/callback`
+- `http://localhost:4173/auth/callback` (preview)
 
-We can implement Supabase sync in a follow-up PR when you have a Supabase project ready.
+---
+
+## Step 3 — Google sign-in (recommended to set up first)
+
+Supabase → **Authentication → Providers → Google**
+
+1. Enable Google
+2. Create OAuth credentials in [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → OAuth 2.0 Client ID → **Web application**
+3. Authorized redirect URI (Supabase shows you the exact URL), typically:
+   `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`
+4. Paste Client ID and Client Secret into Supabase
+
+Test Google on desktop before Apple — it is simpler to verify end-to-end.
+
+---
+
+## Step 4 — Sign in with Apple (for iPhone / Apple ecosystem)
+
+Apple requires a paid [Apple Developer](https://developer.apple.com/) account.
+
+### A. App ID & Service ID
+
+1. [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/identifiers/list)
+2. **Identifiers → +** → **App IDs** → enable **Sign in with Apple**
+3. **Identifiers → +** → **Services IDs** → enable **Sign in with Apple**
+   - Configure **Domains**: `1-tim4.vercel.app` (and `localhost` for dev if needed)
+   - **Return URLs**: `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`
+
+### B. Key for Supabase
+
+1. **Keys → +** → Sign in with Apple → download `.p8` key
+2. Note **Key ID** and **Team ID** (Membership details)
+
+### C. Supabase Apple provider
+
+Supabase → **Authentication → Providers → Apple**
+
+- Enable Apple
+- Services ID (from step A)
+- Secret Key: contents of `.p8` file (or use Supabase helper to generate JWT)
+- Key ID, Team ID
+- Bundle ID / Service ID as Supabase docs specify
+
+Apple’s web flow opens in Safari; on iPhone home-screen PWA it should still work when OAuth redirects back to `/auth/callback`.
+
+---
+
+## Step 5 — Deploy env vars to Vercel
+
+Vercel → your project → **Settings → Environment Variables**
+
+Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` for **Production** (and Preview if you use preview URLs).
+
+Redeploy after saving.
+
+Local dev:
+
+```bash
+cp .env.example .env.local
+# fill in values
+npm run dev
+```
+
+---
+
+## How sync behaves
+
+| Action | Behavior |
+|--------|----------|
+| Use app without signing in | Data stays **local only** (same as before) |
+| Sign in with Apple or Google | Cloud copy is **merged** with this device (newer wins per profile) |
+| Journal, assessment, prayers | **Auto-upload** ~1.5s after each change |
+| Sign out of cloud | Local data remains; cloud copy stays on server |
+| Optional export file | Still available in Guide as extra safety |
+
+Each **local profile name** syncs as a separate row keyed by profile id.
+
+---
+
+## Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| Buttons say “not enabled” | Env vars missing on Vercel; redeploy |
+| Redirect loop / blank callback | Add exact `/auth/callback` URL in Supabase redirect list |
+| Apple fails, Google works | Finish Apple Service ID domains + return URL |
+| Data not on new phone | Sign in with **same** Apple/Google account; tap **Sync now** in Guide |
+| RLS error | Re-run SQL migration; confirm policies exist |
+
+---
+
+## Privacy
+
+- Trail JSON is stored in **your** Supabase project under **your** auth users.
+- The anon key is public in the client (normal for Supabase); **RLS** prevents users reading each other’s rows.
+- Do not put service role keys in the frontend.

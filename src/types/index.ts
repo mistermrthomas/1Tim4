@@ -253,6 +253,8 @@ export interface OnboardingProgress {
 
 export interface AppData {
   version: 1;
+  /** ISO timestamp — last known sync with cloud (for merge on other devices) */
+  cloudSyncedAt?: string;
   journeyStartedAt: string;
   trainingFocus: TrainingFocus | null;
   trainingFocusHistory: TrainingFocus[];

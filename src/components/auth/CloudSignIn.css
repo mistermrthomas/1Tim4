@@ -1,0 +1,46 @@
+.cloud-sign-in__lead {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+}
+
+.cloud-sign-in__signed-in {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.cloud-sign-in__status {
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.cloud-sign-in__status--synced {
+  color: var(--sage-deep);
+}
+
+.cloud-sign-in__status--error {
+  color: var(--terracotta);
+}
+
+.cloud-sign-in__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.cloud-sign-in__actions .btn {
+  width: 100%;
+}
+
+.cloud-sign-in__apple {
+  background: #000;
+  border-color: #000;
+  color: #fff;
+}
+
+.cloud-sign-in__note {
+  margin-top: 12px;
+  text-align: center;
+}

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_NAME, TAGLINE } from '../constants/brand';
+import { CloudSignIn } from '../components/auth/CloudSignIn';
 import { useApp } from '../context/AppContext';
 import { useProfile } from '../context/ProfileContext';
 import { SubPageHeader } from '../components/layout/PageHeader';
@@ -185,16 +186,13 @@ export function GuidePage() {
         )}
       </section>
 
+      <CloudSignIn />
+
       <section className="guide-section">
-        <h2 className="section-title">Your data on this device</h2>
+        <h2 className="section-title">Backup file (optional)</h2>
         <p className="guide-section__desc">
-          Path saves your trail automatically in this browser as you go — no export needed for normal
-          use. If you clear Safari data, get a new phone, or want a copy in iCloud, use the optional
-          backup below. Sync across devices with Google, Apple, or GitHub sign-in is planned — see{' '}
-          <a href="https://github.com/mistermrthomas/1Tim4/blob/main/docs/CLOUD_SYNC.md" target="_blank" rel="noopener noreferrer">
-            cloud sync notes
-          </a>
-          .
+          Your trail saves automatically on this device and to your account when signed in. Export
+          a file only if you want an extra copy in Files or iCloud.
         </p>
         <div className="guide-data-actions card" style={{ padding: 16 }}>
           <button

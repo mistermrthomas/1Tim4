@@ -3,9 +3,12 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
+import { useAuth } from './AuthContext';
+import { scheduleCloudTrailPush } from '../services/cloudTrailSync';
 import type {
   AppContextValue,
   AppData,
@@ -101,17 +104,25 @@ function getBooksCompleted(readingLog: AppData['readingLog']): string[] {
 
 export function AppProvider({
   profileId,
+  profileName,
   children,
 }: {
   profileId: string;
+  profileName: string;
   children: ReactNode;
 }) {
+  const { user } = useAuth();
   const [data, setData] = useState<AppData>(() => loadAppData(profileId));
   const [appMode, setAppModeState] = useState<AppMode>(() => {
     const mode = getAppMode(profileId);
     if (mode) return mode;
     return isAppDataEmpty(loadAppData(profileId)) ? 'new' : 'live';
   });
+  const dataRef = useRef(data);
+  const appModeRef = useRef(appMode);
+  dataRef.current = data;
+  appModeRef.current = appMode;
+
   const today = toDateKey();
   const isEmpty = isAppDataEmpty(data);
 
@@ -119,15 +130,28 @@ export function AppProvider({
     (next: AppData, options?: { promoteLive?: boolean }) => {
       setData(next);
       saveAppData(profileId, next);
+      let mode = getAppMode(profileId) ?? appModeRef.current;
       if (options?.promoteLive !== false && !isAppDataEmpty(next)) {
-        const mode = getAppMode(profileId);
         if (mode === 'new' || mode === null) {
           promoteToLiveMode(profileId);
           setAppModeState('live');
+          mode = 'live';
         }
       }
+      dataRef.current = next;
+      appModeRef.current = mode;
+
+      if (user) {
+        scheduleCloudTrailPush(
+          user.id,
+          profileId,
+          profileName,
+          () => dataRef.current,
+          () => appModeRef.current,
+        );
+      }
     },
-    [profileId],
+    [profileId, profileName, user],
   );
 
   const loadDemoData = useCallback(() => {

@@ -51,13 +51,13 @@ npm run preview
 - Initial spiritual assessment for new trails
 - Reset to sample data
 
-## Profiles (multi-user testing)
+## Profiles
 
-On first launch, choose a local profile (**Michael** and **Bailey** are provided for testing). Each profile has its own assessment, training plan, journal, and prayers. Switch profiles from the header or **Guide → Switch profile**.
+On first launch, enter your name to begin. Additional people on the same device can start under another name. Switch profiles from the header or **Guide → Switch profile**.
 
 ## Data
 
-All data is stored in **localStorage** on your device, keyed per profile. No backend, authentication, or cloud sync.
+All data is stored in **localStorage** on your device, keyed per profile. Optional cloud sync (Apple / Google via Supabase) is documented in [docs/CLOUD_SYNC.md](docs/CLOUD_SYNC.md).
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for GitHub and Vercel deployment steps.
 

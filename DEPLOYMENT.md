@@ -19,7 +19,7 @@ npm run preview
 
 Open the preview URL (usually `http://localhost:4173`). Confirm:
 
-- Profile selection shows **Michael** and **Bailey**
+- Profile selection asks for your name (no pre-seeded profiles)
 - Each profile can complete the assessment independently
 - Switching profiles preserves separate data
 
@@ -70,11 +70,11 @@ The included `vercel.json` rewrites all routes to `index.html` so client-side ro
 
 After deploy, Vercel provides a URL like `https://your-project.vercel.app`.
 
-**Testing with Michael and Bailey**
+**Testing with two profiles**
 
 1. Open the URL in a browser (or two different browsers for side-by-side testing).
-2. On first visit, choose **Michael** or **Bailey**.
-3. Complete the spiritual assessment and accept a training plan for each profile separately.
+2. On first visit, enter a name and tap **Begin**.
+3. Complete the spiritual assessment and accept a training plan for each person separately.
 4. Use the profile name in the header (or **Guide → Switch profile**) to change profiles without losing data.
 
 **Note:** Data is stored only in that browser’s localStorage. Clearing site data or using another device starts fresh unless you export data manually (not built in v1).
@@ -90,7 +90,8 @@ In the Vercel project → **Settings** → **Domains**, add your domain and foll
 | 404 on refresh for `/assessment` | Ensure `vercel.json` is committed and redeploy |
 | Build fails on Vercel | Run `npm run build` locally and fix TypeScript errors |
 | Blank page | Check the browser console; confirm `dist/index.html` exists after build |
-| Profiles missing | First visit creates Michael and Bailey; clear `path-profiles-registry` in devtools only if you need to reset |
+| Old Michael/Bailey list | Deploy latest build; app auto-clears legacy seed profiles on first load |
+| Profiles missing | Enter your name on the welcome screen; clear `path-profiles-registry` in devtools only if you need a full reset |
 
 ## Project files for deployment
 
@@ -99,4 +100,13 @@ In the Vercel project → **Settings** → **Domains**, add your domain and foll
 - `index.html` — Vite entry
 - `public/` — static assets (illustrations, favicon)
 
-No environment variables are required for v1.
+### Optional: cloud sync (Apple / Google)
+
+Set in Vercel (and `.env.local` for dev):
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+See [docs/CLOUD_SYNC.md](docs/CLOUD_SYNC.md) for Supabase setup (SQL migration, Apple, Google, redirect URLs).
+
+Without these variables the app runs **local-only** (still fully usable).
