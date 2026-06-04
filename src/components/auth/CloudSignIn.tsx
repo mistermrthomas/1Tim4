@@ -52,7 +52,8 @@ export function CloudSignIn() {
           </button>
         </div>
         <p className="field-hint cloud-sign-in__note">
-          Local profiles on this device still save as you go. Cloud keeps a copy tied to your account.
+          Your journal saves on this device first, then backs up to your account. Use <strong>Sync now</strong> before
+          switching devices if you just dictated entries.
         </p>
       </section>
     );

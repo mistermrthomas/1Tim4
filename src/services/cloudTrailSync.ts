@@ -1,6 +1,8 @@
 import type { AppData } from '../types';
 import type { UserProfile } from '../types';
 import { isAppDataEmpty } from '../data/emptyData';
+import { mergeAppData } from '../utils/mergeAppData';
+import { getTrailRevisionTime, hasMeaningfulTrailContent } from '../utils/trailRevision';
 import { supabase } from '../lib/supabase';
 import { ensureProfileInRegistry, listProfiles } from '../storage/profiles';
 import { getAppMode, loadAppData, saveAppData, setAppMode, type AppMode } from '../storage/storage';
@@ -14,6 +16,16 @@ export interface CloudTrailRow {
 }
 
 const syncTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const pendingPush = new Map<
+  string,
+  {
+    userId: string;
+    profileId: string;
+    profileName: string;
+    getData: () => AppData;
+    getMode: () => AppMode;
+  }
+>();
 
 export async function fetchCloudTrails(userId: string): Promise<CloudTrailRow[]> {
   if (!supabase) return [];
@@ -64,19 +76,52 @@ export async function pushCloudTrail(
   return (data?.updated_at as string) ?? now;
 }
 
-function shouldReplaceLocalWithCloud(local: AppData, cloudUpdatedAt: string): boolean {
-  if (isAppDataEmpty(local) && !local.spiritualAssessment && !local.servingDiscovery) return true;
-  const localStamp = local.cloudSyncedAt ? Date.parse(local.cloudSyncedAt) : 0;
-  const cloudStamp = Date.parse(cloudUpdatedAt);
-  return cloudStamp > localStamp;
+/**
+ * Never replace a journal that exists on-device with an empty or older cloud snapshot.
+ */
+function shouldReplaceLocalWithCloud(
+  local: AppData,
+  cloud: AppData,
+  cloudUpdatedAt: string,
+): boolean {
+  const localHasContent = hasMeaningfulTrailContent(local);
+  const cloudHasContent = hasMeaningfulTrailContent(cloud);
+
+  if (localHasContent && !cloudHasContent) return false;
+  if (!localHasContent && cloudHasContent) return true;
+
+  const localRev = getTrailRevisionTime(local);
+  const cloudRev = Date.parse(cloudUpdatedAt);
+  return cloudRev > localRev;
+}
+
+function resolveSyncedData(
+  local: AppData,
+  cloud: AppData,
+  cloudUpdatedAt: string,
+): AppData {
+  const localHasContent = hasMeaningfulTrailContent(local);
+  const cloudHasContent = hasMeaningfulTrailContent(cloud);
+
+  if (localHasContent && cloudHasContent) {
+    return {
+      ...mergeAppData(local, cloud),
+      cloudSyncedAt: cloudUpdatedAt,
+    };
+  }
+
+  if (localHasContent && !cloudHasContent) {
+    return local;
+  }
+
+  return {
+    ...cloud,
+    cloudSyncedAt: cloudUpdatedAt,
+  };
 }
 
 function hasTrailContent(data: AppData): boolean {
-  return (
-    !isAppDataEmpty(data) ||
-    !!data.spiritualAssessment ||
-    !!data.servingDiscovery
-  );
+  return hasMeaningfulTrailContent(data);
 }
 
 /** Two-way sync on sign-in: merge cloud ↔ local per profile. */
@@ -92,15 +137,20 @@ export async function syncUserTrailsOnLogin(
   for (const row of cloudRows) {
     ensureProfileInRegistry(row.profile_id, row.profile_name);
     const local = loadAppData(row.profile_id);
-    if (shouldReplaceLocalWithCloud(local, row.updated_at)) {
-      const merged: AppData = {
-        ...row.app_data,
-        cloudSyncedAt: row.updated_at,
-      };
-      saveAppData(row.profile_id, merged);
-      setAppMode(row.profile_id, row.app_mode);
-      if (row.profile_id === activeProfileId) activeProfileReloaded = true;
+    const cloud = row.app_data;
+
+    if (!shouldReplaceLocalWithCloud(local, cloud, row.updated_at)) {
+      if (hasTrailContent(local)) {
+        const mode = getAppMode(row.profile_id) ?? (isAppDataEmpty(local) ? 'new' : 'live');
+        await pushCloudTrail(userId, row.profile_id, row.profile_name, local, mode);
+      }
+      continue;
     }
+
+    const merged = resolveSyncedData(local, cloud, row.updated_at);
+    saveAppData(row.profile_id, merged);
+    setAppMode(row.profile_id, row.app_mode);
+    if (row.profile_id === activeProfileId) activeProfileReloaded = true;
   }
 
   const allProfiles = listProfiles();
@@ -109,7 +159,7 @@ export async function syncUserTrailsOnLogin(
     if (!hasTrailContent(local)) continue;
 
     const cloud = cloudById.get(profile.id);
-    if (!cloud || !shouldReplaceLocalWithCloud(local, cloud.updated_at)) {
+    if (!cloud || !shouldReplaceLocalWithCloud(local, cloud.app_data, cloud.updated_at)) {
       const mode = getAppMode(profile.id) ?? (isAppDataEmpty(local) ? 'new' : 'live');
       await pushCloudTrail(userId, profile.id, profile.name, local, mode);
     }
@@ -137,6 +187,8 @@ export function scheduleCloudTrailPush(
 ): void {
   if (!supabase) return;
 
+  pendingPush.set(profileId, { userId, profileId, profileName, getData, getMode });
+
   const existing = syncTimers.get(profileId);
   if (existing) clearTimeout(existing);
 
@@ -144,25 +196,40 @@ export function scheduleCloudTrailPush(
     profileId,
     setTimeout(() => {
       void (async () => {
+        const pending = pendingPush.get(profileId);
+        if (!pending) return;
         try {
           const at = await pushCloudTrail(
-            userId,
-            profileId,
-            profileName,
-            getData(),
-            getMode(),
+            pending.userId,
+            pending.profileId,
+            pending.profileName,
+            pending.getData(),
+            pending.getMode(),
           );
           onSynced?.(at);
         } catch (err) {
           onError?.(err instanceof Error ? err.message : 'Cloud sync failed');
         }
       })();
-    }, 1500),
+    }, 800),
   );
 }
 
+/** Push pending changes immediately (e.g. before the tab closes). */
 export function flushCloudTrailPush(profileId: string): void {
   const t = syncTimers.get(profileId);
   if (t) clearTimeout(t);
   syncTimers.delete(profileId);
+
+  const pending = pendingPush.get(profileId);
+  if (!pending || !supabase) return;
+
+  void pushCloudTrail(
+    pending.userId,
+    pending.profileId,
+    pending.profileName,
+    pending.getData(),
+    pending.getMode(),
+  );
+  pendingPush.delete(profileId);
 }

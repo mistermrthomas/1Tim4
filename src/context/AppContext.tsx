@@ -2,13 +2,14 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { useAuth } from './AuthContext';
-import { scheduleCloudTrailPush } from '../services/cloudTrailSync';
+import { flushCloudTrailPush, scheduleCloudTrailPush } from '../services/cloudTrailSync';
 import { pickSuggestedPassage } from '../constants/quickStart';
 import { FOCUS_PROFILES, profileToSuggestion } from '../data/assessmentProfiles';
 import type {
@@ -134,6 +135,23 @@ export function AppProvider({
 
   const today = toDateKey();
   const isEmpty = isAppDataEmpty(data);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const flush = () => flushCloudTrailPush(profileId);
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [user, profileId]);
 
   const persist = useCallback(
     (next: AppData, options?: { promoteLive?: boolean }) => {
