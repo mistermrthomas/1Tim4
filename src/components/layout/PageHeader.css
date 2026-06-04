@@ -104,8 +104,9 @@
 
 @media (min-width: 900px) {
   .page-header {
-    margin-bottom: 12px;
-    padding-bottom: 10px;
+    margin-bottom: 0;
+    padding-bottom: 12px;
+    flex-shrink: 0;
   }
 
   .page-header__title--mobile {
@@ -115,5 +116,9 @@
   .page-header__profile {
     order: -1;
     margin-right: 4px;
+  }
+
+  .page-header__date-row {
+    gap: 10px 14px;
   }
 }

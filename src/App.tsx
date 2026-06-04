@@ -18,6 +18,7 @@ import { ServingAssessmentPage } from './pages/ServingAssessmentPage';
 import { ProfileSelectPage } from './pages/ProfileSelectPage';
 import { QuickStartPage } from './pages/QuickStartPage';
 import './styles/global.css';
+import './styles/desktop.css';
 import './components/illustrations/FieldGuideArt.css';
 import './components/layout/AppShell.css';
 import './components/layout/SideNav.css';

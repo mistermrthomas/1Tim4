@@ -8,10 +8,19 @@
 
 .welcome-cover__artwork {
   position: relative;
-  min-height: min(48vh, 380px);
-  max-height: 440px;
+  min-height: 220px;
+  max-height: 320px;
   overflow: hidden;
   background: var(--ink);
+}
+
+.welcome-cover__artwork .hero-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
 }
 
 .welcome-cover__scrim {
@@ -71,10 +80,14 @@
 }
 
 .welcome-cover__intake {
-  margin: 0 20px 0;
+  margin: 0 20px 16px;
   padding: 18px 20px;
   border: 1px solid var(--earth-light);
   background: var(--white);
+}
+
+.welcome-cover__intake--primary {
+  margin-top: 0;
 }
 
 .welcome-cover__intake-title {
@@ -153,7 +166,79 @@
 }
 
 @media (min-width: 900px) {
+  .welcome-cover {
+    display: grid;
+    grid-template-columns: minmax(280px, 38%) minmax(0, 1fr);
+    grid-template-areas:
+      'art plate'
+      'art intake-primary'
+      'art intake-full'
+      'trail trail'
+      'actions actions';
+    column-gap: 0;
+    row-gap: 0;
+  }
+
   .welcome-cover__artwork {
-    min-height: 400px;
+    grid-area: art;
+    min-height: 100%;
+    max-height: none;
+    height: auto;
+    min-height: 360px;
+    border-right: 1px solid var(--earth-light);
+  }
+
+  .welcome-cover__plate {
+    grid-area: plate;
+    border-top: none;
+    border-bottom: 1px solid var(--earth-light);
+    padding: 28px 32px 22px;
+  }
+
+  .welcome-cover__intake--primary {
+    grid-area: intake-primary;
+    margin: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+  }
+
+  .welcome-cover__intake:not(.welcome-cover__intake--primary) {
+    grid-area: intake-full;
+    margin: 0 0 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    border-bottom: 1px solid var(--earth-light);
+  }
+
+  .welcome-cover__trail {
+    grid-area: trail;
+    padding: 24px 32px;
+  }
+
+  .welcome-cover__actions {
+    grid-area: actions;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 16px 32px 24px;
+    border-top: 1px solid var(--earth-light);
+  }
+
+  .welcome-cover__intake-cta {
+    width: auto;
+    min-width: 200px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .welcome-cover__artwork {
+    min-height: 420px;
+  }
+
+  .welcome-cover__intake-cta {
+    width: auto;
   }
 }

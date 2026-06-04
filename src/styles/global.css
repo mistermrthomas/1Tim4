@@ -325,21 +325,4 @@ button, input, textarea, select {
   body {
     background: #b5ab9f;
   }
-
-  .app-shell {
-    max-width: var(--layout-max);
-    min-height: auto;
-    border-left: 1px solid var(--earth);
-    border-right: 1px solid var(--earth);
-    box-shadow: 0 0 0 1px var(--earth-light), 0 16px 48px rgba(44, 36, 25, 0.18);
-  }
-
-  .page-content {
-    padding: 16px 36px 36px;
-  }
-
-  .page-content--form {
-    max-width: 680px;
-    padding-bottom: 36px;
-  }
 }
