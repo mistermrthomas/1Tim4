@@ -32,6 +32,11 @@
   color: var(--moss);
 }
 
+.dictation-field__mic:disabled {
+  opacity: 0.85;
+  cursor: wait;
+}
+
 .dictation-field__listening {
   color: var(--sage-deep);
   font-weight: 600;

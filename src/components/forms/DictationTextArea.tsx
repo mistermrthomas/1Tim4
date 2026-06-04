@@ -28,7 +28,7 @@ export function DictationTextArea({
     [value, onChange],
   );
 
-  const { supported, listening, error, toggle } = useSpeechDictation(appendPhrase);
+  const { supported, listening, requesting, error, toggle } = useSpeechDictation(appendPhrase);
 
   return (
     <div className="dictation-field">
@@ -44,21 +44,34 @@ export function DictationTextArea({
         {supported ? (
           <button
             type="button"
-            className={`dictation-field__mic${listening ? ' dictation-field__mic--active' : ''}`}
+            className={`dictation-field__mic${listening || requesting ? ' dictation-field__mic--active' : ''}`}
             onClick={toggle}
+            disabled={requesting}
             aria-pressed={listening}
-            aria-label={listening ? 'Stop dictation' : 'Start dictation'}
+            aria-busy={requesting}
+            aria-label={
+              requesting
+                ? 'Waiting for microphone permission'
+                : listening
+                  ? 'Stop dictation'
+                  : 'Start dictation'
+            }
           >
-            {listening ? 'Stop dictation' : 'Dictate'}
+            {requesting ? 'Allow mic…' : listening ? 'Stop dictation' : 'Dictate'}
           </button>
         ) : (
           <span className="field-hint dictation-field__unsupported">
             Dictation unavailable — type instead, or use the keyboard mic on your phone.
           </span>
         )}
-        {listening && (
+        {requesting && (
           <span className="dictation-field__listening field-hint" role="status">
-            Listening…
+            Allow microphone when your device asks — dictation will start right after.
+          </span>
+        )}
+        {listening && !requesting && (
+          <span className="dictation-field__listening field-hint" role="status">
+            Listening… speak now
           </span>
         )}
       </div>
