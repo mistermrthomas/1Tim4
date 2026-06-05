@@ -1,7 +1,7 @@
 import { createEmptyAppData } from '../data/emptyData';
 import { sampleData } from '../data/sampleData';
 import type { AppData } from '../types';
-import { hydrateReadingPlan } from '../utils/readingPlanFromProfile';
+import { normalizeAppData } from './normalizeAppData';
 
 const LEGACY_STORAGE_KEY = 'timothy-app-data';
 const LEGACY_MODE_KEY = 'timothy-app-mode';
@@ -59,12 +59,7 @@ export function loadAppData(profileId: string): AppData {
     if (parsed.version !== 1) {
       return mode === 'demo' ? structuredClone(sampleData) : createEmptyAppData();
     }
-    const data = parsed as AppData;
-    if (data.spiritualAssessment === undefined) data.spiritualAssessment = null;
-    if (data.servingDiscovery === undefined) data.servingDiscovery = null;
-    if (!data.onboardingProgress) data.onboardingProgress = {};
-    data.readingPlan = hydrateReadingPlan(data.readingPlan);
-    return data;
+    return normalizeAppData(parsed as AppData);
   } catch {
     return mode === 'demo' ? structuredClone(sampleData) : createEmptyAppData();
   }

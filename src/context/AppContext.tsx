@@ -52,6 +52,7 @@ import {
   parseTrailBackup,
 } from '../utils/trailBackup';
 import { isAppDataEmpty } from '../data/emptyData';
+import { normalizeAppData } from '../storage/normalizeAppData';
 import {
   getAppMode,
   loadAppData,
@@ -155,17 +156,18 @@ export function AppProvider({
 
   const persist = useCallback(
     (next: AppData, options?: { promoteLive?: boolean }) => {
-      setData(next);
-      saveAppData(profileId, next);
+      const safe = normalizeAppData(next);
+      setData(safe);
+      saveAppData(profileId, safe);
       let mode = getAppMode(profileId) ?? appModeRef.current;
-      if (options?.promoteLive !== false && !isAppDataEmpty(next)) {
+      if (options?.promoteLive !== false && !isAppDataEmpty(safe)) {
         if (mode === 'new' || mode === null) {
           promoteToLiveMode(profileId);
           setAppModeState('live');
           mode = 'live';
         }
       }
-      dataRef.current = next;
+      dataRef.current = safe;
       appModeRef.current = mode;
 
       if (user) {

@@ -38,17 +38,23 @@ export function GuidePage() {
 
   const [verseRef, setVerseRef] = useState('');
   const [verseText, setVerseText] = useState('');
+  const [focusSavedMessage, setFocusSavedMessage] = useState<string | null>(null);
 
   const handleFocusSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!focusTitle.trim()) return;
+    const title = focusTitle.trim();
+    if (!title) return;
+
+    const themes = focusThemes.length > 0 ? focusThemes : (['patience'] as GrowthTheme[]);
     setTrainingFocus({
-      title: focusTitle.trim(),
-      description: focusDesc.trim() || `A season of training in ${focusTitle.trim().toLowerCase()}.`,
-      themes: focusThemes,
+      title,
+      description: focusDesc.trim() || `A season of training in ${title.toLowerCase()}.`,
+      themes,
     });
     setFocusTitle('');
     setFocusDesc('');
+    setFocusThemes(['patience']);
+    setFocusSavedMessage(`Training focus set: ${title}. It appears on your Trail home.`);
   };
 
   const handleVerseSubmit = (e: React.FormEvent) => {
@@ -65,9 +71,14 @@ export function GuidePage() {
   };
 
   const toggleTheme = (t: GrowthTheme) => {
-    setFocusThemes((prev) =>
-      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t],
-    );
+    setFocusSavedMessage(null);
+    setFocusThemes((prev) => {
+      if (prev.includes(t)) {
+        const next = prev.filter((x) => x !== t);
+        return next.length > 0 ? next : prev;
+      }
+      return [...prev, t];
+    });
   };
 
   const handleLoadDemo = () => {
@@ -120,6 +131,17 @@ export function GuidePage() {
       <section className="guide-section">
         <h2 className="section-title">Set training focus</h2>
         <p className="guide-section__desc">Begin a new season of growth. Your current focus will be archived.</p>
+        {data.trainingFocus && (
+          <p className="guide-current-focus card">
+            <span className="eyebrow">Current focus</span>
+            <strong className="serif">{data.trainingFocus.title}</strong>
+          </p>
+        )}
+        {focusSavedMessage && (
+          <p className="guide-save-notice" role="status">
+            {focusSavedMessage}
+          </p>
+        )}
         <form onSubmit={handleFocusSubmit} className="card">
           <div className="field">
             <label className="field-label">Focus area</label>

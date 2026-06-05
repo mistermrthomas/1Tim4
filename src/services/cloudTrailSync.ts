@@ -1,6 +1,7 @@
 import type { AppData } from '../types';
 import type { UserProfile } from '../types';
 import { isAppDataEmpty } from '../data/emptyData';
+import { normalizeAppData } from '../storage/normalizeAppData';
 import { mergeAppData } from '../utils/mergeAppData';
 import { getTrailRevisionTime, hasMeaningfulTrailContent } from '../utils/trailRevision';
 import { supabase } from '../lib/supabase';
@@ -137,7 +138,7 @@ export async function syncUserTrailsOnLogin(
   for (const row of cloudRows) {
     ensureProfileInRegistry(row.profile_id, row.profile_name);
     const local = loadAppData(row.profile_id);
-    const cloud = row.app_data;
+    const cloud = normalizeAppData(row.app_data);
 
     if (!shouldReplaceLocalWithCloud(local, cloud, row.updated_at)) {
       if (hasTrailContent(local)) {

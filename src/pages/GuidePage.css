@@ -19,6 +19,30 @@
   line-height: 1.4;
 }
 
+.guide-current-focus {
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  background: var(--sage-light);
+  border-color: var(--sage);
+}
+
+.guide-current-focus strong {
+  display: block;
+  font-size: 1.15rem;
+  margin-top: 4px;
+}
+
+.guide-save-notice {
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  background: var(--white);
+  border: 1px solid var(--sage);
+  color: var(--moss);
+  font-size: 14px;
+  line-height: 1.45;
+  border-radius: var(--radius-sm);
+}
+
 .guide-section form.card {
   display: flex;
   flex-direction: column;

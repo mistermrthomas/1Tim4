@@ -28,14 +28,21 @@ export function createEmptyAppData(): AppData {
 export function isAppDataEmpty(data: AppData): boolean {
   if (data.readingPlan?.currentBook?.trim()) return false;
   if (data.trailStartMode) return false;
+  const history = data.trainingFocusHistory ?? [];
+  const verseArchive = data.trainingVerseArchive ?? [];
+  const entries = data.dailyEntries ?? {};
+  const prayers = data.prayers ?? [];
+  const lessons = data.lessonsLearned ?? [];
+  const readingLog = data.readingLog ?? [];
+
   return (
     !data.trainingFocus &&
     !data.trainingVerse &&
-    data.trainingFocusHistory.length === 0 &&
-    data.trainingVerseArchive.length === 0 &&
-    Object.keys(data.dailyEntries).length === 0 &&
-    data.prayers.length === 0 &&
-    data.lessonsLearned.length === 0 &&
-    data.readingLog.length === 0
+    history.length === 0 &&
+    verseArchive.length === 0 &&
+    Object.keys(entries).length === 0 &&
+    prayers.length === 0 &&
+    lessons.length === 0 &&
+    readingLog.length === 0
   );
 }
