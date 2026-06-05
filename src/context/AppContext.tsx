@@ -54,6 +54,10 @@ import {
 import { isAppDataEmpty } from '../data/emptyData';
 import { normalizeAppData } from '../storage/normalizeAppData';
 import {
+  buildReadingPlanForFocus,
+  suggestedVerseForFocus,
+} from '../utils/suggestReadingForFocus';
+import {
   getAppMode,
   loadAppData,
   loadDemoData as loadDemoFromStorage,
@@ -375,11 +379,34 @@ export function AppProvider({
         next.trainingFocus.endedAt = today;
         next.trainingFocusHistory.push(next.trainingFocus);
       }
-      next.trainingFocus = {
+      const newFocus: TrainingFocus = {
         ...focus,
         id: createId(),
         startedAt: today,
       };
+      next.trainingFocus = newFocus;
+
+      const needsReading = !next.readingPlan?.currentBook?.trim();
+      if (needsReading) {
+        next.readingPlan = buildReadingPlanForFocus(focus.title, focus.themes);
+        if (!next.trainingVerse) {
+          const verse = suggestedVerseForFocus(focus.title, focus.themes);
+          if (verse) {
+            next.trainingVerse = {
+              id: createId(),
+              reference: verse.reference,
+              text: verse.text,
+              startedAt: today,
+              linkedFocusId: newFocus.id,
+              themes: focus.themes,
+            };
+          }
+        }
+        if (!next.trailStartMode) {
+          next.trailStartMode = 'quick_path';
+        }
+      }
+
       persist(next);
     },
     [data, today, persist],

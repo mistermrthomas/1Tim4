@@ -42,3 +42,19 @@
   padding-left: 12px;
   border-left: 2px solid var(--sage-light);
 }
+
+.todays-reading--empty {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.todays-reading__empty-lead {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.todays-reading__empty-cta {
+  width: 100%;
+}

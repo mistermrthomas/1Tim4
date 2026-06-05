@@ -4,6 +4,7 @@ import { APP_NAME, TAGLINE } from '../constants/brand';
 import { CloudSignIn } from '../components/auth/CloudSignIn';
 import { TrailRemindersSettings } from '../components/settings/TrailRemindersSettings';
 import { useApp } from '../context/AppContext';
+import { readingSummaryForFocus } from '../utils/suggestReadingForFocus';
 import { useProfile } from '../context/ProfileContext';
 import { SubPageHeader } from '../components/layout/PageHeader';
 import type { GrowthTheme } from '../types';
@@ -54,7 +55,10 @@ export function GuidePage() {
     setFocusTitle('');
     setFocusDesc('');
     setFocusThemes(['patience']);
-    setFocusSavedMessage(`Training focus set: ${title}. It appears on your Trail home.`);
+    const readingNote = readingSummaryForFocus(title, themes);
+    setFocusSavedMessage(
+      `Training focus set: ${title}. Your trail now includes ${readingNote.toLowerCase()}.`,
+    );
   };
 
   const handleVerseSubmit = (e: React.FormEvent) => {

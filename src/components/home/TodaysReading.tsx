@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { ReadingPlan } from '../../types';
 import { BibleChapterLink } from '../shared/BibleChapterLink';
 import {
@@ -14,12 +15,27 @@ interface TodaysReadingProps {
 }
 
 export function TodaysReading({ plan, todayChapters }: TodaysReadingProps) {
+  const hydrated = hydrateReadingPlan(plan);
+
+  if (!hydrated.currentBook?.trim()) {
+    return (
+      <section className="todays-reading card todays-reading--empty" aria-label="Today's reading">
+        <span className="eyebrow">Today&apos;s reading</span>
+        <p className="todays-reading__empty-lead">
+          Choose a passage to build your reading trail, or set a focus in Guide to get a suggested
+          plan.
+        </p>
+        <Link to="/quick-start" className="btn btn-primary todays-reading__empty-cta">
+          Choose a passage
+        </Link>
+      </section>
+    );
+  }
+
   const reading =
     todayChapters.length > 0
       ? todayChapters[0]
-      : { book: plan.currentBook, chapter: plan.currentChapter };
-
-  const hydrated = hydrateReadingPlan(plan);
+      : { book: hydrated.currentBook, chapter: hydrated.currentChapter };
   const completed = hydrated.chaptersCompletedInBook.length;
   const upcoming = getUpcomingChapter(hydrated);
   const nextUp = upcoming ? getNextChapterInPlan(hydrated, upcoming.book, upcoming.chapter) : null;

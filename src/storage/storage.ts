@@ -59,7 +59,16 @@ export function loadAppData(profileId: string): AppData {
     if (parsed.version !== 1) {
       return mode === 'demo' ? structuredClone(sampleData) : createEmptyAppData();
     }
-    return normalizeAppData(parsed as AppData);
+    const parsedData = parsed as AppData;
+    const normalized = normalizeAppData(parsedData);
+    if (
+      normalized.trainingFocus &&
+      !parsedData.readingPlan?.currentBook?.trim() &&
+      normalized.readingPlan?.currentBook?.trim()
+    ) {
+      saveAppData(profileId, normalized);
+    }
+    return normalized;
   } catch {
     return mode === 'demo' ? structuredClone(sampleData) : createEmptyAppData();
   }
