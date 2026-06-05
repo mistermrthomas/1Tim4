@@ -50,7 +50,14 @@ Vercel cron calls `/api/cron/reminders` with `Authorization: Bearer <CRON_SECRET
 |----------|--------|
 | `CRON_SECRET` | Long random string (generate locally) |
 
-`vercel.json` already defines a `*/15 * * * *` schedule. Hobby plans include cron; confirm under **Vercel → Project → Cron Jobs** after deploy.
+**Vercel Hobby (free) only allows one cron per day**, so `vercel.json` does not ship a frequent schedule (that blocked deploys). Pick one:
+
+| Plan | Setup |
+|------|--------|
+| **Pro** | Add to `vercel.json`: `"crons": [{ "path": "/api/cron/reminders", "schedule": "*/15 * * * *" }]` and redeploy |
+| **Hobby** | Ping `GET /api/cron/reminders` with `Authorization: Bearer <CRON_SECRET>` on a schedule (e.g. external cron service), or upgrade to Pro |
+
+The API route `/api/cron/reminders` stays deployed either way; only the scheduler differs.
 
 ## Local development
 
