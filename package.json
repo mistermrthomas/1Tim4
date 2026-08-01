@@ -7,27 +7,40 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "content:checksum": "node scripts/compute-foundation-checksum.mjs",
+    "content:checksum:season": "node scripts/compute-season-checksum.mjs",
+    "content:validate": "node scripts/validate-content-packs.mjs",
+    "staging:validate": "node scripts/compute-season-checksum.mjs && node scripts/staging-validation.mjs",
+    "phase0:check": "npm run content:checksum && npm run content:validate && npm run test && eslint src/brand src/domain src/data src/content src/app src/pages/Phase0HarnessPage.tsx vite.config.ts scripts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",
+    "@tanstack/react-query": "^5.101.4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.16.0",
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
     "@eslint/js": "^10.0.1",
-    "@types/node": "^24.12.3",
+    "@types/node": "^24.13.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "ajv": "^8.20.0",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
+    "fake-indexeddb": "^6.2.5",
     "globals": "^17.6.0",
+    "pg-connection-string": "^2.14.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "vitest": "^4.1.10"
   }
 }

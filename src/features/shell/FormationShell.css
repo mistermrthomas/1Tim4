@@ -1,0 +1,193 @@
+@import '../../ui/tokens.css';
+@import '../../ui/primitives.css';
+
+.formation-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1fr;
+  background: var(--path-bg);
+  color: var(--path-text);
+  font-family: var(--path-font-body);
+}
+
+.formation-shell__sidebar {
+  display: none;
+}
+
+.formation-shell__main {
+  min-width: 0;
+  padding: 1.25rem 1.1rem 5.75rem;
+  max-width: var(--path-max-content);
+  width: 100%;
+  margin: 0 auto;
+}
+
+.formation-shell__mobile-nav {
+  position: fixed;
+  inset: auto 0 0 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.2rem;
+  padding: 0.45rem 0.4rem calc(0.45rem + env(safe-area-inset-bottom));
+  background: rgba(12, 12, 12, 0.94);
+  border-top: 1px solid var(--path-hairline);
+  backdrop-filter: blur(14px);
+  z-index: 20;
+}
+
+.formation-shell__mobile-tab {
+  text-align: center;
+  text-decoration: none;
+  color: var(--path-text-dim);
+  font-family: var(--path-font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.65rem 0.2rem;
+  border-radius: var(--path-radius-sm);
+}
+
+.formation-shell__mobile-tab--active {
+  color: var(--path-gold);
+  background: rgba(201, 162, 39, 0.1);
+}
+
+@media (min-width: 960px) {
+  .formation-shell {
+    grid-template-columns: var(--path-sidebar-width) 1fr;
+  }
+
+  .formation-shell__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.5rem 1.1rem 1.25rem;
+    border-right: 1px solid var(--path-hairline);
+    background: linear-gradient(180deg, #101010 0%, #0b0b0b 100%);
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+  }
+
+  .formation-shell__brand-block {
+    padding: 0 0.35rem;
+  }
+
+  .formation-shell__mark {
+    width: 2.6rem;
+    height: 2.6rem;
+    color: var(--path-gold);
+    display: block;
+    margin-bottom: 0.65rem;
+  }
+
+  .formation-shell__brand {
+    margin: 0;
+    font-family: var(--path-font-display);
+    font-size: 1.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .formation-shell__tagline {
+    margin: 0.35rem 0 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--path-gold-dim);
+  }
+
+  .formation-shell__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .formation-shell__tab {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.8rem 0.85rem;
+    text-decoration: none;
+    color: var(--path-text-muted);
+    border: 1px solid transparent;
+    border-radius: var(--path-radius-sm);
+    transition:
+      border-color var(--path-duration) var(--path-ease),
+      background var(--path-duration) var(--path-ease),
+      color var(--path-duration) var(--path-ease),
+      box-shadow var(--path-duration) var(--path-ease);
+  }
+
+  .formation-shell__tab:hover {
+    color: var(--path-text);
+    border-color: var(--path-hairline);
+  }
+
+  .formation-shell__tab--active {
+    color: var(--path-text);
+    border-color: var(--path-border-strong);
+    background: rgba(201, 162, 39, 0.08);
+    box-shadow: var(--path-glow);
+  }
+
+  .formation-shell__tab-label {
+    font-family: var(--path-font-display);
+    font-size: 0.95rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .formation-shell__tab-job {
+    font-size: 0.75rem;
+    color: var(--path-text-dim);
+  }
+
+  .formation-shell__quote {
+    margin: auto 0 0.35rem;
+    padding: 0 0.35rem;
+  }
+
+  .formation-shell__quote .path-scripture {
+    font-size: 0.95rem;
+    margin: 0 0 0.4rem;
+  }
+
+  .formation-shell__profile {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.75rem;
+    align-items: center;
+    padding-top: 0.35rem;
+    border-top: 1px solid var(--path-hairline);
+  }
+
+  .formation-shell__avatar {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--path-border-strong);
+    color: var(--path-gold);
+    font-family: var(--path-font-display);
+    letter-spacing: 0.06em;
+  }
+
+  .formation-shell__profile-name {
+    margin: 0 0 0.15rem;
+    font-weight: 600;
+  }
+
+  .formation-shell__season-bar {
+    margin-top: 0.45rem;
+  }
+
+  .formation-shell__main {
+    padding: 1.75rem 2rem 2.5rem;
+  }
+
+  .formation-shell__mobile-nav {
+    display: none;
+  }
+}

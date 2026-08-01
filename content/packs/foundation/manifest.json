@@ -1,0 +1,58 @@
+{
+  "packId": "foundation.core",
+  "version": "1.0.0",
+  "schemaVersion": "1",
+  "kind": "foundation",
+  "locale": "en-US",
+  "publicationStatus": "published",
+  "translationDependencies": [
+    "web"
+  ],
+  "contentOwner": "formation-core",
+  "reviewStatus": "theologically_reviewed",
+  "checksumSha256": "bb5d80e4cc8218a6fbf4db98bc780b3fbccaada949f48c71266039b5bc1f62ba",
+  "minAppVersion": "2.0.0",
+  "releaseNotes": "Phase 0 foundation pack: first season seed, Jesus teaching, 3 workout templates, offline coaching.",
+  "entries": [
+    {
+      "path": "foci.json",
+      "type": "foci"
+    },
+    {
+      "path": "assignments.json",
+      "type": "assignments"
+    },
+    {
+      "path": "prompts.json",
+      "type": "prompts"
+    },
+    {
+      "path": "teachings_jesus.json",
+      "type": "teachings"
+    },
+    {
+      "path": "scripture_references.json",
+      "type": "scripture_references"
+    },
+    {
+      "path": "scripture_texts.web.json",
+      "type": "scripture_texts"
+    },
+    {
+      "path": "workouts.json",
+      "type": "workouts"
+    },
+    {
+      "path": "coaching_fallback.json",
+      "type": "coaching_messages"
+    },
+    {
+      "path": "nutrition.json",
+      "type": "nutrition"
+    },
+    {
+      "path": "safety.json",
+      "type": "safety"
+    }
+  ]
+}

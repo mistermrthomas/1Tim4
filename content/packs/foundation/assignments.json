@@ -1,0 +1,11 @@
+[
+  {
+    "id": "patience.listen-before-reply.v1",
+    "focusKey": "patience",
+    "stageKeys": ["practice", "practice_under_difficulty", "apply_in_relationships"],
+    "contextTags": ["work", "parenting", "marriage"],
+    "prompt": "Today, when interrupted, pause and let the other person finish before you respond.",
+    "successSignal": "You noticed the pause — even if imperfect.",
+    "avoid": "Do not score yourself pass/fail; notice one moment."
+  }
+]

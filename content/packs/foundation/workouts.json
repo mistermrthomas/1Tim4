@@ -1,0 +1,155 @@
+{
+  "exercises": [
+    {
+      "id": "bodyweight_squat",
+      "name": "Bodyweight Squat",
+      "muscleGroups": ["quads", "glutes"],
+      "equipment": ["bodyweight"],
+      "contraindications": ["acute_knee_pain"]
+    },
+    {
+      "id": "push_up",
+      "name": "Push-Up",
+      "muscleGroups": ["chest", "triceps", "shoulders"],
+      "equipment": ["bodyweight"],
+      "contraindications": ["acute_shoulder_pain"]
+    },
+    {
+      "id": "hip_hinge_good_morning",
+      "name": "Standing Hip Hinge",
+      "muscleGroups": ["hamstrings", "back"],
+      "equipment": ["bodyweight"],
+      "contraindications": ["acute_low_back_pain"]
+    },
+    {
+      "id": "worlds_greatest_stretch",
+      "name": "World’s Greatest Stretch",
+      "muscleGroups": ["hips", "thoracic"],
+      "equipment": ["bodyweight"],
+      "contraindications": []
+    },
+    {
+      "id": "brisk_walk",
+      "name": "Brisk Walk",
+      "muscleGroups": ["full_body"],
+      "equipment": ["none"],
+      "contraindications": []
+    }
+  ],
+  "templates": [
+    {
+      "id": "full_body_foundations",
+      "name": "Full Body Foundations",
+      "level": "beginner",
+      "daysPerWeek": 3,
+      "sessions": [
+        {
+          "id": "full_body_foundations.day_a",
+          "title": "Full Body A",
+          "sessionKind": "strength",
+          "dayIndex": 1,
+          "blocks": [
+            {
+              "name": "Main",
+              "items": [
+                {
+                  "exerciseId": "bodyweight_squat",
+                  "sets": 3,
+                  "reps": "8-10",
+                  "rpe": 6,
+                  "restSec": 60
+                },
+                {
+                  "exerciseId": "push_up",
+                  "sets": 3,
+                  "reps": "5-8",
+                  "rpe": 6,
+                  "restSec": 60
+                },
+                {
+                  "exerciseId": "hip_hinge_good_morning",
+                  "sets": 3,
+                  "reps": "8-10",
+                  "rpe": 6,
+                  "restSec": 60
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "strength_foundations",
+      "name": "Strength Foundations",
+      "level": "intermediate",
+      "daysPerWeek": 3,
+      "sessions": [
+        {
+          "id": "strength_foundations.day_a",
+          "title": "Strength A",
+          "sessionKind": "strength",
+          "dayIndex": 1,
+          "blocks": [
+            {
+              "name": "Main",
+              "items": [
+                {
+                  "exerciseId": "bodyweight_squat",
+                  "sets": 4,
+                  "reps": "6-8",
+                  "rpe": 7,
+                  "restSec": 90
+                },
+                {
+                  "exerciseId": "push_up",
+                  "sets": 4,
+                  "reps": "6-10",
+                  "rpe": 7,
+                  "restSec": 90
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "recovery_mobility",
+      "name": "Recovery & Mobility",
+      "level": "recovery",
+      "daysPerWeek": 3,
+      "sessions": [
+        {
+          "id": "recovery_mobility.day_a",
+          "title": "Mobility + Walk",
+          "sessionKind": "mobility",
+          "dayIndex": 1,
+          "blocks": [
+            {
+              "name": "Mobility",
+              "items": [
+                {
+                  "exerciseId": "worlds_greatest_stretch",
+                  "sets": 2,
+                  "reps": "5/side",
+                  "restSec": 30
+                }
+              ]
+            },
+            {
+              "name": "Walk",
+              "items": [
+                {
+                  "exerciseId": "brisk_walk",
+                  "sets": 1,
+                  "reps": "10-20 min"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

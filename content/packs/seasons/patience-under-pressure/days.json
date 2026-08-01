@@ -1,0 +1,186 @@
+[
+  {
+    "dayKey": "w1d1",
+    "weekIndex": 1,
+    "dayInWeek": 1,
+    "morningVariantIds": {
+      "full": "mv.w1.full.second-mile",
+      "short": "mv.w1.short.second-mile",
+      "two_minute": "mv.w1.two.second-mile"
+    },
+    "assignmentId": "patience.notice-hurry.v1",
+    "eveningPromptIds": ["evening.evidence.growth.v1", "evening.miss.learn.v1", "evening.gratitude.v1"],
+    "middayPromptId": "midday.tested.patience.v1",
+    "sessionType": "workout",
+    "workoutSessionId": "full_body_foundations.day_a",
+    "recoveryDayId": null,
+    "coachIntentKeys": ["daily_card", "apply_scripture", "workout_guide"],
+    "optionalJournalPromptId": "journal.optional.pressure.v1"
+  },
+  {
+    "dayKey": "w1d3",
+    "weekIndex": 1,
+    "dayInWeek": 3,
+    "morningVariantIds": {
+      "full": "mv.w1.full.second-mile",
+      "short": "mv.w1.short.second-mile",
+      "two_minute": "mv.w1.two.second-mile"
+    },
+    "assignmentId": "patience.notice-hurry.v1",
+    "eveningPromptIds": ["evening.evidence.growth.v1", "evening.gratitude.v1"],
+    "sessionType": "recovery",
+    "workoutSessionId": null,
+    "recoveryDayId": "recovery.mobility.basic.v1",
+    "coachIntentKeys": ["daily_card", "reset"]
+  },
+  {
+    "dayKey": "w2d2",
+    "weekIndex": 2,
+    "dayInWeek": 2,
+    "morningVariantIds": {
+      "full": "mv.w2.full.notice",
+      "short": "mv.w2.short.notice",
+      "two_minute": "mv.w2.two.notice"
+    },
+    "assignmentId": "patience.gentle-answer.v1",
+    "eveningPromptIds": ["evening.evidence.growth.v1", "evening.miss.learn.v1", "evening.recovery.body.v1"],
+    "middayPromptId": "midday.tested.patience.v1",
+    "sessionType": "workout",
+    "workoutSessionId": "full_body_foundations.day_b",
+    "recoveryDayId": null,
+    "coachIntentKeys": ["daily_card", "midday_adjust", "evening_reflect"]
+  },
+  {
+    "dayKey": "w3d1",
+    "weekIndex": 3,
+    "dayInWeek": 1,
+    "morningVariantIds": {
+      "full": "mv.w3.full.practice",
+      "short": "mv.w3.short.practice",
+      "two_minute": "mv.w3.two.practice"
+    },
+    "assignmentId": "patience.pause-before-reply.v1",
+    "eveningPromptIds": ["evening.evidence.growth.v1", "evening.miss.learn.v1"],
+    "middayPromptId": "midday.tested.patience.v1",
+    "sessionType": "workout",
+    "workoutSessionId": "full_body_foundations.day_a",
+    "recoveryDayId": null,
+    "coachIntentKeys": ["daily_card", "apply_scripture", "workout_guide"]
+  },
+  {
+    "dayKey": "w3d5-busy",
+    "weekIndex": 3,
+    "dayInWeek": 5,
+    "morningVariantIds": {
+      "full": "mv.w3.full.practice",
+      "short": "mv.w3.short.practice",
+      "two_minute": "mv.w3.two.practice"
+    },
+    "assignmentId": "patience.pause-before-reply.v1",
+    "eveningPromptIds": ["evening.evidence.growth.v1"],
+    "sessionType": "rest_walk",
+    "workoutSessionId": null,
+    "recoveryDayId": null,
+    "coachIntentKeys": ["recommend_morning_mode", "daily_card"]
+  },
+  {
+    "dayKey": "w4d2",
+    "weekIndex": 4,
+    "dayInWeek": 2,
+    "morningVariantIds": {
+      "full": "mv.w4.full.difficulty",
+      "short": "mv.w4.short.difficulty",
+      "two_minute": "mv.w4.two.difficulty"
+    },
+    "assignmentId": "patience.second-mile.v1",
+    "eveningPromptIds": ["evening.evidence.growth.v1", "evening.miss.learn.v1", "evening.gratitude.v1"],
+    "middayPromptId": "midday.tested.patience.v1",
+    "sessionType": "workout",
+    "workoutSessionId": "full_body_foundations.day_a",
+    "recoveryDayId": null,
+    "coachIntentKeys": ["daily_card", "apply_scripture", "midday_adjust", "evening_reflect"],
+    "optionalJournalPromptId": "journal.optional.pressure.v1"
+  },
+  {
+    "dayKey": "w4d4-recovery",
+    "weekIndex": 4,
+    "dayInWeek": 4,
+    "morningVariantIds": {
+      "full": "mv.w4.full.difficulty",
+      "short": "mv.w4.short.difficulty",
+      "two_minute": "mv.w4.two.difficulty"
+    },
+    "assignmentId": "patience.second-mile.v1",
+    "eveningPromptIds": ["evening.recovery.body.v1", "evening.gratitude.v1"],
+    "sessionType": "recovery",
+    "workoutSessionId": null,
+    "recoveryDayId": "recovery.mobility.basic.v1",
+    "coachIntentKeys": ["workout_guide", "reset"]
+  },
+  {
+    "dayKey": "w5d1",
+    "weekIndex": 5,
+    "dayInWeek": 1,
+    "morningVariantIds": {
+      "full": "mv.w5.full.people",
+      "short": "mv.w5.short.people",
+      "two_minute": "mv.w5.two.people"
+    },
+    "assignmentId": "patience.relational-room.v1",
+    "eveningPromptIds": ["evening.evidence.growth.v1", "evening.miss.learn.v1", "evening.gratitude.v1"],
+    "middayPromptId": "midday.tested.patience.v1",
+    "sessionType": "workout",
+    "workoutSessionId": "full_body_foundations.day_b",
+    "recoveryDayId": null,
+    "coachIntentKeys": ["daily_card", "apply_scripture", "evening_reflect"],
+    "optionalJournalPromptId": "journal.optional.pressure.v1"
+  },
+  {
+    "dayKey": "w5d6-transition",
+    "weekIndex": 5,
+    "dayInWeek": 6,
+    "morningVariantIds": {
+      "full": "mv.w5.full.people",
+      "short": "mv.w5.short.people",
+      "two_minute": "mv.w5.two.people"
+    },
+    "assignmentId": "patience.gentle-answer.v1",
+    "eveningPromptIds": ["evening.evidence.growth.v1", "evening.gratitude.v1"],
+    "sessionType": "rest_walk",
+    "workoutSessionId": null,
+    "recoveryDayId": null,
+    "coachIntentKeys": ["weekly_review", "daily_card"]
+  },
+  {
+    "dayKey": "w6d1-reassess",
+    "weekIndex": 6,
+    "dayInWeek": 1,
+    "morningVariantIds": {
+      "full": "mv.w6.full.reassess",
+      "short": "mv.w6.short.reassess",
+      "two_minute": "mv.w6.two.reassess"
+    },
+    "assignmentId": "patience.reassess-honesty.v1",
+    "eveningPromptIds": ["evening.evidence.growth.v1", "evening.reassess.prep.v1", "evening.gratitude.v1"],
+    "sessionType": "recovery",
+    "workoutSessionId": null,
+    "recoveryDayId": "recovery.deload.week6.v1",
+    "coachIntentKeys": ["season_propose", "evening_reflect", "weekly_review"]
+  },
+  {
+    "dayKey": "w6d3-busy-reassess",
+    "weekIndex": 6,
+    "dayInWeek": 3,
+    "morningVariantIds": {
+      "full": "mv.w6.full.reassess",
+      "short": "mv.w6.short.reassess",
+      "two_minute": "mv.w6.two.reassess"
+    },
+    "assignmentId": "patience.reassess-honesty.v1",
+    "eveningPromptIds": ["evening.reassess.prep.v1"],
+    "sessionType": "rest_walk",
+    "workoutSessionId": null,
+    "recoveryDayId": null,
+    "coachIntentKeys": ["recommend_morning_mode", "season_propose"]
+  }
+]

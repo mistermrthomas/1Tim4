@@ -1,0 +1,79 @@
+[
+  {
+    "id": "morning.intention.patience.v1",
+    "stage": "morning",
+    "slot": "intention",
+    "text": "Where do you expect patience to be tested today?",
+    "focusKeys": ["patience"]
+  },
+  {
+    "id": "morning.intention.short.v1",
+    "stage": "morning",
+    "slot": "intention",
+    "text": "Name one pressurized moment you will meet with a slower response.",
+    "focusKeys": ["patience", "*"]
+  },
+  {
+    "id": "morning.prayer.patience.v1",
+    "stage": "morning",
+    "slot": "prayer",
+    "text": "Ask Jesus for a gentle and humble heart in today’s pressure.",
+    "focusKeys": ["patience"]
+  },
+  {
+    "id": "morning.prayer.two_minute.v1",
+    "stage": "morning",
+    "slot": "prayer",
+    "text": "Jesus, teach me your pace in the next hard moment.",
+    "focusKeys": ["*"]
+  },
+  {
+    "id": "midday.tested.patience.v1",
+    "stage": "midday",
+    "slot": "tested",
+    "text": "Have you been tested in patience yet? How did you respond?",
+    "focusKeys": ["patience"]
+  },
+  {
+    "id": "evening.evidence.growth.v1",
+    "stage": "evening",
+    "slot": "evidence",
+    "text": "Where did you notice even a small sign of patience today?",
+    "focusKeys": ["patience", "*"]
+  },
+  {
+    "id": "evening.miss.learn.v1",
+    "stage": "evening",
+    "slot": "miss",
+    "text": "Was there a hurried or harsh moment to learn from — without shame?",
+    "focusKeys": ["patience", "*"]
+  },
+  {
+    "id": "evening.gratitude.v1",
+    "stage": "evening",
+    "slot": "gratitude",
+    "text": "Name one mercy you received today.",
+    "focusKeys": ["*"]
+  },
+  {
+    "id": "evening.recovery.body.v1",
+    "stage": "evening",
+    "slot": "body",
+    "text": "How is your energy, soreness, and readiness to rest?",
+    "focusKeys": ["*"]
+  },
+  {
+    "id": "evening.reassess.prep.v1",
+    "stage": "evening",
+    "slot": "reassess",
+    "text": "What should shape your next season’s primary focus?",
+    "focusKeys": ["patience"]
+  },
+  {
+    "id": "journal.optional.pressure.v1",
+    "stage": "evening",
+    "slot": "journal",
+    "text": "Optional: describe one pressurized conversation and what you wanted to become in it.",
+    "focusKeys": ["patience"]
+  }
+]

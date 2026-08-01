@@ -1,0 +1,262 @@
+[
+  {
+    "id": "mv.w1.full.second-mile",
+    "mode": "full",
+    "teachingId": "jesus.second-mile.v1",
+    "primaryReferenceId": "matt.5.38-42",
+    "supportingReferenceIds": ["james.1.19-20"],
+    "explanation": "Jesus trains disciples to answer force with surplus grace. Patience is not weakness; it is chosen restraint.",
+    "intentionPromptId": "morning.intention.patience.v1",
+    "bodyAction": {
+      "kind": "workout_ref",
+      "summary": "Complete Full Body A with controlled tempo — no rushed reps.",
+      "workoutSessionId": "full_body_foundations.day_a"
+    },
+    "prayerPromptId": "morning.prayer.patience.v1"
+  },
+  {
+    "id": "mv.w1.short.second-mile",
+    "mode": "short",
+    "teachingId": "jesus.second-mile.v1",
+    "primaryReferenceId": "matt.5.38-42",
+    "supportingReferenceIds": [],
+    "explanation": "One teaching: when pressed, choose the second mile.",
+    "intentionPromptId": "morning.intention.short.v1",
+    "bodyAction": {
+      "kind": "walk",
+      "summary": "Brisk walk 8–12 minutes; match breath to a slower pace."
+    },
+    "prayerPromptId": "morning.prayer.patience.v1"
+  },
+  {
+    "id": "mv.w1.two.second-mile",
+    "mode": "two_minute",
+    "teachingId": "jesus.second-mile.v1",
+    "primaryReferenceId": "matt.5.38-42",
+    "supportingReferenceIds": [],
+    "explanation": "Jesus: go the second mile.",
+    "intentionPromptId": "morning.intention.short.v1",
+    "bodyAction": {
+      "kind": "breath_stand",
+      "summary": "Stand tall; 10 slow breaths before your first task."
+    },
+    "prayerPromptId": "morning.prayer.two_minute.v1"
+  },
+  {
+    "id": "mv.w2.full.notice",
+    "mode": "full",
+    "teachingId": "jesus.gentle-yoke.v1",
+    "primaryReferenceId": "matt.11.28-30",
+    "supportingReferenceIds": ["prov.15.1"],
+    "explanation": "Notice hurry without self-condemnation. Jesus invites the weary to learn his pace.",
+    "intentionPromptId": "morning.intention.patience.v1",
+    "bodyAction": {
+      "kind": "workout_ref",
+      "summary": "Full Body A; log RPE honestly.",
+      "workoutSessionId": "full_body_foundations.day_a"
+    },
+    "prayerPromptId": "morning.prayer.patience.v1"
+  },
+  {
+    "id": "mv.w2.short.notice",
+    "mode": "short",
+    "teachingId": "jesus.gentle-yoke.v1",
+    "primaryReferenceId": "matt.11.28-30",
+    "supportingReferenceIds": [],
+    "explanation": "Learn from Jesus’ gentleness when weary.",
+    "intentionPromptId": "morning.intention.short.v1",
+    "bodyAction": {
+      "kind": "mobility",
+      "summary": "5 minutes hip/thoracic mobility.",
+      "recoveryDayId": "recovery.mobility.basic.v1"
+    },
+    "prayerPromptId": "morning.prayer.two_minute.v1"
+  },
+  {
+    "id": "mv.w2.two.notice",
+    "mode": "two_minute",
+    "teachingId": "jesus.gentle-yoke.v1",
+    "primaryReferenceId": "matt.11.28-30",
+    "supportingReferenceIds": [],
+    "explanation": "Come to Jesus with today’s weariness.",
+    "intentionPromptId": "morning.intention.short.v1",
+    "bodyAction": {
+      "kind": "breath_stand",
+      "summary": "10 breaths; unclench jaw and shoulders."
+    },
+    "prayerPromptId": "morning.prayer.two_minute.v1"
+  },
+  {
+    "id": "mv.w3.full.practice",
+    "mode": "full",
+    "teachingId": "jesus.golden-rule.pressure.v1",
+    "primaryReferenceId": "luke.6.27-31",
+    "supportingReferenceIds": ["james.1.19-20"],
+    "explanation": "Practice: treat others under stress as you would want to be treated.",
+    "intentionPromptId": "morning.intention.patience.v1",
+    "bodyAction": {
+      "kind": "workout_ref",
+      "summary": "Full Body A; controlled eccentrics.",
+      "workoutSessionId": "full_body_foundations.day_a"
+    },
+    "prayerPromptId": "morning.prayer.patience.v1"
+  },
+  {
+    "id": "mv.w3.short.practice",
+    "mode": "short",
+    "teachingId": "jesus.golden-rule.pressure.v1",
+    "primaryReferenceId": "luke.6.27-31",
+    "supportingReferenceIds": [],
+    "explanation": "Do to others as you would want under pressure.",
+    "intentionPromptId": "morning.intention.short.v1",
+    "bodyAction": {
+      "kind": "walk",
+      "summary": "10-minute walk; phone away."
+    },
+    "prayerPromptId": "morning.prayer.patience.v1"
+  },
+  {
+    "id": "mv.w3.two.practice",
+    "mode": "two_minute",
+    "teachingId": "jesus.golden-rule.pressure.v1",
+    "primaryReferenceId": "luke.6.27-31",
+    "supportingReferenceIds": [],
+    "explanation": "Golden rule under stress.",
+    "intentionPromptId": "morning.intention.short.v1",
+    "bodyAction": {
+      "kind": "breath_stand",
+      "summary": "10 breaths; set one gentle intention."
+    },
+    "prayerPromptId": "morning.prayer.two_minute.v1"
+  },
+  {
+    "id": "mv.w4.full.difficulty",
+    "mode": "full",
+    "teachingId": "jesus.love-enemies.v1",
+    "primaryReferenceId": "matt.5.43-45",
+    "supportingReferenceIds": ["col.3.12-13"],
+    "explanation": "Under difficulty, patience includes blessing those who oppose you.",
+    "intentionPromptId": "morning.intention.patience.v1",
+    "bodyAction": {
+      "kind": "workout_ref",
+      "summary": "Full Body A or swap to recovery if pain flagged.",
+      "workoutSessionId": "full_body_foundations.day_a"
+    },
+    "prayerPromptId": "morning.prayer.patience.v1"
+  },
+  {
+    "id": "mv.w4.short.difficulty",
+    "mode": "short",
+    "teachingId": "jesus.love-enemies.v1",
+    "primaryReferenceId": "matt.5.43-45",
+    "supportingReferenceIds": ["luke.6.27-31"],
+    "explanation": "Bless before you battle.",
+    "intentionPromptId": "morning.intention.short.v1",
+    "bodyAction": {
+      "kind": "mobility",
+      "summary": "Recovery mobility + short walk.",
+      "recoveryDayId": "recovery.mobility.basic.v1"
+    },
+    "prayerPromptId": "morning.prayer.patience.v1"
+  },
+  {
+    "id": "mv.w4.two.difficulty",
+    "mode": "two_minute",
+    "teachingId": "jesus.love-enemies.v1",
+    "primaryReferenceId": "matt.5.43-45",
+    "supportingReferenceIds": [],
+    "explanation": "Love your enemies — start with one prayer.",
+    "intentionPromptId": "morning.intention.short.v1",
+    "bodyAction": {
+      "kind": "breath_stand",
+      "summary": "10 breaths; pray one name."
+    },
+    "prayerPromptId": "morning.prayer.two_minute.v1"
+  },
+  {
+    "id": "mv.w5.full.people",
+    "mode": "full",
+    "teachingId": "jesus.love-enemies.v1",
+    "primaryReferenceId": "matt.5.43-45",
+    "supportingReferenceIds": ["col.3.12-13", "prov.15.1"],
+    "explanation": "Apply patience in relationships: compassion, forbearance, gentle answers.",
+    "intentionPromptId": "morning.intention.patience.v1",
+    "bodyAction": {
+      "kind": "workout_ref",
+      "summary": "Full Body A; finish with 5-minute walk cooldown.",
+      "workoutSessionId": "full_body_foundations.day_a"
+    },
+    "prayerPromptId": "morning.prayer.patience.v1"
+  },
+  {
+    "id": "mv.w5.short.people",
+    "mode": "short",
+    "teachingId": "jesus.gentle-yoke.v1",
+    "primaryReferenceId": "matt.11.28-30",
+    "supportingReferenceIds": [],
+    "explanation": "Bring relational weariness to Jesus first.",
+    "intentionPromptId": "morning.intention.short.v1",
+    "bodyAction": {
+      "kind": "walk",
+      "summary": "Walk and pray for one person."
+    },
+    "prayerPromptId": "morning.prayer.patience.v1"
+  },
+  {
+    "id": "mv.w5.two.people",
+    "mode": "two_minute",
+    "teachingId": "jesus.gentle-yoke.v1",
+    "primaryReferenceId": "matt.11.28-30",
+    "supportingReferenceIds": [],
+    "explanation": "Rest your soul before hard conversations.",
+    "intentionPromptId": "morning.intention.short.v1",
+    "bodyAction": {
+      "kind": "breath_stand",
+      "summary": "10 breaths before the next hard interaction."
+    },
+    "prayerPromptId": "morning.prayer.two_minute.v1"
+  },
+  {
+    "id": "mv.w6.full.reassess",
+    "mode": "full",
+    "teachingId": "jesus.gentle-yoke.v1",
+    "primaryReferenceId": "matt.11.28-30",
+    "supportingReferenceIds": ["gal.5.22-23"],
+    "explanation": "Reflect: fruit is observed over time. Prepare an honest reassessment.",
+    "intentionPromptId": "morning.intention.patience.v1",
+    "bodyAction": {
+      "kind": "mobility",
+      "summary": "Recovery day — mobility and easy walk.",
+      "recoveryDayId": "recovery.deload.week6.v1"
+    },
+    "prayerPromptId": "morning.prayer.patience.v1"
+  },
+  {
+    "id": "mv.w6.short.reassess",
+    "mode": "short",
+    "teachingId": "jesus.second-mile.v1",
+    "primaryReferenceId": "matt.5.38-42",
+    "supportingReferenceIds": ["gal.5.22-23"],
+    "explanation": "Look for evidence, not a score.",
+    "intentionPromptId": "morning.intention.short.v1",
+    "bodyAction": {
+      "kind": "walk",
+      "summary": "Easy walk; review the season mentally."
+    },
+    "prayerPromptId": "morning.prayer.patience.v1"
+  },
+  {
+    "id": "mv.w6.two.reassess",
+    "mode": "two_minute",
+    "teachingId": "jesus.second-mile.v1",
+    "primaryReferenceId": "matt.5.38-42",
+    "supportingReferenceIds": [],
+    "explanation": "Thank God for one place patience grew.",
+    "intentionPromptId": "morning.intention.short.v1",
+    "bodyAction": {
+      "kind": "breath_stand",
+      "summary": "10 breaths of gratitude."
+    },
+    "prayerPromptId": "morning.prayer.two_minute.v1"
+  }
+]

@@ -17,7 +17,14 @@ import { AssessmentPage } from './pages/AssessmentPage';
 import { ServingAssessmentPage } from './pages/ServingAssessmentPage';
 import { ProfileSelectPage } from './pages/ProfileSelectPage';
 import { QuickStartPage } from './pages/QuickStartPage';
+import { Phase0HarnessPage } from './pages/Phase0HarnessPage';
+import { FormationShell } from './features/shell/FormationShell';
+import { TodayPage } from './features/today/TodayPage';
+import { JourneyPage } from './features/journey/JourneyPage';
+import { GrowthPage } from './features/growth/GrowthPage';
+import { CoachPage } from './features/coach/CoachPage';
 import './styles/global.css';
+import './features/shell/FormationShell.css';
 import './styles/desktop.css';
 import './components/illustrations/FieldGuideArt.css';
 import './components/layout/AppShell.css';
@@ -82,6 +89,16 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
+            <Route path="/phase0" element={<Phase0HarnessPage />} />
+            {/* Formation product is the public Path home; legacy routes remain at /prepare, /guide, etc. */}
+            <Route path="/" element={<Navigate to="/today" replace />} />
+            <Route element={<FormationShell />}>
+              <Route path="/today" element={<TodayPage />} />
+              <Route path="/journey" element={<JourneyPage />} />
+              <Route path="/growth" element={<GrowthPage />} />
+              <Route path="/coach" element={<CoachPage />} />
+              <Route path="/preview" element={<Navigate to="/today" replace />} />
+            </Route>
             <Route path="*" element={<AppRoutes cloudReloadKey={cloudReloadKey} />} />
           </Routes>
         </BrowserRouter>

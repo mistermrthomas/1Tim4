@@ -1,0 +1,92 @@
+[
+  {
+    "intentKey": "daily_card",
+    "groundingReferenceIds": ["matt.5.38-42"],
+    "jesusTeachingId": "jesus.second-mile.v1",
+    "supportingReferenceIds": ["james.1.19-20"],
+    "template": "Today’s training: practice the second mile when pressed. Scripture: {{primaryRef}}.",
+    "priorityLens": "jesus_primary",
+    "situation": ["morning_pending"]
+  },
+  {
+    "intentKey": "recommend_morning_mode",
+    "groundingReferenceIds": ["matt.11.28-30"],
+    "jesusTeachingId": "jesus.gentle-yoke.v1",
+    "supportingReferenceIds": [],
+    "template": "If time is tight, choose Short Morning or Two-minute reset. Jesus still invites the weary — formation loop stays intact.",
+    "priorityLens": "jesus_primary",
+    "situation": ["opened_late", "busy_schedule"]
+  },
+  {
+    "intentKey": "apply_scripture",
+    "groundingReferenceIds": ["matt.5.43-45", "luke.6.27-31"],
+    "jesusTeachingId": "jesus.love-enemies.v1",
+    "supportingReferenceIds": ["col.3.12-13"],
+    "template": "Apply Jesus’ words: bless before you battle. Supporting counsel: {{supportingRefs}}.",
+    "priorityLens": "jesus_primary",
+    "situation": ["morning_scripture"]
+  },
+  {
+    "intentKey": "midday_adjust",
+    "groundingReferenceIds": ["luke.6.27-31", "james.1.19-20"],
+    "jesusTeachingId": "jesus.golden-rule.pressure.v1",
+    "supportingReferenceIds": ["prov.15.1"],
+    "template": "Course correction from Jesus’ standard: do to others as you would want. Be quick to hear, slow to speak.",
+    "priorityLens": "jesus_primary",
+    "situation": ["tested_yes"]
+  },
+  {
+    "intentKey": "evening_reflect",
+    "groundingReferenceIds": ["matt.11.28-30", "gal.5.22-23"],
+    "jesusTeachingId": "jesus.gentle-yoke.v1",
+    "supportingReferenceIds": ["rom.12.12"],
+    "template": "Return to Jesus’ gentle yoke. Look for fruit evidence — patience noticed, not earned.",
+    "priorityLens": "jesus_primary",
+    "situation": ["evening"]
+  },
+  {
+    "intentKey": "workout_guide",
+    "groundingReferenceIds": ["matt.11.28-30"],
+    "jesusTeachingId": "jesus.gentle-yoke.v1",
+    "supportingReferenceIds": [],
+    "template": "Train with controlled tempo. If pain flags, choose recovery — wisdom is not weakness.",
+    "priorityLens": "jesus_primary",
+    "situation": ["train_block"]
+  },
+  {
+    "intentKey": "reset",
+    "groundingReferenceIds": ["matt.11.28-30"],
+    "jesusTeachingId": "jesus.gentle-yoke.v1",
+    "supportingReferenceIds": ["rom.12.12"],
+    "template": "Missing a session doesn’t erase who you are becoming. Come to Jesus and take the next smallest step.",
+    "priorityLens": "jesus_primary",
+    "situation": ["missed_morning"]
+  },
+  {
+    "intentKey": "season_propose",
+    "groundingReferenceIds": ["matt.5.38-42", "gal.5.22-23"],
+    "jesusTeachingId": "jesus.second-mile.v1",
+    "supportingReferenceIds": ["col.3.12-13"],
+    "template": "Season complete. Keep Jesus’ second-mile teaching in view. Reassessment invites honesty — not a spiritual verdict.",
+    "priorityLens": "jesus_primary",
+    "situation": ["reassessment_due"]
+  },
+  {
+    "intentKey": "ask_coach",
+    "groundingReferenceIds": ["matt.5.38-42", "matt.11.28-30"],
+    "jesusTeachingId": "jesus.second-mile.v1",
+    "supportingReferenceIds": ["james.1.19-20"],
+    "template": "Answer from today’s teaching and references only. Prefer Jesus’ words; use supporting Scripture to reinforce, never to bypass.",
+    "priorityLens": "jesus_primary",
+    "situation": ["user_question"]
+  },
+  {
+    "intentKey": "weekly_review",
+    "groundingReferenceIds": ["gal.5.22-23", "matt.5.38-42"],
+    "jesusTeachingId": "jesus.second-mile.v1",
+    "supportingReferenceIds": ["james.1.19-20"],
+    "template": "Weekly evidence: where did second-mile patience appear? Where is more training needed?",
+    "priorityLens": "jesus_primary",
+    "situation": ["week_end"]
+  }
+]

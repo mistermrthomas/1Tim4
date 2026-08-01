@@ -1,0 +1,74 @@
+[
+  {
+    "referenceId": "matt.5.38-42",
+    "bookCode": "Matt",
+    "chapter": 5,
+    "verseStart": 38,
+    "verseEnd": 42,
+    "canonicalLabel": "Matthew 5:38-42"
+  },
+  {
+    "referenceId": "matt.5.43-45",
+    "bookCode": "Matt",
+    "chapter": 5,
+    "verseStart": 43,
+    "verseEnd": 45,
+    "canonicalLabel": "Matthew 5:43-45"
+  },
+  {
+    "referenceId": "matt.11.28-30",
+    "bookCode": "Matt",
+    "chapter": 11,
+    "verseStart": 28,
+    "verseEnd": 30,
+    "canonicalLabel": "Matthew 11:28-30"
+  },
+  {
+    "referenceId": "luke.6.27-31",
+    "bookCode": "Luke",
+    "chapter": 6,
+    "verseStart": 27,
+    "verseEnd": 31,
+    "canonicalLabel": "Luke 6:27-31"
+  },
+  {
+    "referenceId": "james.1.19-20",
+    "bookCode": "Jas",
+    "chapter": 1,
+    "verseStart": 19,
+    "verseEnd": 20,
+    "canonicalLabel": "James 1:19-20"
+  },
+  {
+    "referenceId": "prov.15.1",
+    "bookCode": "Prov",
+    "chapter": 15,
+    "verseStart": 1,
+    "verseEnd": 1,
+    "canonicalLabel": "Proverbs 15:1"
+  },
+  {
+    "referenceId": "rom.12.12",
+    "bookCode": "Rom",
+    "chapter": 12,
+    "verseStart": 12,
+    "verseEnd": 12,
+    "canonicalLabel": "Romans 12:12"
+  },
+  {
+    "referenceId": "gal.5.22-23",
+    "bookCode": "Gal",
+    "chapter": 5,
+    "verseStart": 22,
+    "verseEnd": 23,
+    "canonicalLabel": "Galatians 5:22-23"
+  },
+  {
+    "referenceId": "col.3.12-13",
+    "bookCode": "Col",
+    "chapter": 3,
+    "verseStart": 12,
+    "verseEnd": 13,
+    "canonicalLabel": "Colossians 3:12-13"
+  }
+]

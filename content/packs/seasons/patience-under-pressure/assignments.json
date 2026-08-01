@@ -1,0 +1,56 @@
+[
+  {
+    "id": "patience.pause-before-reply.v1",
+    "focusKey": "patience",
+    "stageKeys": ["practice", "practice_under_difficulty"],
+    "contextTags": ["work", "interruptions"],
+    "prompt": "When interrupted, finish a silent count of three before you reply.",
+    "successSignal": "You noticed at least one pause.",
+    "avoid": "Do not grade the day pass/fail."
+  },
+  {
+    "id": "patience.gentle-answer.v1",
+    "focusKey": "patience",
+    "stageKeys": ["notice", "practice", "apply_in_relationships"],
+    "contextTags": ["marriage", "parenting", "work"],
+    "prompt": "Offer one gentle answer where a sharp one would be easier.",
+    "successSignal": "You chose softness once under tension.",
+    "avoid": "Do not rehearse how others failed you."
+  },
+  {
+    "id": "patience.second-mile.v1",
+    "focusKey": "patience",
+    "stageKeys": ["practice_under_difficulty", "apply_in_relationships"],
+    "contextTags": ["work", "service"],
+    "prompt": "Do one small second-mile act for someone who adds friction to your day.",
+    "successSignal": "You acted beyond bare obligation once.",
+    "avoid": "Do not announce it for credit."
+  },
+  {
+    "id": "patience.notice-hurry.v1",
+    "focusKey": "patience",
+    "stageKeys": ["understand", "notice"],
+    "contextTags": ["phone", "schedule"],
+    "prompt": "Name two moments of hurry without fixing them yet — just notice.",
+    "successSignal": "You can point to specific moments.",
+    "avoid": "Do not stack self-condemnation onto the noticing."
+  },
+  {
+    "id": "patience.relational-room.v1",
+    "focusKey": "patience",
+    "stageKeys": ["apply_in_relationships", "reflect_and_reassess"],
+    "contextTags": ["marriage", "family", "friendship"],
+    "prompt": "Give someone full sentences of space before you interpret their motive.",
+    "successSignal": "You listened longer than usual once.",
+    "avoid": "Do not use listening as a trap for later correction."
+  },
+  {
+    "id": "patience.reassess-honesty.v1",
+    "focusKey": "patience",
+    "stageKeys": ["reflect_and_reassess"],
+    "contextTags": ["consistency"],
+    "prompt": "Write one place patience grew and one place honesty shows you still need training.",
+    "successSignal": "You can name both without shame language.",
+    "avoid": "Do not flatten the season into a score."
+  }
+]

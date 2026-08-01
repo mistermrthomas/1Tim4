@@ -1,0 +1,38 @@
+[
+  {
+    "weekIndex": 1,
+    "stageKey": "understand",
+    "theme": "What patience is",
+    "intent": "See patience as strength under restraint, not passivity."
+  },
+  {
+    "weekIndex": 2,
+    "stageKey": "notice",
+    "theme": "Where pressure shows",
+    "intent": "Notice hurry, interruption, and harsh first responses."
+  },
+  {
+    "weekIndex": 3,
+    "stageKey": "practice",
+    "theme": "Practice the pause",
+    "intent": "Deliberately slow one response each day."
+  },
+  {
+    "weekIndex": 4,
+    "stageKey": "practice_under_difficulty",
+    "theme": "Hold form under load",
+    "intent": "Practice patience when delayed, misunderstood, or overloaded."
+  },
+  {
+    "weekIndex": 5,
+    "stageKey": "apply_in_relationships",
+    "theme": "Patience with people",
+    "intent": "Let patience shape one important relationship."
+  },
+  {
+    "weekIndex": 6,
+    "stageKey": "reflect_and_reassess",
+    "theme": "Reflect and reassess",
+    "intent": "Gather evidence of growth and prepare the next season."
+  }
+]

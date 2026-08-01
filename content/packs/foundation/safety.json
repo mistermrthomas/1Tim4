@@ -1,0 +1,16 @@
+[
+  {
+    "id": "safety.foundation.v1",
+    "crisisResources": [
+      {
+        "label": "US 988 Suicide & Crisis Lifeline",
+        "contact": "988"
+      },
+      {
+        "label": "International Association for Suicide Prevention",
+        "contact": "https://www.iasp.info/suicidalthoughts/"
+      }
+    ],
+    "medicalDeferral": "If you have medical red flags or new/worsening pain, stop progressive training and seek qualified medical guidance. The app provides general coaching, not medical diagnosis."
+  }
+]

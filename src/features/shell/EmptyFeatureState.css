@@ -1,0 +1,41 @@
+.formation-empty {
+  padding-top: 1.5rem;
+  max-width: 36rem;
+}
+
+.formation-empty__title {
+  margin: 0;
+  font-family: var(--path-font-display);
+  font-size: clamp(2.4rem, 8vw, 3.6rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--path-text);
+  line-height: 0.95;
+}
+
+.formation-empty__question {
+  margin: 0.85rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--path-gold);
+}
+
+.formation-empty__body {
+  margin: 1rem 0 0;
+  font-family: var(--path-font-body);
+  line-height: 1.55;
+  color: var(--path-text-muted);
+}
+
+.formation-empty__hint {
+  margin: 1.5rem 0 0;
+  padding: 0.9rem 1rem;
+  border-left: 2px solid var(--path-gold-dim);
+  color: var(--path-text-dim);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  background: rgba(201, 162, 39, 0.05);
+}

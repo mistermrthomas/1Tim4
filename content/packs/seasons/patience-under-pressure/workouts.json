@@ -1,0 +1,110 @@
+{
+  "exercises": [
+    {
+      "id": "bodyweight_squat",
+      "name": "Bodyweight Squat",
+      "muscleGroups": ["quads", "glutes"],
+      "equipment": ["bodyweight"],
+      "contraindications": ["acute_knee_pain"]
+    },
+    {
+      "id": "push_up",
+      "name": "Push-Up",
+      "muscleGroups": ["chest", "triceps", "shoulders"],
+      "equipment": ["bodyweight"],
+      "contraindications": ["acute_shoulder_pain"]
+    },
+    {
+      "id": "hip_hinge_good_morning",
+      "name": "Standing Hip Hinge",
+      "muscleGroups": ["hamstrings", "back"],
+      "equipment": ["bodyweight"],
+      "contraindications": ["acute_low_back_pain"]
+    },
+    {
+      "id": "worlds_greatest_stretch",
+      "name": "World’s Greatest Stretch",
+      "muscleGroups": ["hips", "thoracic"],
+      "equipment": ["bodyweight"],
+      "contraindications": []
+    },
+    {
+      "id": "brisk_walk",
+      "name": "Brisk Walk",
+      "muscleGroups": ["full_body"],
+      "equipment": ["none"],
+      "contraindications": []
+    }
+  ],
+  "templates": [
+    {
+      "id": "full_body_foundations",
+      "name": "Full Body Foundations",
+      "level": "beginner",
+      "daysPerWeek": 3,
+      "sessions": [
+        {
+          "id": "full_body_foundations.day_a",
+          "title": "Full Body A",
+          "sessionKind": "strength",
+          "dayIndex": 1,
+          "blocks": [
+            {
+              "name": "Main",
+              "items": [
+                {
+                  "exerciseId": "bodyweight_squat",
+                  "sets": 3,
+                  "reps": "8-10",
+                  "rpe": 6,
+                  "restSec": 60
+                },
+                {
+                  "exerciseId": "push_up",
+                  "sets": 3,
+                  "reps": "5-8",
+                  "rpe": 6,
+                  "restSec": 60
+                },
+                {
+                  "exerciseId": "hip_hinge_good_morning",
+                  "sets": 3,
+                  "reps": "8-10",
+                  "rpe": 6,
+                  "restSec": 60
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "full_body_foundations.day_b",
+          "title": "Full Body B",
+          "sessionKind": "strength",
+          "dayIndex": 2,
+          "blocks": [
+            {
+              "name": "Main",
+              "items": [
+                {
+                  "exerciseId": "bodyweight_squat",
+                  "sets": 3,
+                  "reps": "10-12",
+                  "rpe": 6,
+                  "restSec": 60
+                },
+                {
+                  "exerciseId": "push_up",
+                  "sets": 3,
+                  "reps": "6-10",
+                  "rpe": 6,
+                  "restSec": 60
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

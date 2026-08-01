@@ -1,0 +1,35 @@
+[
+  {
+    "id": "patience",
+    "displayName": "Patience",
+    "summary": "Learning to wait, listen, and respond with grace under pressure.",
+    "fruitTag": "patience",
+    "lifePressureAffinity": ["anger", "parenting", "work", "interruptions"],
+    "weekCopy": {
+      "understand": {
+        "title": "Understand patience",
+        "body": "Patience is not passivity. It is strength under restraint — love that makes room for others."
+      },
+      "notice": {
+        "title": "Notice impatience",
+        "body": "Where do hurry and harshness show up in ordinary moments this week?"
+      },
+      "practice": {
+        "title": "Practice the pause",
+        "body": "Choose one daily situation to slow your first response."
+      },
+      "practice_under_difficulty": {
+        "title": "Hold form under load",
+        "body": "Practice patience when interrupted, delayed, or misunderstood."
+      },
+      "apply_in_relationships": {
+        "title": "Patience with people",
+        "body": "Let patience shape one important relationship this week."
+      },
+      "reflect_and_reassess": {
+        "title": "Reflect and reassess",
+        "body": "What evidence of growth do you notice? Where is honesty inviting a next season?"
+      }
+    }
+  }
+]

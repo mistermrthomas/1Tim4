@@ -1,0 +1,55 @@
+/**
+ * Path design system — athletic formation brand.
+ * Forged steel, leather, wood, stone. Warm antique gold accent.
+ */
+:root {
+  /* Surfaces */
+  --path-bg: #0a0a0a;
+  --path-bg-elevated: #121212;
+  --path-surface: #171717;
+  --path-surface-2: #1c1c1c;
+  --path-surface-3: #222222;
+  --path-border: rgba(212, 175, 105, 0.14);
+  --path-border-strong: rgba(212, 175, 105, 0.32);
+  --path-hairline: rgba(255, 255, 255, 0.06);
+
+  /* Accent — antique gold / bronze */
+  --path-gold: #c9a227;
+  --path-gold-bright: #d4af69;
+  --path-gold-dim: #8a7020;
+  --path-bronze: #a67c2d;
+
+  /* Text */
+  --path-text: #f4f0e6;
+  --path-text-muted: #a8a29a;
+  --path-text-dim: #6f6a63;
+
+  /* Semantic */
+  --path-danger: #b54a3a;
+  --path-success: #6b8f5e;
+
+  /* Typography */
+  --path-font-display: 'Oswald', 'Arial Narrow', Impact, sans-serif;
+  --path-font-body: 'DM Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --path-font-scripture: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+
+  /* Spacing / radius / motion */
+  --path-radius-sm: 4px;
+  --path-radius: 8px;
+  --path-radius-lg: 12px;
+  --path-space-1: 0.25rem;
+  --path-space-2: 0.5rem;
+  --path-space-3: 0.75rem;
+  --path-space-4: 1rem;
+  --path-space-5: 1.5rem;
+  --path-space-6: 2rem;
+  --path-space-7: 3rem;
+  --path-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --path-duration: 220ms;
+  --path-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --path-glow: 0 0 24px rgba(201, 162, 39, 0.12);
+
+  /* Layout */
+  --path-sidebar-width: 16.5rem;
+  --path-max-content: 72rem;
+}

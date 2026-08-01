@@ -1,0 +1,16 @@
+[
+  {
+    "id": "recovery.mobility.basic.v1",
+    "title": "Basic mobility + walk",
+    "mobilityNotes": "World’s Greatest Stretch, hip openers, easy thoracic rotations — 8–10 minutes.",
+    "walkMinutes": 15,
+    "recoveryPromptId": "evening.recovery.body.v1"
+  },
+  {
+    "id": "recovery.deload.week6.v1",
+    "title": "Week 6 deload",
+    "mobilityNotes": "Light mobility only; no progressive overload. Protect joints and sleep.",
+    "walkMinutes": 20,
+    "recoveryPromptId": "evening.recovery.body.v1"
+  }
+]

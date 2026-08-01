@@ -1,0 +1,322 @@
+.today-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.today-hero {
+  min-height: 16rem;
+  border-radius: 0;
+  margin: -1.75rem -1.1rem 0.15rem;
+}
+
+.today-hero .path-scene__img {
+  object-position: 72% center;
+}
+
+.today-hero__copy {
+  max-width: 28rem;
+  padding: 1.35rem 1.25rem 1.5rem;
+}
+
+.today-hero__title {
+  font-size: clamp(3.2rem, 11vw, 5rem);
+  margin-top: 0.35rem;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
+}
+
+.today-hero__theme {
+  margin: 0.55rem 0 0;
+  font-family: var(--path-font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--path-gold);
+  font-size: 0.95rem;
+}
+
+.today-hero__meta {
+  margin-top: 0.65rem;
+  color: var(--path-text);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.65);
+}
+
+.today-hero__coach {
+  margin: 1rem 0 0;
+  padding: 0.85rem 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--path-text-muted);
+  line-height: 1.5;
+  max-width: 26rem;
+}
+
+.today-preview__modes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  padding: 0.35rem;
+  background: var(--path-surface);
+  border: 1px solid var(--path-hairline);
+  border-radius: var(--path-radius);
+}
+
+.today-preview__mode {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--path-radius-sm);
+  padding: 0.7rem 0.35rem;
+  cursor: pointer;
+  font: inherit;
+  color: var(--path-text-muted);
+  transition:
+    background var(--path-duration) var(--path-ease),
+    border-color var(--path-duration) var(--path-ease),
+    color var(--path-duration) var(--path-ease);
+}
+
+.today-preview__mode--active {
+  border-color: var(--path-border-strong);
+  background: rgba(201, 162, 39, 0.12);
+  color: var(--path-text);
+  box-shadow: var(--path-glow);
+}
+
+.today-preview__mode-label {
+  display: block;
+  font-family: var(--path-font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.today-preview__mode-hint {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.68rem;
+  color: var(--path-text-dim);
+}
+
+.today-preview__sessions {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid var(--path-hairline);
+}
+
+.today-preview__session {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--path-text-dim);
+  padding: 0.7rem 0.1rem;
+  cursor: pointer;
+  font-family: var(--path-font-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.today-preview__session--active {
+  color: var(--path-gold);
+  border-bottom-color: var(--path-gold);
+}
+
+.today-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.today-grid__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.today-grid__side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.today-section {
+  position: relative;
+  padding: 0.85rem 0.95rem;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.today-section--scene {
+  min-height: 12rem;
+  border-color: transparent;
+  background: transparent;
+}
+
+.today-section--train.today-section--scene {
+  min-height: 16rem;
+}
+
+.today-section--train-collapsed {
+  min-height: 5.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.today-section--train-collapsed .today-section__toggle {
+  width: 100%;
+}
+
+.today-section__scene-img {
+  object-position: center right;
+}
+
+.today-section--train .today-section__scene-img {
+  filter: brightness(0.48) contrast(1.1) saturate(0.65);
+}
+
+.today-section__toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+}
+
+.today-section__toggle:disabled {
+  cursor: default;
+}
+
+.today-section__title {
+  font-family: var(--path-font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 1rem;
+}
+
+.today-section__chevron {
+  color: var(--path-gold);
+}
+
+.today-section__body {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.today-section--scene .today-section__body .path-body,
+.today-section--scene .today-section__body .path-scripture,
+.today-section--scene .today-section__list {
+  color: var(--path-text);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+}
+
+.today-section--scene .path-label {
+  color: var(--path-gold-bright);
+}
+
+.today-section__ref {
+  margin: 0;
+  font-family: var(--path-font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--path-gold);
+  font-size: 0.85rem;
+}
+
+.today-section__list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--path-text-muted);
+  line-height: 1.55;
+}
+
+.today-train__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem;
+}
+
+.today-train__stats p:last-child {
+  margin: 0.2rem 0 0;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.today-side-panel {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.today-side-panel__title {
+  font-size: 1.15rem;
+}
+
+.today-side-panel__intro {
+  margin-top: -0.25rem;
+}
+
+.today-side-panel__meters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.today-side-panel--locked {
+  opacity: 0.55;
+}
+
+.today-preview__complete {
+  width: 100%;
+}
+
+.today-preview__done {
+  margin: 0;
+  padding: 0.95rem 1rem;
+  border-radius: var(--path-radius);
+  border: 1px solid var(--path-border);
+  background: rgba(201, 162, 39, 0.08);
+  line-height: 1.5;
+}
+
+.today-preview__loading,
+.today-preview__error {
+  padding: 2rem 0;
+  color: var(--path-text-muted);
+}
+
+.today-preview__error {
+  color: var(--path-danger);
+}
+
+@media (min-width: 960px) {
+  .today-hero {
+    min-height: 22rem;
+    margin: -1.75rem -2rem 0.25rem;
+  }
+
+  .today-hero__copy {
+    max-width: 34rem;
+    padding: 2.35rem 2.25rem 2.5rem;
+  }
+
+  .today-grid:not(.today-grid--single) {
+    grid-template-columns: 1.35fr 0.85fr;
+    align-items: start;
+  }
+
+  .today-section--train.today-section--scene {
+    min-height: 18rem;
+  }
+}

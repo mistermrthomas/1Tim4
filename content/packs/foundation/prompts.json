@@ -1,0 +1,30 @@
+[
+  {
+    "id": "morning.intention.v1",
+    "stage": "morning",
+    "slot": "intention",
+    "text": "What is one clear intention for who you are becoming today?",
+    "focusKeys": ["*"]
+  },
+  {
+    "id": "midday.tested.v1",
+    "stage": "midday",
+    "slot": "tested",
+    "text": "Have you been tested in today’s focus yet?",
+    "focusKeys": ["*"]
+  },
+  {
+    "id": "evening.evidence.growth.v1",
+    "stage": "evening",
+    "slot": "evidence",
+    "text": "Where did you notice even a small sign of growth today?",
+    "focusKeys": ["*"]
+  },
+  {
+    "id": "evening.miss.v1",
+    "stage": "evening",
+    "slot": "miss",
+    "text": "Was there a moment you want to learn from — without shame?",
+    "focusKeys": ["*"]
+  }
+]

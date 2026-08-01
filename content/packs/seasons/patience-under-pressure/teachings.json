@@ -1,0 +1,38 @@
+[
+  {
+    "id": "jesus.second-mile.v1",
+    "lens": "jesus_primary",
+    "title": "The second mile",
+    "summary": "Jesus forms a people who answer pressure with surplus kindness, not retaliation.",
+    "primaryReferenceId": "matt.5.38-42",
+    "supportingReferenceIds": ["james.1.19-20", "rom.12.12"],
+    "application": "When pressed today, choose one concrete second-mile response instead of matching force with force."
+  },
+  {
+    "id": "jesus.love-enemies.v1",
+    "lens": "jesus_primary",
+    "title": "Love under hostility",
+    "summary": "Patience under pressure includes blessing those who oppose you.",
+    "primaryReferenceId": "matt.5.43-45",
+    "supportingReferenceIds": ["luke.6.27-31", "col.3.12-13"],
+    "application": "Pray once by name for someone who frustrates you before you speak to or about them."
+  },
+  {
+    "id": "jesus.gentle-yoke.v1",
+    "lens": "jesus_primary",
+    "title": "Learn from the gentle One",
+    "summary": "Jesus invites the weary to learn gentleness and humility from him.",
+    "primaryReferenceId": "matt.11.28-30",
+    "supportingReferenceIds": ["gal.5.22-23", "prov.15.1"],
+    "application": "Trade one anxious push for a quiet ask: “What would Jesus’ pace look like in this moment?”"
+  },
+  {
+    "id": "jesus.golden-rule.pressure.v1",
+    "lens": "jesus_primary",
+    "title": "Do to others under stress",
+    "summary": "The measure of love is how we treat others when we are interrupted or depleted.",
+    "primaryReferenceId": "luke.6.27-31",
+    "supportingReferenceIds": ["prov.15.1", "james.1.19-20"],
+    "application": "Give one person the response you would want if roles were reversed."
+  }
+]

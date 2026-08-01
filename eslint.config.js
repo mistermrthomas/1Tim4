@@ -19,4 +19,19 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // Phase 0: IndexedDB only via StorageAdapter implementation
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/data/storage/indexedDbAdapter.ts', 'src/data/storage/indexedDbAdapter.test.ts'],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        {
+          name: 'indexedDB',
+          message:
+            'Do not access IndexedDB directly. Use StorageAdapter via data/repositories.',
+        },
+      ],
+    },
+  },
 ])

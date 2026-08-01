@@ -1,0 +1,37 @@
+[
+  {
+    "id": "coach.daily.begin_morning.v1",
+    "intent": "daily_card",
+    "situation": ["morning_pending"],
+    "tone": "direct_encourage",
+    "template": "Let’s prepare for the day. One focus. One practice. One training step."
+  },
+  {
+    "id": "coach.reset.after_miss.v1",
+    "intent": "reset",
+    "situation": ["missed_morning", "missed_yesterday"],
+    "tone": "direct_encourage",
+    "template": "We train again today. Missing a session doesn’t erase who you are becoming. Next step: {{next_action}}."
+  },
+  {
+    "id": "coach.busy.recommend_short.v1",
+    "intent": "recommend_morning_mode",
+    "situation": ["opened_late", "busy_schedule"],
+    "tone": "practical",
+    "template": "Time looks tight. You can choose Short Morning or a Two-minute reset — the formation loop still holds."
+  },
+  {
+    "id": "coach.ask.redirect.v1",
+    "intent": "ask_coach",
+    "situation": ["soft_cap_redirect"],
+    "tone": "practical",
+    "template": "Before starting another conversation, practice today’s assignment. Or continue an existing thread if you need a follow-up."
+  },
+  {
+    "id": "coach.offline.fallback.v1",
+    "intent": "daily_card",
+    "situation": ["offline"],
+    "tone": "practical",
+    "template": "You’re offline. Today’s plan is available from your foundation pack — keep training."
+  }
+]
