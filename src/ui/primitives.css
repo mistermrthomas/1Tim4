@@ -24,7 +24,7 @@
 
 .path-btn--primary {
   background: var(--path-gold);
-  color: #12100a;
+  color: var(--path-on-gold);
   padding: 0.95rem 1.25rem;
   font-size: 0.95rem;
   box-shadow: var(--path-glow);
@@ -55,6 +55,8 @@
   background: var(--path-surface);
   border: 1px solid var(--path-hairline);
   border-radius: var(--path-radius);
+  box-shadow: var(--path-shadow);
+  backdrop-filter: blur(8px);
   transition:
     border-color var(--path-duration) var(--path-ease),
     transform var(--path-duration) var(--path-ease),
@@ -178,7 +180,7 @@
 
 .path-progress__track {
   height: 3px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--path-progress-track);
   border-radius: 999px;
   overflow: hidden;
 }

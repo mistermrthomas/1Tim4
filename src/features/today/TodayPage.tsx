@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { MorningMode } from '../../domain/formation/types';
 import { loadSeasonPack } from '../../content/bundled/loadSeasonPack';
 import type { InstalledSeasonPack } from '../../content/types';
 import { Button } from '../../ui/Button';
-import { PATH_MEDIA } from '../../ui/media';
 import { pickPreviewDay, resolvePreviewDay } from './resolvePreviewDay';
 import './TodayPage.css';
 
@@ -16,42 +15,21 @@ const MODE_HINTS: Record<MorningMode, string> = {
   two_minute: 'Reset',
 };
 
-const SCRIPTURE_EXCERPT_CHARS = 180;
-
-function excerptText(text: string, limit = SCRIPTURE_EXCERPT_CHARS): { short: string; truncated: boolean } {
+function excerptText(text: string, limit: number): { short: string; truncated: boolean } {
   const trimmed = text.trim();
   if (trimmed.length <= limit) return { short: trimmed, truncated: false };
   const cut = trimmed.slice(0, limit);
   const boundary = cut.lastIndexOf(' ');
-  return { short: `${(boundary > 80 ? cut.slice(0, boundary) : cut).trim()}…`, truncated: true };
+  return { short: `${(boundary > 60 ? cut.slice(0, boundary) : cut).trim()}…`, truncated: true };
 }
 
-function Section({
-  title,
-  open,
-  onToggle,
-  children,
-}: {
-  title: string;
-  open: boolean;
-  onToggle?: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <section className={`today-section path-surface${open ? ' today-section--open' : ''}`}>
-      <button
-        type="button"
-        className="today-section__toggle"
-        onClick={onToggle}
-        aria-expanded={open}
-        disabled={!onToggle}
-      >
-        <span className="today-section__title">{title}</span>
-        {onToggle ? <span className="today-section__chevron">{open ? '▾' : '▸'}</span> : null}
-      </button>
-      {open ? <div className="today-section__body path-fade-in">{children}</div> : null}
-    </section>
-  );
+function teachingParagraphs(text: string, max: number): string[] {
+  const parts = text
+    .split(/(?<=\.)\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length <= max) return parts;
+  return [...parts.slice(0, max - 1), parts.slice(max - 1).join(' ')];
 }
 
 export function TodayPage() {
@@ -59,8 +37,8 @@ export function TodayPage() {
   const [error, setError] = useState<string | null>(null);
   const [morningMode, setMorningMode] = useState<MorningMode>('full');
   const [session, setSession] = useState<Session>('morning');
-  const [openSection, setOpenSection] = useState('scripture');
   const [expectedTest, setExpectedTest] = useState('');
+  const [practiceNote, setPracticeNote] = useState('');
   const [intention, setIntention] = useState('');
   const [emotion, setEmotion] = useState<string | null>(null);
   const [tested, setTested] = useState<'yes' | 'not_yet' | 'unsure' | null>(null);
@@ -69,6 +47,8 @@ export function TodayPage() {
   const [middayDone, setMiddayDone] = useState(false);
   const [eveningDone, setEveningDone] = useState(false);
   const [practiceAccepted, setPracticeAccepted] = useState(false);
+  const [practiceDone, setPracticeDone] = useState(false);
+  const [scriptureReviewed, setScriptureReviewed] = useState(false);
   const [scriptureExpanded, setScriptureExpanded] = useState(false);
   const [habits, setHabits] = useState<Record<HabitKey, boolean>>({
     protein: false,
@@ -97,11 +77,6 @@ export function TodayPage() {
     return resolvePreviewDay(pack, day, morningMode);
   }, [pack, morningMode]);
 
-  const selectSession = (next: Session) => {
-    setSession(next);
-    setOpenSection(next === 'morning' ? 'scripture' : next === 'midday' ? 'check' : 'evidence');
-  };
-
   if (error) {
     return (
       <div className="today-preview">
@@ -125,19 +100,39 @@ export function TodayPage() {
         ? model.scripture.paraphrase
         : null;
 
-  const scriptureExcerpt = scriptureBody ? excerptText(scriptureBody) : null;
-  const teachingSummary = model.morning.explanation || model.teaching.summary;
-  const teachingExcerpt = excerptText(teachingSummary, 140);
+  const excerptLimit =
+    morningMode === 'two_minute' ? 110 : morningMode === 'short' ? 160 : 220;
+  const scriptureExcerpt = scriptureBody ? excerptText(scriptureBody, excerptLimit) : null;
+
+  const teachingSource = model.morning.explanation || model.teaching.summary;
+  const teachingMax =
+    morningMode === 'two_minute' ? 1 : morningMode === 'short' ? 2 : 3;
+  const teachingLines = teachingParagraphs(
+    `${model.teaching.title}. ${teachingSource}${model.teaching.application ? ` ${model.teaching.application}` : ''}`,
+    teachingMax,
+  );
+
+  const becomingLine =
+    morningMode === 'two_minute'
+      ? `${model.primaryFocus[0]?.toUpperCase()}${model.primaryFocus.slice(1)} under pressure — stay steady.`
+      : `${model.primaryFocus[0]?.toUpperCase()}${model.primaryFocus.slice(1)} is the strength to remain steady when pressure invites a reactive response.`;
 
   const canCompleteMorning =
     expectedTest.trim().length > 0 && intention.trim().length > 0 && !morningDone;
 
   const setCount = model.workoutItems.reduce((sum, item) => sum + item.sets, 0);
   const coachLead =
-    model.coachCard.length > 120 ? `${model.coachCard.slice(0, 117).trim()}…` : model.coachCard;
+    morningMode === 'two_minute'
+      ? excerptText(model.coachCard, 90).short
+      : morningMode === 'short'
+        ? excerptText(model.coachCard, 130).short
+        : model.coachCard.length > 140
+          ? `${model.coachCard.slice(0, 137).trim()}…`
+          : model.coachCard;
 
   const proteinCurrent = morningMode === 'full' ? 72 : morningMode === 'short' ? 48 : 24;
   const waterCurrent = morningMode === 'two_minute' ? 24 : 48;
+
   const habitRows: Array<{
     key: HabitKey;
     label: string;
@@ -147,7 +142,7 @@ export function TodayPage() {
     {
       key: 'protein',
       label: 'Protein',
-      detail: habits.protein ? `${proteinCurrent} / 120g` : `${proteinCurrent} / 120g`,
+      detail: `${proteinCurrent} / 120g`,
       percent: Math.round((proteinCurrent / 120) * 100),
     },
     {
@@ -161,8 +156,8 @@ export function TodayPage() {
       label: 'Movement',
       detail: model.workoutTitle
         ? habits.movement
-          ? 'Workout done'
-          : 'Workout planned'
+          ? 'Workout completed'
+          : 'Workout scheduled'
         : model.day.sessionType === 'rest_walk'
           ? 'Walk / rest day'
           : 'Movement planned',
@@ -171,9 +166,41 @@ export function TodayPage() {
     {
       key: 'recovery',
       label: 'Recovery',
-      detail: habits.recovery ? 'Sleep protected' : 'Protect sleep',
+      detail: habits.recovery ? 'Bedtime protected' : 'Protect bedtime',
       percent: habits.recovery ? 100 : 25,
     },
+  ];
+
+  const checkpointPrompt =
+    session === 'morning'
+      ? 'Where are you most likely to feel pressured today?'
+      : session === 'midday'
+        ? 'Where have you already been tested?'
+        : 'How did you respond when patience was required?';
+
+  const checkpointValue =
+    session === 'morning'
+      ? expectedTest
+      : session === 'midday'
+        ? emotion && tested
+          ? `${emotion} · ${tested.replace('_', ' ')}`
+          : ''
+        : Object.values(eveningNotes).find((v) => v.trim()) ?? '';
+
+  const setCheckpoint = (value: string) => {
+    if (session === 'morning') setExpectedTest(value);
+    else if (session === 'evening') {
+      const firstId = model.eveningPrompts[0]?.id;
+      if (firstId) setEveningNotes((prev) => ({ ...prev, [firstId]: value }));
+    }
+  };
+
+  const completionItems = [
+    { label: 'Scripture reviewed', done: scriptureReviewed || scriptureExpanded },
+    { label: 'Practice accepted', done: practiceAccepted || practiceDone },
+    { label: 'Movement', done: habits.movement || !model.workoutTitle },
+    { label: 'Water target', done: habits.water },
+    { label: 'Reflection', done: eveningDone || (session === 'evening' && Boolean(checkpointValue.trim())) },
   ];
 
   const toggleHabit = (key: HabitKey) => {
@@ -182,26 +209,20 @@ export function TodayPage() {
 
   return (
     <div className="today-preview path-fade-in">
-      <header className="today-hero path-scene">
-        <img className="path-scene__img" src={PATH_MEDIA.heroStudy} alt="" />
-        <div className="path-scene__veil" />
-        <div className="today-hero__copy path-scene__content">
-          <div className="today-hero__topline">
-            <p className="path-eyebrow">Season 01 · Week {model.week.weekIndex} of 6</p>
-            <h1 className="path-display today-hero__title">Today</h1>
-          </div>
+      <header className="today-hero">
+        <p className="path-eyebrow">Season 01 · Week {model.week.weekIndex} of 6</p>
+        <div className="today-hero__row">
+          <h1 className="path-display today-hero__title">Today</h1>
           <p className="today-hero__theme">{model.seasonTitle}</p>
-          <p className="today-hero__meta">
-            <span>{model.week.theme}</span>
-            <span className="today-hero__dot" aria-hidden>
-              ·
-            </span>
-            <span>
-              Primary {model.primaryFocus} · Secondary {model.secondaryFocus}
-            </span>
-          </p>
-          <p className="today-hero__coach">{coachLead}</p>
         </div>
+        <p className="today-hero__meta">
+          Primary {model.primaryFocus}
+          <span aria-hidden> · </span>
+          Secondary {model.secondaryFocus}
+          <span aria-hidden> · </span>
+          {model.week.theme}
+        </p>
+        <p className="today-hero__coach">{coachLead}</p>
       </header>
 
       <div className="today-preview__controls">
@@ -215,7 +236,8 @@ export function TodayPage() {
                 setMorningMode(mode);
                 setMorningDone(false);
                 setPracticeAccepted(false);
-                setOpenSection('scripture');
+                setPracticeDone(false);
+                setScriptureExpanded(false);
               }}
             >
               <span className="today-preview__mode-label">
@@ -240,7 +262,7 @@ export function TodayPage() {
               role="tab"
               aria-selected={session === key}
               className={`today-preview__session${session === key ? ' today-preview__session--active' : ''}`}
-              onClick={() => selectSession(key)}
+              onClick={() => setSession(key)}
             >
               {label}
               {done ? ' ✓' : ''}
@@ -252,106 +274,92 @@ export function TodayPage() {
       {session === 'morning' && (
         <div className="today-grid">
           <div className="today-grid__main">
-            <article className="today-practice path-surface">
+            <section className="today-block">
+              <p className="today-block__label">Becoming</p>
+              <p className="today-block__becoming">{becomingLine}</p>
+            </section>
+
+            <section className="today-practice path-surface">
               <p className="path-eyebrow">Today’s practice</p>
               <p className="today-practice__challenge">{model.assignment.prompt}</p>
-              <p className="today-practice__signal">{model.assignment.successSignal}</p>
-              <label className="path-field today-practice__field">
-                <span className="path-label">Where will this be tested?</span>
-                <input
-                  value={expectedTest}
-                  onChange={(e) => setExpectedTest(e.target.value)}
-                  placeholder="e.g. the 2pm meeting, bedtime with the kids…"
-                />
-              </label>
+              {morningMode !== 'two_minute' ? (
+                <p className="today-practice__signal">{model.assignment.successSignal}</p>
+              ) : null}
               <div className="today-practice__actions">
                 <Button
                   variant={practiceAccepted ? 'ghost' : 'primary'}
-                  className="today-practice__accept"
-                  onClick={() => setPracticeAccepted(true)}
+                  className="today-practice__btn"
                   disabled={practiceAccepted}
+                  onClick={() => {
+                    setPracticeAccepted(true);
+                    setScriptureReviewed(true);
+                  }}
                 >
-                  {practiceAccepted ? 'Challenge accepted' : 'Accept today’s challenge'}
+                  {practiceAccepted ? 'Practice accepted' : 'Accept today’s practice'}
                 </Button>
-                <button
-                  type="button"
-                  className="today-practice__link"
-                  onClick={() => setOpenSection(openSection === 'prayer' ? '' : 'prayer')}
+                <Button
+                  variant="ghost"
+                  className="today-practice__btn"
+                  disabled={!practiceAccepted || practiceDone}
+                  onClick={() => setPracticeDone(true)}
                 >
-                  Reflect tonight
-                </button>
+                  {practiceDone ? 'Marked practiced' : 'Mark as practiced'}
+                </Button>
               </div>
-            </article>
+              {morningMode === 'full' ? (
+                <label className="path-field today-practice__note">
+                  <span className="path-label">Quick note</span>
+                  <input
+                    value={practiceNote}
+                    onChange={(e) => setPracticeNote(e.target.value)}
+                    placeholder="Optional — one line for tonight"
+                  />
+                </label>
+              ) : null}
+            </section>
 
-            <Section
-              title="Becoming"
-              open={openSection === 'becoming'}
-              onToggle={() => setOpenSection(openSection === 'becoming' ? '' : 'becoming')}
-            >
-              <p className="path-body">
-                Training <strong>{model.primaryFocus}</strong> under pressure — week{' '}
-                {model.week.weekIndex}: {model.week.intent}
-              </p>
-            </Section>
-
-            <Section
-              title="Scripture & teaching"
-              open={openSection === 'scripture'}
-              onToggle={() => setOpenSection(openSection === 'scripture' ? '' : 'scripture')}
-            >
+            <section className="today-block today-block--scripture">
+              <p className="today-block__label">Scripture</p>
               <p className="today-section__ref">
                 {model.scripture.reference.canonicalLabel}
                 {model.scripture.mode === 'paraphrase' ? ' · paraphrase' : ''}
               </p>
               {scriptureExcerpt ? (
-                <>
-                  <blockquote className="path-scripture today-section__scripture">
-                    {scriptureExpanded || !scriptureExcerpt.truncated
-                      ? scriptureBody
-                      : scriptureExcerpt.short}
-                  </blockquote>
-                  {scriptureExcerpt.truncated ? (
-                    <button
-                      type="button"
-                      className="today-section__more"
-                      onClick={() => setScriptureExpanded((v) => !v)}
-                    >
-                      {scriptureExpanded ? 'Show less' : 'Continue reading'}
-                    </button>
-                  ) : null}
-                </>
+                <blockquote className="path-scripture today-section__scripture">
+                  {scriptureExpanded || !scriptureExcerpt.truncated
+                    ? scriptureBody
+                    : scriptureExcerpt.short}
+                </blockquote>
+              ) : null}
+              {scriptureExcerpt?.truncated ? (
+                <button
+                  type="button"
+                  className="today-section__more"
+                  onClick={() => {
+                    setScriptureExpanded((v) => !v);
+                    setScriptureReviewed(true);
+                  }}
+                >
+                  {scriptureExpanded ? 'Show less' : 'Read full passage'}
+                </button>
               ) : null}
               {model.scripture.mode === 'full_text' ? (
                 <p className="path-label">{model.scripture.attribution}</p>
               ) : null}
-              <p className="path-label">Teaching</p>
-              <p className="path-body">
-                <strong>{model.teaching.title}.</strong>{' '}
-                {scriptureExpanded || !teachingExcerpt.truncated
-                  ? teachingSummary
-                  : teachingExcerpt.short}
-              </p>
-              {!scriptureExpanded && teachingExcerpt.truncated ? (
-                <button
-                  type="button"
-                  className="today-section__more"
-                  onClick={() => setScriptureExpanded(true)}
-                >
-                  Continue reading
-                </button>
-              ) : null}
-            </Section>
+            </section>
 
-            <Section
-              title="Prayer & intention"
-              open={openSection === 'prayer' || openSection === 'intention'}
-              onToggle={() =>
-                setOpenSection(
-                  openSection === 'prayer' || openSection === 'intention' ? '' : 'prayer',
-                )
-              }
-            >
-              <p className="path-body">{model.intentionPrompt}</p>
+            <section className="today-block">
+              <p className="today-block__label">Teaching</p>
+              {teachingLines.map((line) => (
+                <p key={line.slice(0, 24)} className="path-body today-block__teaching">
+                  {line}
+                </p>
+              ))}
+            </section>
+
+            <section className="today-block today-block--prayer">
+              <p className="today-block__label">Prayer & intention</p>
+              <p className="today-block__prayer">{model.prayerPrompt}</p>
               <label className="path-field">
                 <span className="path-label">One intention for today</span>
                 <input
@@ -360,9 +368,7 @@ export function TodayPage() {
                   placeholder="Who am I becoming in the pressurized moment?"
                 />
               </label>
-              <p className="path-label">Prayer</p>
-              <p className="path-body">{model.prayerPrompt}</p>
-            </Section>
+            </section>
 
             {morningDone ? (
               <p className="today-preview__done">
@@ -375,7 +381,7 @@ export function TodayPage() {
                 disabled={!canCompleteMorning}
                 onClick={() => {
                   setMorningDone(true);
-                  selectSession('midday');
+                  setSession('midday');
                 }}
               >
                 Complete Morning
@@ -385,7 +391,7 @@ export function TodayPage() {
 
           <aside className="today-grid__side">
             <div className="path-surface today-side-panel">
-              <p className="path-display today-side-panel__title">Train the body</p>
+              <p className="path-display today-side-panel__title">Daily foundations</p>
               <p className="today-side-panel__intro">
                 Train the body to support the character you are building.
               </p>
@@ -416,8 +422,7 @@ export function TodayPage() {
                   </li>
                 ))}
               </ul>
-
-              {(model.workoutTitle || model.recoveryTitle) && (
+              {morningMode !== 'two_minute' && (model.workoutTitle || model.recoveryTitle) ? (
                 <div className="today-side-panel__workout">
                   <p className="path-label">Movement plan</p>
                   <p className="today-side-panel__workout-title">
@@ -428,7 +433,7 @@ export function TodayPage() {
                       {setCount || '—'} sets · {morningMode.replace('_', ' ')}
                     </p>
                   ) : null}
-                  {model.workoutItems.length ? (
+                  {morningMode === 'full' && model.workoutItems.length ? (
                     <ul className="today-section__list">
                       {model.workoutItems.map((item) => (
                         <li key={`${item.name}-${item.reps}`}>
@@ -438,44 +443,59 @@ export function TodayPage() {
                     </ul>
                   ) : null}
                 </div>
-              )}
+              ) : null}
             </div>
 
-            <div
-              className={`path-surface today-side-panel${eveningDone ? '' : ' today-side-panel--locked'}`}
-            >
-              <p className="path-display today-side-panel__title">Evening reflection</p>
-              <p className="path-body">
-                {eveningDone
-                  ? 'Reflection captured. Rest, then train again.'
-                  : 'Unlocks after midday — evidence without shame.'}
-              </p>
+            <div className="path-surface today-side-panel">
+              <p className="path-display today-side-panel__title">Today’s checkpoint</p>
+              <label className="path-field">
+                <span className="path-label">{checkpointPrompt}</span>
+                <input
+                  value={session === 'morning' ? expectedTest : checkpointValue}
+                  onChange={(e) => setCheckpoint(e.target.value)}
+                  placeholder="One concrete moment…"
+                />
+              </label>
+            </div>
+
+            <div className="path-surface today-side-panel today-side-panel--status">
+              <p className="path-display today-side-panel__title">Daily completion</p>
+              <ul className="today-completion">
+                {completionItems.map((item) => (
+                  <li
+                    key={item.label}
+                    className={`today-completion__item${item.done ? ' today-completion__item--done' : ''}`}
+                  >
+                    <span className="today-completion__mark" aria-hidden>
+                      {item.done ? '✓' : '○'}
+                    </span>
+                    <span>{item.label}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </aside>
         </div>
       )}
 
       {session === 'midday' && (
-        <div className="today-grid today-grid--single">
+        <div className="today-grid">
           <div className="today-grid__main">
-            <Section title="Form check" open>
-              <p className="path-label">Morning focus</p>
+            <section className="today-practice path-surface">
+              <p className="path-eyebrow">Form check</p>
+              <p className="today-practice__challenge">{model.assignment.prompt}</p>
+              {expectedTest.trim() ? (
+                <p className="today-practice__signal">
+                  You expected pressure in: <strong>{expectedTest.trim()}</strong>
+                </p>
+              ) : null}
               <p className="path-body">
-                {model.assignment.prompt}
-                {expectedTest.trim() ? (
-                  <>
-                    <br />
-                    You expected a test in: <strong>{expectedTest.trim()}</strong>
-                  </>
-                ) : null}
+                {model.middayPrompt ?? 'Have you been tested yet today?'}
               </p>
-              {model.middayPrompt ? (
-                <p className="path-body">{model.middayPrompt}</p>
-              ) : (
-                <p className="path-body">Have you been tested yet today?</p>
-              )}
+            </section>
 
-              <p className="path-label">How are you?</p>
+            <section className="today-block">
+              <p className="today-block__label">How are you?</p>
               <div className="path-chip-row">
                 {['Steady', 'Pressed', 'Tired', 'Hopeful'].map((e) => (
                   <button
@@ -488,8 +508,7 @@ export function TodayPage() {
                   </button>
                 ))}
               </div>
-
-              <p className="path-label">Tested?</p>
+              <p className="today-block__label">Tested?</p>
               <div className="path-chip-row">
                 {(
                   [
@@ -508,7 +527,6 @@ export function TodayPage() {
                   </button>
                 ))}
               </div>
-
               {tested === 'yes' ? (
                 <p className="path-body">
                   Course correction: be quick to hear, slow to speak. A gentle answer turns away wrath.
@@ -520,7 +538,7 @@ export function TodayPage() {
               {tested === 'unsure' ? (
                 <p className="path-body">Name one pressurized moment so far — even a small one counts.</p>
               ) : null}
-            </Section>
+            </section>
 
             {middayDone ? (
               <p className="today-preview__done">Midday check saved. Keep training your form.</p>
@@ -530,41 +548,95 @@ export function TodayPage() {
                 disabled={!emotion || !tested}
                 onClick={() => {
                   setMiddayDone(true);
-                  selectSession('evening');
+                  setSession('evening');
                 }}
               >
                 Complete Midday
               </Button>
             )}
           </div>
+
+          <aside className="today-grid__side">
+            <div className="path-surface today-side-panel">
+              <p className="path-display today-side-panel__title">Daily foundations</p>
+              <p className="today-side-panel__intro">
+                Train the body to support the character you are building.
+              </p>
+              <ul className="today-habits">
+                {habitRows.map((habit) => (
+                  <li key={habit.key} className="today-habit">
+                    <div className="today-habit__head">
+                      <div>
+                        <p className="today-habit__label">{habit.label}</p>
+                        <p className="today-habit__detail">{habit.detail}</p>
+                      </div>
+                      <button
+                        type="button"
+                        className={`today-habit__check${habits[habit.key] ? ' today-habit__check--done' : ''}`}
+                        aria-pressed={habits[habit.key]}
+                        onClick={() => toggleHabit(habit.key)}
+                      >
+                        {habits[habit.key] ? '✓' : ''}
+                      </button>
+                    </div>
+                    <div className="path-progress__track" aria-hidden>
+                      <div
+                        className="path-progress__fill"
+                        style={{ width: `${habits[habit.key] ? 100 : habit.percent}%` }}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="path-surface today-side-panel today-side-panel--status">
+              <p className="path-display today-side-panel__title">Daily completion</p>
+              <ul className="today-completion">
+                {completionItems.map((item) => (
+                  <li
+                    key={item.label}
+                    className={`today-completion__item${item.done ? ' today-completion__item--done' : ''}`}
+                  >
+                    <span className="today-completion__mark" aria-hidden>
+                      {item.done ? '✓' : '○'}
+                    </span>
+                    <span>{item.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </aside>
         </div>
       )}
 
       {session === 'evening' && (
-        <div className="today-grid today-grid--single">
+        <div className="today-grid">
           <div className="today-grid__main">
-            <Section
-              title="Evidence"
-              open={openSection === 'evidence'}
-              onToggle={() => setOpenSection(openSection === 'evidence' ? '' : 'evidence')}
-            >
+            <section className="today-practice path-surface">
+              <p className="path-eyebrow">Evidence</p>
+              <p className="today-practice__challenge">
+                Review the day without shame. Name what happened when pressure came.
+              </p>
+            </section>
+
+            <section className="today-block">
+              <p className="today-block__label">Reflection</p>
               {model.eveningPrompts.map((p) => (
                 <label key={p.id} className="path-field">
                   <span className="path-label">{p.text}</span>
                   <textarea
                     value={eveningNotes[p.id] ?? ''}
-                    onChange={(e) => setEveningNotes((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                    onChange={(e) =>
+                      setEveningNotes((prev) => ({ ...prev, [p.id]: e.target.value }))
+                    }
                     placeholder="A few honest words…"
                   />
                 </label>
               ))}
-            </Section>
+            </section>
 
-            <Section
-              title="Body & recovery"
-              open={openSection === 'body'}
-              onToggle={() => setOpenSection(openSection === 'body' ? '' : 'body')}
-            >
+            <section className="today-block">
+              <p className="today-block__label">Body & recovery</p>
               <p className="path-body">
                 Session: {model.day.sessionType}
                 {model.workoutTitle ? ` · ${model.workoutTitle}` : ''}
@@ -573,12 +645,12 @@ export function TodayPage() {
               <p className="path-body">
                 How is your energy and readiness to rest? (Preview — full logging comes next.)
               </p>
-            </Section>
+            </section>
 
             {eveningDone ? (
               <p className="today-preview__done">
-                Evening complete. Missing perfection doesn’t erase who you are becoming. Rest, then train
-                again.
+                Evening complete. Missing perfection doesn’t erase who you are becoming. Rest, then
+                train again.
               </p>
             ) : (
               <Button className="today-preview__complete" onClick={() => setEveningDone(true)}>
@@ -586,6 +658,54 @@ export function TodayPage() {
               </Button>
             )}
           </div>
+
+          <aside className="today-grid__side">
+            <div className="path-surface today-side-panel">
+              <p className="path-display today-side-panel__title">Daily foundations</p>
+              <ul className="today-habits">
+                {habitRows.map((habit) => (
+                  <li key={habit.key} className="today-habit">
+                    <div className="today-habit__head">
+                      <div>
+                        <p className="today-habit__label">{habit.label}</p>
+                        <p className="today-habit__detail">{habit.detail}</p>
+                      </div>
+                      <button
+                        type="button"
+                        className={`today-habit__check${habits[habit.key] ? ' today-habit__check--done' : ''}`}
+                        aria-pressed={habits[habit.key]}
+                        onClick={() => toggleHabit(habit.key)}
+                      >
+                        {habits[habit.key] ? '✓' : ''}
+                      </button>
+                    </div>
+                    <div className="path-progress__track" aria-hidden>
+                      <div
+                        className="path-progress__fill"
+                        style={{ width: `${habits[habit.key] ? 100 : habit.percent}%` }}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="path-surface today-side-panel today-side-panel--status">
+              <p className="path-display today-side-panel__title">Daily completion</p>
+              <ul className="today-completion">
+                {completionItems.map((item) => (
+                  <li
+                    key={item.label}
+                    className={`today-completion__item${item.done ? ' today-completion__item--done' : ''}`}
+                  >
+                    <span className="today-completion__mark" aria-hidden>
+                      {item.done ? '✓' : '○'}
+                    </span>
+                    <span>{item.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </aside>
         </div>
       )}
     </div>

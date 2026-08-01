@@ -1,39 +1,118 @@
 /**
  * Path design system — athletic formation brand.
- * Forged steel, leather, wood, stone. Warm antique gold accent.
+ * Dark: cinematic near-black. Light: crisp white / light gray.
  */
-:root {
-  /* Surfaces */
+
+:root,
+[data-path-theme='dark'] {
+  color-scheme: dark;
+
   --path-bg: #0a0a0a;
   --path-bg-elevated: #121212;
-  --path-surface: #171717;
+  --path-surface: rgba(22, 22, 22, 0.88);
+  --path-surface-solid: #161616;
   --path-surface-2: #1c1c1c;
-  --path-surface-3: #222222;
-  --path-border: rgba(212, 175, 105, 0.14);
-  --path-border-strong: rgba(212, 175, 105, 0.32);
-  --path-hairline: rgba(255, 255, 255, 0.06);
+  --path-surface-3: #242424;
+  --path-border: rgba(201, 162, 39, 0.16);
+  --path-border-strong: rgba(201, 162, 39, 0.34);
+  --path-hairline: rgba(244, 244, 244, 0.08);
 
-  /* Accent — antique gold / bronze */
   --path-gold: #c9a227;
   --path-gold-bright: #d4af69;
   --path-gold-dim: #8a7020;
   --path-bronze: #a67c2d;
 
-  /* Text */
-  --path-text: #f4f0e6;
-  --path-text-muted: #a8a29a;
-  --path-text-dim: #6f6a63;
+  --path-text: #f2f2f0;
+  --path-text-muted: #a3a39c;
+  --path-text-dim: #6f6f68;
 
-  /* Semantic */
   --path-danger: #b54a3a;
   --path-success: #6b8f5e;
 
-  /* Typography */
+  --path-scripture-bg: rgba(255, 255, 255, 0.03);
+  --path-practice-glow: 0 0 28px rgba(201, 162, 39, 0.12);
+  --path-sidebar-bg: rgba(12, 12, 12, 0.96);
+  --path-mobile-nav-bg: rgba(10, 10, 10, 0.94);
+  --path-progress-track: rgba(255, 255, 255, 0.08);
+  --path-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  --path-glow: 0 0 22px rgba(201, 162, 39, 0.1);
+  --path-on-gold: #12100a;
+
+  /* Full-bleed page backdrop */
+  --path-page-filter: brightness(0.38) contrast(1.1) saturate(0.45);
+  --path-page-veil:
+    linear-gradient(
+      180deg,
+      rgba(10, 10, 10, 0.78) 0%,
+      rgba(10, 10, 10, 0.72) 28%,
+      rgba(10, 10, 10, 0.82) 70%,
+      rgba(10, 10, 10, 0.92) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(10, 10, 10, 0.88) 0%,
+      rgba(10, 10, 10, 0.55) 48%,
+      rgba(10, 10, 10, 0.42) 100%
+    );
+}
+
+[data-path-theme='light'] {
+  color-scheme: light;
+
+  --path-bg: #f3f4f6;
+  --path-bg-elevated: #ffffff;
+  --path-surface: rgba(255, 255, 255, 0.94);
+  --path-surface-solid: #ffffff;
+  --path-surface-2: #eef0f3;
+  --path-surface-3: #e5e8ec;
+  --path-border: rgba(17, 24, 32, 0.08);
+  --path-border-strong: rgba(154, 123, 36, 0.42);
+  --path-hairline: rgba(17, 24, 32, 0.08);
+
+  --path-gold: #9a7b24;
+  --path-gold-bright: #b08e2e;
+  --path-gold-dim: #7a621c;
+  --path-bronze: #8a7020;
+
+  --path-text: #121417;
+  --path-text-muted: #5c6570;
+  --path-text-dim: #8a93a0;
+
+  --path-danger: #a13d32;
+  --path-success: #4f6d46;
+
+  --path-scripture-bg: rgba(255, 255, 255, 0.72);
+  --path-practice-glow: 0 8px 24px rgba(17, 24, 32, 0.05);
+  --path-sidebar-bg: rgba(255, 255, 255, 0.96);
+  --path-mobile-nav-bg: rgba(255, 255, 255, 0.94);
+  --path-progress-track: #e5e8ec;
+  --path-shadow: 0 8px 22px rgba(17, 24, 32, 0.05);
+  --path-glow: 0 0 0 transparent;
+  --path-on-gold: #ffffff;
+
+  /* Full-bleed page backdrop — high-key, desaturated, under white veil */
+  --path-page-filter: grayscale(0.9) brightness(1.35) contrast(0.82) saturate(0.05);
+  --path-page-veil:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(243, 244, 246, 0.86) 35%,
+      rgba(243, 244, 246, 0.9) 70%,
+      rgba(243, 244, 246, 0.94) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(255, 255, 255, 0.78) 55%,
+      rgba(243, 244, 246, 0.72) 100%
+    );
+}
+
+:root {
   --path-font-display: 'Oswald', 'Arial Narrow', Impact, sans-serif;
   --path-font-body: 'DM Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --path-font-scripture: 'Source Serif 4', Georgia, 'Times New Roman', serif;
 
-  /* Spacing / radius / motion */
   --path-radius-sm: 4px;
   --path-radius: 8px;
   --path-radius-lg: 12px;
@@ -46,10 +125,7 @@
   --path-space-7: 3rem;
   --path-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --path-duration: 220ms;
-  --path-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
-  --path-glow: 0 0 24px rgba(201, 162, 39, 0.12);
 
-  /* Layout */
   --path-sidebar-width: 16.5rem;
   --path-max-content: 72rem;
 }

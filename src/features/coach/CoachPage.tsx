@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { loadSeasonPack } from '../../content/bundled/loadSeasonPack';
 import type { InstalledSeasonPack } from '../../content/types';
-import { PATH_MEDIA } from '../../ui/media';
 import './CoachPage.css';
 
 export function CoachPage() {
@@ -30,17 +29,13 @@ export function CoachPage() {
 
   return (
     <div className="coach-preview path-fade-in">
-      <header className="coach-preview__hero path-scene">
-        <img className="path-scene__img" src={PATH_MEDIA.atmosphere} alt="" />
-        <div className="path-scene__veil" />
-        <div className="coach-preview__copy path-scene__content">
-          <p className="path-eyebrow">Coach leads</p>
-          <h1 className="path-display coach-preview__title">Coach</h1>
-          <p className="path-body coach-preview__lede">
-            About 90% proactive structured coaching. Ask Coach is a bounded 10% — never the center of
-            the product.
-          </p>
-        </div>
+      <header className="coach-preview__hero">
+        <p className="path-eyebrow">Coach leads</p>
+        <h1 className="path-display coach-preview__title">Coach</h1>
+        <p className="path-body coach-preview__lede">
+          About 90% proactive structured coaching. Ask Coach is a bounded 10% — never the center of
+          the product.
+        </p>
       </header>
 
       <p className="coach-preview__card path-surface">

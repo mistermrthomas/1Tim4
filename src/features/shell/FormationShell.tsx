@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { APP_NAME, PathMark, TAGLINE } from '../../brand';
+import { PATH_MEDIA } from '../../ui/media';
+import { readStoredTheme, storeTheme, type PathTheme } from '../../ui/theme';
 import './FormationShell.css';
 
 const TABS = [
@@ -10,8 +13,18 @@ const TABS = [
 ] as const;
 
 export function FormationShell() {
+  const [theme, setTheme] = useState<PathTheme>(() => readStoredTheme());
+
+  useEffect(() => {
+    storeTheme(theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   return (
-    <div className="formation-shell">
+    <div className="formation-shell" data-path-theme={theme}>
       <aside className="formation-shell__sidebar">
         <div className="formation-shell__brand-block">
           <PathMark className="formation-shell__mark" />
@@ -42,22 +55,53 @@ export function FormationShell() {
           <p className="path-label">Isaiah 40:31 · WEB</p>
         </figure>
 
-        <div className="formation-shell__profile">
-          <div className="formation-shell__avatar" aria-hidden>
-            M
-          </div>
-          <div>
-            <p className="formation-shell__profile-name">Preview</p>
-            <p className="path-label">Season 01 · Week 1 of 6</p>
-            <div className="path-progress__track formation-shell__season-bar" aria-hidden>
-              <div className="path-progress__fill" style={{ width: '16%' }} />
+        <div className="formation-shell__footer">
+          <button
+            type="button"
+            className="formation-shell__theme"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          >
+            <span className="formation-shell__theme-icon" aria-hidden>
+              {theme === 'dark' ? '☀' : '☾'}
+            </span>
+            <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+          </button>
+
+          <div className="formation-shell__profile">
+            <div className="formation-shell__avatar" aria-hidden>
+              M
+            </div>
+            <div>
+              <p className="formation-shell__profile-name">Preview</p>
+              <p className="path-label">Season 01 · Week 1 of 6</p>
+              <div className="path-progress__track formation-shell__season-bar" aria-hidden>
+                <div className="path-progress__fill" style={{ width: '16%' }} />
+              </div>
             </div>
           </div>
         </div>
       </aside>
 
       <main className="formation-shell__main">
-        <Outlet />
+        <div className="formation-shell__backdrop" aria-hidden>
+          <img src={PATH_MEDIA.heroStudy} alt="" />
+          <div className="formation-shell__backdrop-veil" />
+        </div>
+        <div className="formation-shell__content">
+          <div className="formation-shell__mobile-bar">
+            <button
+              type="button"
+              className="formation-shell__theme formation-shell__theme--mobile"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+            >
+              <span aria-hidden>{theme === 'dark' ? '☀' : '☾'}</span>
+              <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            </button>
+          </div>
+          <Outlet />
+        </div>
       </main>
 
       <nav className="formation-shell__mobile-nav" aria-label="Primary mobile">

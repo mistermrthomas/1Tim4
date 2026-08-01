@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { ProgressMeter } from '../../ui/ProgressMeter';
-import { PATH_MEDIA } from '../../ui/media';
 import './GrowthPage.css';
 
 const METRICS = [
@@ -16,17 +15,13 @@ const METRICS = [
 export function GrowthPage() {
   return (
     <div className="growth-preview path-fade-in">
-      <header className="growth-preview__hero path-scene">
-        <img className="path-scene__img" src={PATH_MEDIA.trainPlates} alt="" />
-        <div className="path-scene__veil" />
-        <div className="growth-preview__copy path-scene__content">
-          <p className="path-eyebrow">How am I changing?</p>
-          <h1 className="path-display growth-preview__title">Growth</h1>
-          <p className="path-body growth-preview__lede">
-            Evidence of becoming — physical capacity, recovery, character observations, and life
-            application stay distinct. No single spiritual score.
-          </p>
-        </div>
+      <header className="growth-preview__hero">
+        <p className="path-eyebrow">How am I changing?</p>
+        <h1 className="path-display growth-preview__title">Growth</h1>
+        <p className="path-body growth-preview__lede">
+          Evidence of becoming — physical capacity, recovery, character observations, and life
+          application stay distinct. No single spiritual score.
+        </p>
       </header>
 
       <ul className="growth-preview__metrics">

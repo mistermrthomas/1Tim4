@@ -1,28 +1,20 @@
 .journey-preview {
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 1rem;
 }
 
 .journey-preview__hero {
-  min-height: 15rem;
-  border-radius: 0;
-  margin: -1.75rem -1.1rem 0.15rem;
-}
-
-.journey-preview__copy {
-  max-width: 32rem;
-  padding: 1.35rem 1.25rem 1.5rem;
+  max-width: 40rem;
 }
 
 .journey-preview__title {
-  font-size: clamp(2.8rem, 9vw, 4.2rem);
-  margin-top: 0.3rem;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
+  font-size: clamp(2.4rem, 7vw, 3.6rem);
+  margin-top: 0.25rem;
 }
 
 .journey-preview__season {
-  margin: 0.5rem 0 0;
+  margin: 0.4rem 0 0;
   font-family: var(--path-font-display);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -30,31 +22,29 @@
 }
 
 .journey-preview__lede {
-  margin-top: 0.55rem;
-  color: var(--path-text);
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.6);
+  margin-top: 0.45rem;
 }
 
 .journey-preview__facts {
   margin: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.65rem;
+  gap: 0.55rem;
 }
 
 .journey-preview__facts > div {
-  padding: 0.85rem 0.9rem;
+  padding: 0.8rem 0.85rem;
 }
 
 .journey-preview__facts dd {
-  margin: 0.35rem 0 0;
+  margin: 0.3rem 0 0;
   font-weight: 600;
   text-transform: capitalize;
 }
 
 .journey-preview__h2 {
-  font-size: 1.35rem;
-  margin-top: 0.35rem;
+  font-size: 1.2rem;
+  margin-top: 0.2rem;
 }
 
 .journey-preview__weeks {
@@ -63,11 +53,11 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.55rem;
 }
 
 .journey-preview__weeks li {
-  padding: 0.95rem 1rem;
+  padding: 0.85rem 0.95rem;
 }
 
 .journey-preview__weeks strong {
@@ -85,11 +75,11 @@
 }
 
 .journey-preview__weeks .path-body {
-  margin-top: 0.4rem;
+  margin-top: 0.35rem;
 }
 
 .journey-preview__samples {
-  margin: 0.35rem 0 0;
+  margin: 0.3rem 0 0;
   font-size: 0.85rem;
   color: var(--path-text-dim);
 }
@@ -108,15 +98,4 @@
 
 .journey-preview__error {
   color: var(--path-danger);
-}
-
-@media (min-width: 960px) {
-  .journey-preview__hero {
-    min-height: 18rem;
-    margin: -1.75rem -2rem 0.25rem;
-  }
-
-  .journey-preview__copy {
-    padding: 2rem 2.25rem;
-  }
 }

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { loadSeasonPack } from '../../content/bundled/loadSeasonPack';
 import type { InstalledSeasonPack } from '../../content/types';
-import { PATH_MEDIA } from '../../ui/media';
 import './JourneyPage.css';
 
 export function JourneyPage() {
@@ -30,16 +29,12 @@ export function JourneyPage() {
 
   return (
     <div className="journey-preview path-fade-in">
-      <header className="journey-preview__hero path-scene">
-        <img className="path-scene__img" src={PATH_MEDIA.scriptureDesk} alt="" />
-        <div className="path-scene__veil" />
-        <div className="journey-preview__copy path-scene__content">
-          <p className="path-eyebrow">Where am I going?</p>
-          <h1 className="path-display journey-preview__title">Journey</h1>
-          <p className="journey-preview__season">{season.title}</p>
-          <p className="path-body journey-preview__lede">{season.theme}</p>
-          <p className="path-body journey-preview__lede">{season.summary}</p>
-        </div>
+      <header className="journey-preview__hero">
+        <p className="path-eyebrow">Where am I going?</p>
+        <h1 className="path-display journey-preview__title">Journey</h1>
+        <p className="journey-preview__season">{season.title}</p>
+        <p className="path-body journey-preview__lede">{season.theme}</p>
+        <p className="path-body journey-preview__lede">{season.summary}</p>
       </header>
 
       <dl className="journey-preview__facts">

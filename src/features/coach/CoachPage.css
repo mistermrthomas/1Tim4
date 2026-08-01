@@ -1,43 +1,32 @@
 .coach-preview {
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 1rem;
 }
 
 .coach-preview__hero {
-  min-height: 15rem;
-  border-radius: 0;
-  margin: -1.75rem -1.1rem 0.15rem;
-}
-
-.coach-preview__copy {
-  max-width: 32rem;
-  padding: 1.35rem 1.25rem 1.5rem;
+  max-width: 40rem;
 }
 
 .coach-preview__title {
-  font-size: clamp(2.8rem, 9vw, 4.2rem);
-  margin-top: 0.3rem;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
+  font-size: clamp(2.4rem, 7vw, 3.6rem);
+  margin-top: 0.25rem;
 }
 
 .coach-preview__lede {
-  margin-top: 0.65rem;
-  color: var(--path-text);
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.6);
+  margin-top: 0.5rem;
 }
 
 .coach-preview__card {
   margin: 0;
-  padding: 1.1rem 1.15rem;
+  padding: 1rem 1.05rem;
   line-height: 1.5;
   font-weight: 500;
   border-color: var(--path-border);
-  box-shadow: var(--path-glow);
 }
 
 .coach-preview__h2 {
-  font-size: 1.35rem;
+  font-size: 1.2rem;
 }
 
 .coach-preview__intents {
@@ -45,11 +34,11 @@
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 0.55rem;
+  gap: 0.5rem;
 }
 
 .coach-preview__intents li {
-  padding: 0.85rem 0.95rem;
+  padding: 0.8rem 0.9rem;
 }
 
 .coach-preview__intents strong {
@@ -67,7 +56,7 @@
 }
 
 .coach-preview__intents p {
-  margin: 0.35rem 0 0;
+  margin: 0.3rem 0 0;
   font-size: 0.9rem;
   color: var(--path-text-muted);
 }
@@ -89,15 +78,6 @@
 }
 
 @media (min-width: 960px) {
-  .coach-preview__hero {
-    min-height: 18rem;
-    margin: -1.75rem -2rem 0.25rem;
-  }
-
-  .coach-preview__copy {
-    padding: 2rem 2.25rem;
-  }
-
   .coach-preview__intents {
     grid-template-columns: 1fr 1fr;
   }
