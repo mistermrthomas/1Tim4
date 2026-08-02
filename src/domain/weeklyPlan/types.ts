@@ -226,8 +226,10 @@ export interface WorkDailyAssignment {
   title: string;
   outcomeId: string | null;
   priority: number;
-  status: 'open' | 'done' | 'deferred' | 'removed';
+  status: 'open' | 'done' | 'deferred' | 'carried_forward' | 'removed';
   notes: string;
+  /** Brief reason when deferred or carried forward. */
+  dispositionNote?: string;
   optional: boolean;
 }
 

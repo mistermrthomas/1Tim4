@@ -1732,3 +1732,127 @@
     top: 1.25rem;
   }
 }
+
+/* —— Complete today —— */
+.today-complete-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--path-gold) 55%, transparent);
+  color: var(--path-gold);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.complete-today {
+  padding: 1.1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+}
+
+.complete-today--ready {
+  border-color: color-mix(in srgb, var(--path-gold) 45%, var(--path-border-strong));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--path-gold) 18%, transparent);
+}
+
+.complete-today--done {
+  border-color: color-mix(in srgb, var(--path-gold) 50%, var(--path-border-strong));
+}
+
+.complete-today__seal {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--path-gold);
+  color: var(--path-gold);
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.complete-today__body {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.45;
+  color: var(--path-text);
+}
+
+.complete-today__missing,
+.complete-today__note,
+.complete-today__time {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--path-text-dim);
+}
+
+.complete-today__note {
+  color: var(--path-text-muted);
+}
+
+.complete-today__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.complete-today__summary {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.complete-today__summary li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.complete-today__summary strong {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--path-text-dim);
+}
+
+.complete-today__reopen {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--path-text-dim);
+  font: inherit;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  align-self: flex-start;
+  padding: 0;
+  margin-top: 0.25rem;
+}
+
+.complete-today__next-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  color: var(--path-gold);
+}
+
+.today-work__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem 0.85rem;
+}
+
+.today-work__row select {
+  min-width: 10rem;
+}

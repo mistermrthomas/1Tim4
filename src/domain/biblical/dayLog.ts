@@ -2,10 +2,15 @@ import { todayDateKey } from '../physical/store';
 
 const KEY = 'path-biblical-day-v1';
 
+export type ConcreteActionDisposition = 'unset' | 'completed' | 'not_completed' | 'carried_forward';
+
 export interface BiblicalDayLog {
   dateKey: string;
   practiceAccepted: boolean;
   practiceDone: boolean;
+  /** Honest outcome for today’s concrete action (required to close the day). */
+  concreteActionStatus: ConcreteActionDisposition;
+  concreteActionNote: string;
   expectedTest: string;
   intention: string;
   morningDone: boolean;
@@ -33,26 +38,40 @@ function writeStore(store: Store): void {
 }
 
 export function loadBiblicalDay(dateKey = todayDateKey()): BiblicalDayLog {
-  return (
-    readStore()[dateKey] ?? {
-      dateKey,
-      practiceAccepted: false,
-      practiceDone: false,
-      expectedTest: '',
-      intention: '',
-      morningDone: false,
-      middayDone: false,
-      eveningDone: false,
-      emotion: null,
-      tested: null,
-      eveningNotes: {},
-      scriptureReviewed: false,
-    }
-  );
+  const stored = readStore()[dateKey];
+  const defaults: BiblicalDayLog = {
+    dateKey,
+    practiceAccepted: false,
+    practiceDone: false,
+    concreteActionStatus: 'unset',
+    concreteActionNote: '',
+    expectedTest: '',
+    intention: '',
+    morningDone: false,
+    middayDone: false,
+    eveningDone: false,
+    emotion: null,
+    tested: null,
+    eveningNotes: {},
+    scriptureReviewed: false,
+  };
+  if (!stored) return defaults;
+  return {
+    ...defaults,
+    ...stored,
+    dateKey,
+    concreteActionStatus:
+      stored.concreteActionStatus ?? (stored.practiceDone ? 'completed' : 'unset'),
+    concreteActionNote: stored.concreteActionNote ?? '',
+  };
 }
 
 export function saveBiblicalDay(log: BiblicalDayLog): void {
   const store = readStore();
-  store[log.dateKey] = log;
+  store[log.dateKey] = {
+    ...log,
+    concreteActionStatus: log.concreteActionStatus ?? 'unset',
+    concreteActionNote: log.concreteActionNote ?? '',
+  };
   writeStore(store);
 }

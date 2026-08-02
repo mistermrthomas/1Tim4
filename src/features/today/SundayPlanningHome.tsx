@@ -2,6 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { addDays, nextSundayStart, toLocalDateKey } from '../../domain/calendar/week';
 import { todayDateKey } from '../../domain/physical/store';
+import {
+  completeDay,
+  evaluatePlanningDayEligibility,
+  healthTargetsSnapshot,
+  loadDayCompletion,
+  reopenDay,
+} from '../../domain/today/dayCompletion';
 import { activateAndSyncWeeklyPlan } from '../../domain/weeklyPlan/activate';
 import { normalizePhysicalDay } from '../../domain/weeklyPlan/physicalWorkouts';
 import {
@@ -13,6 +20,7 @@ import {
 import { ensureWeeklyPlan, saveWeeklyPlan } from '../../domain/weeklyPlan/store';
 import type { WeeklyPlan } from '../../domain/weeklyPlan/types';
 import { Button } from '../../ui/Button';
+import { CompleteTodayCard } from './CompleteTodayCard';
 import { TomorrowPreview } from './TomorrowPreview';
 
 function formatSundayHeader(dateKey: string): string {
@@ -95,6 +103,8 @@ export function SundayPlanningHome() {
   const [error, setError] = useState<string | null>(null);
   const [healthOpen, setHealthOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [dayCompletion, setDayCompletion] = useState(() => loadDayCompletion(todayDateKey()));
+  const [completingPlanning, setCompletingPlanning] = useState(false);
 
   const reload = useCallback(async () => {
     try {
@@ -111,9 +121,12 @@ export function SundayPlanningHome() {
 
   useEffect(() => {
     void reload();
+    setDayCompletion(loadDayCompletion(todayDateKey()));
   }, [reload]);
 
   const setup = useMemo(() => deriveWeeklySetup(plan), [plan]);
+  const planningEval = useMemo(() => evaluatePlanningDayEligibility(plan), [plan]);
+  const planningClosed = dayCompletion.status === 'completed';
 
   const activate = async (allowIncomplete: boolean) => {
     if (!plan) return;
@@ -175,6 +188,9 @@ export function SundayPlanningHome() {
         </p>
         {setup.isActive && theme ? (
           <p className="sunday-home__theme">{theme}</p>
+        ) : null}
+        {planningClosed ? (
+          <span className="today-complete-badge">✓ Planning complete</span>
         ) : null}
       </header>
 
@@ -262,15 +278,97 @@ export function SundayPlanningHome() {
               </ul>
             </section>
           ) : null}
+
+          {setup.isActive ? (
+            <CompleteTodayCard
+              variant="planning_day"
+              eligible={planningEval.eligible}
+              missing={planningEval.missing}
+              completed={planningClosed}
+              record={dayCompletion}
+              summary={
+                dayCompletion.summary ??
+                (() => {
+                  const health = healthTargetsSnapshot();
+                  return {
+                    biblicalPracticeCompleted: true,
+                    concreteActionStatus: 'completed' as const,
+                    workoutStatus: 'not_scheduled' as const,
+                    workStatus: 'not_scheduled' as const,
+                    healthTargetsReached: health.reached,
+                    healthTargetsTotal: health.total,
+                    unfinishedItems: [] as string[],
+                  };
+                })()
+              }
+              closureQuality={dayCompletion.closureQuality ?? 'completed_as_planned'}
+              completing={completingPlanning}
+              onComplete={() => {
+                setCompletingPlanning(true);
+                const health = healthTargetsSnapshot();
+                setDayCompletion(
+                  completeDay({
+                    date: todayDateKey(),
+                    completionType: 'planning_day',
+                    summary: {
+                      biblicalPracticeCompleted: true,
+                      concreteActionStatus: 'completed',
+                      workoutStatus: 'not_scheduled',
+                      workStatus: 'not_scheduled',
+                      healthTargetsReached: health.reached,
+                      healthTargetsTotal: health.total,
+                      unfinishedItems: [],
+                    },
+                    closureQuality: 'completed_as_planned',
+                  }),
+                );
+                setMessage(
+                  'Your week is ready. Review Monday, prepare what you need, and close Path until tomorrow.',
+                );
+                setCompletingPlanning(false);
+              }}
+              onReopen={
+                planningClosed
+                  ? () => {
+                      if (
+                        !window.confirm(
+                          'Reopen planning day? Your activated week stays active.',
+                        )
+                      ) {
+                        return;
+                      }
+                      setDayCompletion(reopenDay(todayDateKey()));
+                    }
+                  : undefined
+              }
+            />
+          ) : null}
         </div>
 
         <aside className="sunday-home__aside">
-          <TomorrowPreview
-            plan={plan}
-            targetDate={mondayKey}
-            showPrepare
-            planLink={weekPlanPath(weekStart)}
-          />
+          {(planningClosed || setup.isActive) && (
+            <>
+              {planningClosed ? (
+                <p className="complete-today__next-note">
+                  Tomorrow is ready. Prepare what you need, then close Path until Monday.
+                </p>
+              ) : null}
+              <TomorrowPreview
+                plan={plan}
+                targetDate={mondayKey}
+                showPrepare={planningClosed}
+                planLink={weekPlanPath(weekStart)}
+              />
+            </>
+          )}
+          {!setup.isActive ? (
+            <TomorrowPreview
+              plan={plan}
+              targetDate={mondayKey}
+              showPrepare={false}
+              planLink={weekPlanPath(weekStart)}
+            />
+          ) : null}
 
           <details
             className="sunday-health path-surface"
