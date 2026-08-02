@@ -4,10 +4,20 @@ Path turns **Sunday sermon notes** into an editable Monday–Friday biblical pla
 
 ## Enable
 
-1. Set `OPENAI_API_KEY` in `.env.local` (local) and Vercel → **Settings → Environment Variables** (production).
-2. Optional: `OPENAI_MODEL` — must be one of `gpt-4o-mini`, `gpt-4o`, `gpt-4.1-mini`, `gpt-4.1` (default `gpt-4o-mini`).
-3. Redeploy after adding env vars on Vercel.
-4. Local API routes: use `npx vercel dev` (plain `npm run dev` does not serve `/api`).
+Path accepts either:
+
+| Setup | Env var | Notes |
+|-------|---------|--------|
+| Direct OpenAI | `OPENAI_API_KEY=sk-…` | Calls `api.openai.com` |
+| Vercel AI Gateway | `OPENAI_API_KEY=vck-…` **or** `AI_GATEWAY_API_KEY=vck-…` | Calls `https://ai-gateway.vercel.sh/v1` automatically when the key starts with `vck_` |
+
+1. Set the key in `.env.local` (local) and Vercel → **Settings → Environment Variables** (production).
+2. Optional: `OPENAI_MODEL` — `gpt-4o-mini` (default), `gpt-4o`, `gpt-4.1-mini`, or `gpt-4.1`. Through the gateway these become `openai/gpt-4o-mini`, etc.
+3. Optional override: `OPENAI_BASE_URL` if you need a custom OpenAI-compatible endpoint.
+4. Redeploy after changing env vars on Vercel.
+5. Local API routes: use `npx vercel dev` (plain `npm run dev` does not serve `/api`).
+
+**Important:** A key that is “Active” in the Vercel AI Gateway UI only works if Path routes through the gateway. A `vck_…` key will fail if sent to OpenAI’s direct API. This app auto-detects `vck_` keys.
 
 Never put the key in client code, IndexedDB, Settings UI, or a `VITE_` variable.
 

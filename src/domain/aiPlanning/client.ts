@@ -90,22 +90,26 @@ export async function requestSermonPlan(body: SermonPlanRequest): Promise<{
 export async function testAiConnection(): Promise<{
   status: 'connected' | 'missing_configuration' | 'failed';
   model?: string;
+  via?: string;
+  code?: string;
 }> {
   try {
     const res = await fetch('/api/ai/connection-test', { method: 'POST' });
     const payload = (await res.json().catch(() => ({}))) as {
       status?: string;
       model?: string;
+      via?: string;
+      code?: string;
     };
     if (payload.status === 'connected') {
-      return { status: 'connected', model: payload.model };
+      return { status: 'connected', model: payload.model, via: payload.via };
     }
     if (payload.status === 'missing_configuration' || res.status === 503) {
-      return { status: 'missing_configuration' };
+      return { status: 'missing_configuration', code: payload.code };
     }
-    return { status: 'failed' };
+    return { status: 'failed', code: payload.code };
   } catch {
-    return { status: 'failed' };
+    return { status: 'failed', code: 'NETWORK' };
   }
 }
 

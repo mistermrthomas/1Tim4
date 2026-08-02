@@ -6,7 +6,7 @@ import {
   sermonPlanJsonSchema,
   type SermonPlan,
 } from '../../shared/sermonPlanSchema';
-import { createOpenAIClient } from './openaiClient';
+import { createOpenAIClient, resolveOpenAIModelId } from './openaiClient';
 
 export interface SermonPlanGenerateInput {
   sermonTitle: string;
@@ -81,7 +81,9 @@ export class OpenAISermonPlanGenerator implements SermonPlanGenerator {
   constructor(private readonly client: OpenAI) {}
 
   async generate(input: SermonPlanGenerateInput): Promise<SermonPlanGenerateResult> {
-    const model = resolveSermonPlanModel(input.model, process.env.OPENAI_MODEL);
+    const model = resolveOpenAIModelId(
+      resolveSermonPlanModel(input.model, process.env.OPENAI_MODEL),
+    );
     const system = (input.planningPrompt?.trim() || DEFAULT_PLANNING_PROMPT).slice(0, 12_000);
 
     const response = await this.client.responses.create({

@@ -75,16 +75,25 @@ export function SettingsPage() {
     const result = await testAiConnection();
     setTesting(false);
     if (result.status === 'connected') {
-      setMessage(`Connected${result.model ? ` · ${result.model}` : ''}`);
+      const via = result.via === 'vercel-ai-gateway' ? ' · Vercel AI Gateway' : '';
+      setMessage(`Connected${result.model ? ` · ${result.model}` : ''}${via}`);
       return;
     }
     if (result.status === 'missing_configuration') {
       setError(
-        'AI planning has not been configured. Add OPENAI_API_KEY to the server environment. You can still build the week manually.',
+        'AI planning has not been configured. Add OPENAI_API_KEY (sk-… or vck-…) to the server environment. You can still build the week manually.',
       );
       return;
     }
-    setError('Connection failed. Check the server configuration and try again.');
+    if (result.code === 'AUTH_FAILED') {
+      setError(
+        'Authentication failed. A Vercel AI Gateway key (vck_…) must be routed through the gateway — redeploy the latest Path build. A direct OpenAI key should start with sk-.',
+      );
+      return;
+    }
+    setError(
+      'Connection failed. Confirm OPENAI_API_KEY on Vercel, then redeploy. Gateway keys (vck_…) need the latest Path build; OpenAI keys start with sk-.',
+    );
   };
 
   return (
