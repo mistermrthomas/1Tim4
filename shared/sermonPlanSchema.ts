@@ -19,9 +19,52 @@ export const sermonPlanDaySchema = z.object({
 
 export const sermonPlanSaturdaySchema = z.object({
   sabbathFocus: nonEmpty(12, 320),
-  reflectionQuestions: z.array(nonEmpty(8, 280)).min(3).max(8),
+  reflectionQuestions: z.array(nonEmpty(8, 280)).min(1).max(8),
   carryForwardQuestion: nonEmpty(12, 280),
 });
+
+/** Soft-repair common AI underfills before Zod validation. */
+export function coerceSermonPlanCandidate(raw: unknown): unknown {
+  if (!raw || typeof raw !== 'object') return raw;
+  const plan = { ...(raw as Record<string, unknown>) };
+
+  const saturdayRaw = plan.saturday;
+  if (saturdayRaw && typeof saturdayRaw === 'object') {
+    const saturday = { ...(saturdayRaw as Record<string, unknown>) };
+    const existing = Array.isArray(saturday.reflectionQuestions)
+      ? saturday.reflectionQuestions
+          .map((q) => String(q ?? '').trim())
+          .filter((q) => q.length >= 8)
+      : [];
+    const focus = String(saturday.sabbathFocus ?? plan.centralTruth ?? 'this week’s sermon').trim();
+    const pads = [
+      `Where did you notice “${focus.slice(0, 80)}” showing up this week?`,
+      'Where did you resist or struggle to live this out?',
+      'What one practice from this week should continue into next week?',
+    ];
+    const questions = [...existing];
+    for (const pad of pads) {
+      if (questions.length >= 3) break;
+      if (!questions.some((q) => q.toLowerCase() === pad.toLowerCase())) {
+        questions.push(pad.slice(0, 280));
+      }
+    }
+    saturday.reflectionQuestions = questions.slice(0, 8);
+    plan.saturday = saturday;
+  }
+
+  if (Array.isArray(plan.watchFor)) {
+    plan.watchFor = plan.watchFor
+      .map((item) => String(item ?? '').trim())
+      .filter((item) => item.length >= 4)
+      .slice(0, 6);
+  }
+  if (!Array.isArray(plan.watchFor) || plan.watchFor.length === 0) {
+    plan.watchFor = ['hurrying past the sermon’s concrete call'];
+  }
+
+  return plan;
+}
 
 export const sermonPlanSchema = z
   .object({
@@ -124,7 +167,12 @@ export const sermonPlanJsonSchema = {
       required: ['sabbathFocus', 'reflectionQuestions', 'carryForwardQuestion'],
       properties: {
         sabbathFocus: { type: 'string' },
-        reflectionQuestions: { type: 'array', items: { type: 'string' } },
+        reflectionQuestions: {
+          type: 'array',
+          minItems: 3,
+          maxItems: 8,
+          items: { type: 'string' },
+        },
         carryForwardQuestion: { type: 'string' },
       },
     },
@@ -132,9 +180,9 @@ export const sermonPlanJsonSchema = {
 } as const;
 
 export function parseSermonPlan(data: unknown): SermonPlan {
-  return sermonPlanSchema.parse(data);
+  return sermonPlanSchema.parse(coerceSermonPlanCandidate(data));
 }
 
 export function safeParseSermonPlan(data: unknown) {
-  return sermonPlanSchema.safeParse(data);
+  return sermonPlanSchema.safeParse(coerceSermonPlanCandidate(data));
 }

@@ -17,6 +17,8 @@ Thursday — apply the teaching in relationships, leadership, work, or responsib
 Friday — take a concrete act of obedience and evaluate the week
 Saturday — rest, reflect, and identify what should carry forward
 
+For Saturday, include at least three distinct reflectionQuestions plus one carryForwardQuestion.
+
 Keep the morning portion achievable in 10–15 minutes. Midday and evening checkpoints should be brief. Prefer one meaningful practice over several shallow tasks.
 
 Stay faithful to Scripture. Do not invent quotations or claim divine revelation. When the sermon notes are incomplete or ambiguous, make cautious suggestions and identify any inference.

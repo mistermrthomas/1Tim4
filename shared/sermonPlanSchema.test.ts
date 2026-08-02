@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { safeParseSermonPlan } from './sermonPlanSchema';
+import { coerceSermonPlanCandidate, safeParseSermonPlan } from './sermonPlanSchema';
 
 function samplePlan() {
   return {
@@ -48,5 +48,13 @@ describe('sermonPlanSchema', () => {
     plan.days[0]!.day = 'tuesday';
     const result = safeParseSermonPlan(plan);
     expect(result.success).toBe(false);
+  });
+
+  it('coerces short Saturday reflection lists up to three questions', () => {
+    const plan = samplePlan();
+    plan.saturday.reflectionQuestions = ['What stayed with me this week?'];
+    const coerced = coerceSermonPlanCandidate(plan) as typeof plan;
+    expect(coerced.saturday.reflectionQuestions.length).toBeGreaterThanOrEqual(3);
+    expect(safeParseSermonPlan(plan).success).toBe(true);
   });
 });

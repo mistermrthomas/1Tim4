@@ -150,6 +150,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'UNKNOWN';
+    const name = err instanceof Error ? err.name : '';
     if (message === 'TIMEOUT') {
       res.status(504).json({ error: 'AI request timed out. Try again.', code: 'TIMEOUT' });
       return;
@@ -165,9 +166,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(429).json({ error: 'Rate limited. Wait a moment and try again.', code: 'RATE_LIMIT' });
       return;
     }
-    // Zod / validation failures
-    if (message.includes('Zod') || message.includes('Validation') || message.includes('Expected')) {
-      console.error('sermon-plan validation failed');
+    // Zod issues often stringify as a JSON array of { path, message, ... }
+    const looksLikeZod =
+      name === 'ZodError' ||
+      (message.trimStart().startsWith('[') && message.includes('"path"'));
+    if (looksLikeZod) {
+      console.error('sermon-plan validation failed', message.slice(0, 500));
       res.status(502).json({
         error: 'The AI returned an invalid structured plan. Try again.',
         code: 'INVALID_AI_OUTPUT',
