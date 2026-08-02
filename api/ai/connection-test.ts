@@ -1,5 +1,5 @@
-import { resolveSermonPlanModel } from '../../shared/aiModels';
-import { createOpenAIClient, resolveOpenAIModelId } from '../_lib/openaiClient';
+import { resolveSermonPlanModel } from '../../shared/aiModels.js';
+import { createOpenAIClient, resolveOpenAIModelId } from '../_lib/openaiClient.js';
 
 type VercelRequest = { method?: string };
 type VercelResponse = {

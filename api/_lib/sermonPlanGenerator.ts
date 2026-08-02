@@ -1,12 +1,12 @@
 import type OpenAI from 'openai';
-import { resolveSermonPlanModel } from '../../shared/aiModels';
-import { DEFAULT_PLANNING_PROMPT } from '../../shared/defaultPlanningPrompt';
+import { resolveSermonPlanModel } from '../../shared/aiModels.js';
+import { DEFAULT_PLANNING_PROMPT } from '../../shared/defaultPlanningPrompt.js';
 import {
   parseSermonPlan,
   sermonPlanJsonSchema,
   type SermonPlan,
-} from '../../shared/sermonPlanSchema';
-import { createOpenAIClient, resolveOpenAIModelId } from './openaiClient';
+} from '../../shared/sermonPlanSchema.js';
+import { createOpenAIClient, resolveOpenAIModelId } from './openaiClient.js';
 
 export interface SermonPlanGenerateInput {
   sermonTitle: string;

@@ -1,6 +1,6 @@
-import { isAllowedSermonPlanModel } from '../../shared/aiModels';
-import { createSermonPlanGenerator } from '../_lib/sermonPlanGenerator';
-import { safeParseSermonPlan, type SermonPlan } from '../../shared/sermonPlanSchema';
+import { isAllowedSermonPlanModel } from '../../shared/aiModels.js';
+import { safeParseSermonPlan, type SermonPlan } from '../../shared/sermonPlanSchema.js';
+import { createSermonPlanGenerator } from '../_lib/sermonPlanGenerator.js';
 
 const MAX_NOTES = 20_000;
 const MAX_CONTEXT = 4_000;
