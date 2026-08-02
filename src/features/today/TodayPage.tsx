@@ -10,6 +10,8 @@ import {
 } from '../../domain/calendar/week';
 import { todayDateKey } from '../../domain/physical/store';
 import { buildDailyBrief, resolveActivePlan } from '../../domain/training/activePlan';
+import { getActiveFormationPlanForDate } from '../../domain/churchNotes/store';
+import type { WeeklyFormationPlan } from '../../domain/churchNotes/types';
 import { getActivePlanForDate, saveWeeklyPlan } from '../../domain/weeklyPlan/store';
 import type { WeeklyPlan, WorkDailyAssignment } from '../../domain/weeklyPlan/types';
 import { loadSeasonPack } from '../../content/bundled/loadSeasonPack';
@@ -92,6 +94,7 @@ export function TodayPage() {
   const [scriptureReviewed, setScriptureReviewed] = useState(false);
   const [biblicalReady, setBiblicalReady] = useState(false);
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan | null>(null);
+  const [formationPlan, setFormationPlan] = useState<WeeklyFormationPlan | null>(null);
   const dateKey = todayDateKey();
   const sabbath = isSaturdaySabbath();
   const sundayKickoff = isSundayPlanningDay();
@@ -118,6 +121,13 @@ export function TodayPage() {
       })
       .catch(() => {
         if (!cancelled) setWeeklyPlan(null);
+      });
+    getActiveFormationPlanForDate(dateKey)
+      .then((plan) => {
+        if (!cancelled) setFormationPlan(plan);
+      })
+      .catch(() => {
+        if (!cancelled) setFormationPlan(null);
       });
     return () => {
       cancelled = true;
@@ -326,9 +336,41 @@ export function TodayPage() {
                 <Link to="/plan">Manage plan</Link>
                 <span aria-hidden> · </span>
                 <Link to={startNextWeekPath()}>Weekly plan</Link>
+                <span aria-hidden> · </span>
+                <Link to="/church-notes">Church notes</Link>
               </p>
             </header>
           </div>
+
+          {formationPlan ? (
+            <section className="today-week-banner path-surface" aria-label="Sermon formation">
+              <p className="today-panel__label">This week’s theme</p>
+              <p className="path-body">{formationPlan.weeklyTheme}</p>
+              {(() => {
+                const day = formationPlan.dailyPlan.find((d) => d.date === dateKey);
+                if (!day) return null;
+                return (
+                  <>
+                    <p className="today-week-banner__note">
+                      <strong>Before you read</strong> — {day.beforeReadingPrompt}
+                    </p>
+                    <p className="today-week-banner__note">
+                      <strong>After you read</strong> — {day.reflectionQuestion}
+                    </p>
+                    {formationPlan.memoryVerse ? (
+                      <p className="today-week-banner__note">
+                        Memory verse · {formationPlan.memoryVerse}
+                      </p>
+                    ) : null}
+                  </>
+                );
+              })()}
+              <p className="today-week-banner__note">
+                Formation layer only — your Bible-reading plan stays intact. Read Scripture, then
+                close the app.
+              </p>
+            </section>
+          ) : null}
 
           {sundayKickoff && (!weeklyPlan || weeklyPlan.status !== 'active') ? (
             <section className="today-week-banner path-surface">
@@ -338,7 +380,10 @@ export function TodayPage() {
                 outcomes for the week ahead.
               </p>
               <div className="today-week-banner__actions">
-                <Link className="path-btn path-btn--primary" to={startNextWeekPath()}>
+                <Link className="path-btn path-btn--primary" to="/church-notes">
+                  Capture church notes
+                </Link>
+                <Link className="path-btn path-btn--ghost" to={startNextWeekPath()}>
                   Build this week’s plan
                 </Link>
                 <Link className="path-btn path-btn--ghost" to={`/plan/week/${followingSundayStart()}`}>

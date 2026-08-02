@@ -113,7 +113,7 @@ Without these variables the app runs **local-only** (still fully usable).
 
 ### Optional: AI assessment guidance
 
-Set `OPENAI_API_KEY` on Vercel (server-side only). See [docs/AI_ASSESSMENT.md](docs/AI_ASSESSMENT.md). Without it, intake uses the built-in rule-based planner.
+Set `OPENAI_API_KEY` on Vercel (server-side only). See [docs/AI_ASSESSMENT.md](docs/AI_ASSESSMENT.md) and [docs/CHURCH_NOTES.md](docs/CHURCH_NOTES.md). Without it, intake uses the built-in rule-based planner and Church Notes analysis returns 503 (raw notes stay saved locally).
 
 ### Optional: trail push reminders
 

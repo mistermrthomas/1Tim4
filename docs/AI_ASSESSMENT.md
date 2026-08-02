@@ -4,6 +4,12 @@ Uses the same `OPENAI_API_KEY` on Vercel for both features below.
 
 ---
 
+## Church Notes (sermon review)
+
+Paste messy sermon notes at `/church-notes`, review structured AI output, then approve a seven-day formation layer. Uses `POST /api/church-notes/analyze` (OpenAI Responses API). Disable with `VITE_CHURCH_NOTES_AI=false`. See [CHURCH_NOTES.md](./CHURCH_NOTES.md).
+
+---
+
 ## Go deeper (passage study)
 
 On **training verse**, **Prepare standout verse**, **Live**, and **assessment results**, tap **Go deeper** for:
@@ -40,6 +46,7 @@ If AI is unavailable, the existing **rule-based** planner runs automatically (sa
 |----------|----------|---------|
 | `OPENAI_API_KEY` | Yes | `sk-…` from [OpenAI](https://platform.openai.com/api-keys) |
 | `OPENAI_MODEL` | No | `gpt-4o-mini` (default) |
+| `SUPABASE_URL` / `SUPABASE_ANON_KEY` | For Church Notes auth | Server JWT verification (falls back to `VITE_` names) |
 
 3. **Redeploy** production.
 

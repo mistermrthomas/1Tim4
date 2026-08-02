@@ -146,7 +146,9 @@ export function WeeklyPlanWorkspace() {
         <section className="weekly-plan__section path-surface">
           <h2 className="weekly-plan__h2">1. Church notes</h2>
           <p className="weekly-plan__note">
-            Paste or write anything you captured during church. Rough notes are fine.
+            Paste or write anything you captured during church. Rough notes are fine. For AI-assisted
+            sermon review and a formation layer, use{' '}
+            <Link to="/church-notes">Church Notes</Link>.
           </p>
           <div className="weekly-plan__grid">
             <label className="path-field">
@@ -303,7 +305,9 @@ export function WeeklyPlanWorkspace() {
           <h2 className="weekly-plan__h2">3. Biblical plan</h2>
           <p className="weekly-plan__note">
             Review all generated content against Scripture and your own judgment before activating
-            the plan. AI synthesis arrives in a later pass — this draft is editable now.
+            the plan. Prefer{' '}
+            <Link to="/church-notes">Church Notes AI</Link> for structured sermon analysis — this
+            draft remains fully editable.
           </p>
           <div className="weekly-plan__grid">
             <label className="path-field weekly-plan__span-2">

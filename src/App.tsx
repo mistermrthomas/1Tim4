@@ -25,6 +25,7 @@ import { GrowthPage } from './features/growth/GrowthPage';
 import { CoachPage } from './features/coach/CoachPage';
 import { PlanBuilderPage } from './features/plan/PlanBuilderPage';
 import { WeeklyPlanWorkspace } from './features/weeklyPlan/WeeklyPlanWorkspace';
+import { ChurchNotesPage } from './features/churchNotes/ChurchNotesPage';
 import './styles/global.css';
 import './features/shell/FormationShell.css';
 import './styles/desktop.css';
@@ -102,6 +103,8 @@ export default function App() {
               <Route path="/plan" element={<PlanBuilderPage />} />
               <Route path="/plan/week" element={<WeeklyPlanWorkspace />} />
               <Route path="/plan/week/:weekStart" element={<WeeklyPlanWorkspace />} />
+              <Route path="/church-notes" element={<ChurchNotesPage />} />
+              <Route path="/church-notes/:noteId" element={<ChurchNotesPage />} />
               <Route path="/preview" element={<Navigate to="/today" replace />} />
             </Route>
             <Route path="*" element={<AppRoutes cloudReloadKey={cloudReloadKey} />} />
