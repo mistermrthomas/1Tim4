@@ -390,17 +390,29 @@ export function TodayActiveWeek({
                       />
                     </label>
                     <SessionProgress title="Morning progress" items={morningProgress} />
-                    <Button onClick={() => setMorningDone(true)} disabled={morningDone}>
-                      {morningDone ? 'Morning complete' : 'Complete morning session'}
-                    </Button>
+                    <div className="today-session-action">
+                      <Button
+                        className="today-session-action__btn"
+                        onClick={() => setMorningDone(true)}
+                        disabled={morningDone}
+                      >
+                        {morningDone ? 'Morning complete' : 'Complete morning session'}
+                      </Button>
+                    </div>
                   </>
                 ) : null}
                 {session === 'midday' ? (
                   <>
                     <p className="path-body">{weeklyBiblical?.middayPrompt || 'Have you practiced once yet?'}</p>
-                    <Button onClick={() => setMiddayDone(true)} disabled={middayDone}>
-                      {middayDone ? 'Midday complete' : 'Complete midday check'}
-                    </Button>
+                    <div className="today-session-action">
+                      <Button
+                        className="today-session-action__btn"
+                        onClick={() => setMiddayDone(true)}
+                        disabled={middayDone}
+                      >
+                        {middayDone ? 'Midday complete' : 'Complete midday check'}
+                      </Button>
+                    </div>
                   </>
                 ) : null}
                 {session === 'evening' ? (
@@ -408,9 +420,15 @@ export function TodayActiveWeek({
                     <p className="path-body">
                       {weeklyBiblical?.eveningPrompt || 'What evidence did you see — or avoid?'}
                     </p>
-                    <Button onClick={() => setEveningDone(true)} disabled={eveningDone}>
-                      {eveningDone ? 'Evening complete' : 'Complete evening reflection'}
-                    </Button>
+                    <div className="today-session-action">
+                      <Button
+                        className="today-session-action__btn"
+                        onClick={() => setEveningDone(true)}
+                        disabled={eveningDone}
+                      >
+                        {eveningDone ? 'Evening complete' : 'Complete evening reflection'}
+                      </Button>
+                    </div>
                   </>
                 ) : null}
               </div>
