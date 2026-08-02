@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import type { SermonPlan } from '../../../shared/sermonPlanSchema';
 import { applySermonPlanToWeeklyPlan } from '../../domain/aiPlanning/applySermonPlan';
 import {
@@ -52,10 +52,23 @@ function hasSermonContent(plan: WeeklyPlan): boolean {
 
 export function WeeklyPlanWorkspace() {
   const { weekId, weekStart: weekStartParam } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const ref = weekId || weekStartParam || nextSundayStart();
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
-  const [step, setStep] = useState(0);
+  const stepFromQuery = Number(searchParams.get('step'));
+  const [step, setStep] = useState(
+    Number.isFinite(stepFromQuery) && stepFromQuery >= 0 && stepFromQuery <= 5
+      ? stepFromQuery
+      : 0,
+  );
+
+  useEffect(() => {
+    const raw = searchParams.get('step');
+    if (raw == null) return;
+    const next = Number(raw);
+    if (Number.isFinite(next) && next >= 0 && next <= 5) setStep(next);
+  }, [searchParams]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

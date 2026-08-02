@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { loadBiblicalDay, saveBiblicalDay } from '../../domain/biblical/dayLog';
 import {
+  addDays,
+  followingSundayStart,
   isSaturdaySabbath,
   isSundayPlanningDay,
   toLocalDateKey,
@@ -14,6 +16,7 @@ import {
 import type { SaturdayReflection, WeeklyPlan, WorkDailyAssignment } from '../../domain/weeklyPlan/types';
 import { Button } from '../../ui/Button';
 import { PhysicalTrainingPanel } from './PhysicalTrainingPanel';
+import { TomorrowPreview } from './TomorrowPreview';
 import './TodayPage.css';
 
 type Session = 'morning' | 'midday' | 'evening';
@@ -433,6 +436,14 @@ export function TodayActiveWeek({
                 ) : null}
               </div>
 
+              {eveningDone && !sunday ? (
+                <TomorrowPreview
+                  plan={weeklyPlan}
+                  targetDate={addDays(dateKey, 1)}
+                  showPrepare
+                />
+              ) : null}
+
               {weeklyWork.length > 0 ? (
                 <section className="today-work path-surface">
                   <p className="today-panel__label">Work</p>
@@ -514,6 +525,14 @@ export function TodayActiveWeek({
               </div>
             </section>
           )}
+
+          {sabbath ? (
+            <TomorrowPreview
+              plan={weeklyPlan}
+              targetDate={followingSundayStart()}
+              showPrepare={false}
+            />
+          ) : null}
         </div>
 
         <PhysicalTrainingPanel unscheduled={unscheduled || sabbath} />
