@@ -7,8 +7,8 @@ import './FormationShell.css';
 
 const TABS = [
   { to: '/today', label: 'Today', job: 'Train today' },
-  { to: '/journey', label: 'Journey', job: 'Goals and plan' },
-  { to: '/growth', label: 'Growth', job: 'Review progress' },
+  { to: '/journey', label: 'Journey', job: 'This week & history' },
+  { to: '/growth', label: 'Growth', job: 'Weekly reflections' },
   { to: '/coach', label: 'Coach', job: 'Guidance & adjustments' },
 ] as const;
 
@@ -82,8 +82,11 @@ export function FormationShell() {
           </figure>
 
           <div className="formation-shell__footer">
-            <NavLink to="/plan" className="formation-shell__manage">
-              Manage plan
+            <NavLink to="/plan/week" className="formation-shell__manage">
+              Weekly plan
+            </NavLink>
+            <NavLink to="/workouts" className="formation-shell__manage">
+              Workouts
             </NavLink>
 
             <button
@@ -103,11 +106,8 @@ export function FormationShell() {
                 M
               </div>
               <div>
-                <p className="formation-shell__profile-name">Preview</p>
-                <p className="path-label">Season 01 · Week 1 of 6</p>
-                <div className="path-progress__track formation-shell__season-bar" aria-hidden>
-                  <div className="path-progress__fill" style={{ width: '16%' }} />
-                </div>
+                <p className="formation-shell__profile-name">Michael</p>
+                <p className="path-label">Weekly planning</p>
               </div>
             </div>
           </div>

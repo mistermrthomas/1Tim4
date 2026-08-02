@@ -80,15 +80,11 @@ function titleCase(value: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function defaultPhysicalFromPack(pack: InstalledSeasonPack): PlanPhysicalTrack {
-  const template =
-    pack.data.workouts.templates.find((t) => t.id === pack.data.season.physicalTemplateId) ??
-    pack.data.workouts.templates[0];
-  const rotation = template?.sessions.map((s) => s.title) ?? ['Full Body A', 'Full Body B'];
+function emptyPhysicalTrack(): PlanPhysicalTrack {
   return {
-    primaryGoal: 'Build consistency and basic strength',
-    workoutsPerWeek: template?.daysPerWeek ?? 3,
-    rotation,
+    primaryGoal: '',
+    workoutsPerWeek: 4,
+    rotation: [],
     foundations: {
       proteinG: 120,
       waterOz: 80,
@@ -98,21 +94,22 @@ function defaultPhysicalFromPack(pack: InstalledSeasonPack): PlanPhysicalTrack {
   };
 }
 
-export function buildDefaultPlanConfig(pack: InstalledSeasonPack): PlanConfig {
-  const { season, weeks } = pack.data;
+/** Blank editable config — does not import sample season titles or Full Body A. */
+export function buildDefaultPlanConfig(pack?: InstalledSeasonPack): PlanConfig {
+  const weekCount = pack?.data.season.weekCount ?? 6;
   return {
     programName: 'PATH',
     seasonNumber: 1,
-    seasonTitle: season.title,
-    durationWeeks: season.weekCount,
-    primaryGoal: `Develop ${titleCase(season.primaryFocusKey).toLowerCase()} under pressure`,
-    secondaryGoal: `Strengthen ${titleCase(season.secondaryFocusKey).toLowerCase()}`,
-    weeklyThemes: weeks.map((w) => ({
-      weekIndex: w.weekIndex,
-      theme: w.theme,
-      intent: w.intent,
+    seasonTitle: '',
+    durationWeeks: weekCount,
+    primaryGoal: '',
+    secondaryGoal: '',
+    weeklyThemes: Array.from({ length: weekCount }, (_, i) => ({
+      weekIndex: i + 1,
+      theme: '',
+      intent: '',
     })),
-    physical: defaultPhysicalFromPack(pack),
+    physical: emptyPhysicalTrack(),
   };
 }
 
@@ -134,26 +131,38 @@ export function clearPlanConfig(): void {
   localStorage.removeItem(PLAN_CONFIG_STORAGE_KEY);
 }
 
-export function resolvePlanConfig(pack: InstalledSeasonPack): PlanConfig {
+export function resolvePlanConfig(pack?: InstalledSeasonPack): PlanConfig {
   const defaults = buildDefaultPlanConfig(pack);
   const stored = readPlanConfig();
   if (!stored) return defaults;
+  // Drop legacy sample season titles left from earlier seeds.
+  const cleaned = { ...stored };
+  if (/patience under pressure/i.test(cleaned.seasonTitle ?? '')) {
+    cleaned.seasonTitle = '';
+    cleaned.primaryGoal = '';
+    cleaned.secondaryGoal = '';
+  }
+  if (cleaned.physical?.rotation?.some((r) => /full body [ab]/i.test(r))) {
+    cleaned.physical = { ...cleaned.physical, rotation: [] };
+  }
   return {
     ...defaults,
-    ...stored,
+    ...cleaned,
     weeklyThemes:
-      stored.weeklyThemes?.length === defaults.weeklyThemes.length
-        ? stored.weeklyThemes
+      cleaned.weeklyThemes?.length === defaults.weeklyThemes.length
+        ? cleaned.weeklyThemes.map((w) =>
+            /pressure|patience/i.test(w.theme) ? { ...w, theme: '', intent: '' } : w,
+          )
         : defaults.weeklyThemes,
     physical: {
       ...defaults.physical,
-      ...stored.physical,
+      ...cleaned.physical,
       foundations: {
         ...defaults.physical.foundations,
-        ...stored.physical?.foundations,
+        ...cleaned.physical?.foundations,
       },
-      rotation: stored.physical?.rotation?.length
-        ? stored.physical.rotation
+      rotation: cleaned.physical?.rotation?.length
+        ? cleaned.physical.rotation
         : defaults.physical.rotation,
     },
   };

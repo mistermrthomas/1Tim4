@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import type { InstalledSeasonPack, SeasonDayEntry } from '../../content/types';
+import { Link } from 'react-router-dom';
+import { isSaturdaySabbath } from '../../domain/calendar/week';
 import {
   addIntake,
   getDayMeta,
@@ -16,7 +17,6 @@ import {
   getStepsDay,
   setStepsTotal,
 } from '../../domain/physical/stepsTracker';
-import { isSaturdaySabbath } from '../../domain/calendar/week';
 import { todayDateKey } from '../../domain/physical/store';
 import type { ExerciseLogEntry, ExercisePrescription, StepsDayEntry, WorkoutSession } from '../../domain/physical/types';
 import {
@@ -31,6 +31,7 @@ import {
   updateExerciseActual,
   workoutProgress,
 } from '../../domain/physical/workoutTracker';
+import { startNextWeekPath } from '../weeklyPlan/WeeklyPlanWorkspace';
 import { Button } from '../../ui/Button';
 
 function SessionProgress({
@@ -333,11 +334,10 @@ function IntakeComposer({
 }
 
 export function PhysicalTrainingPanel({
-  pack,
-  day,
+  unscheduled = false,
 }: {
-  pack: InstalledSeasonPack;
-  day: SeasonDayEntry;
+  /** When true, never invent a workout session (no active weekly schedule). */
+  unscheduled?: boolean;
 }) {
   const dateKey = todayDateKey();
   const rootRef = useRef<HTMLElement | null>(null);
@@ -358,14 +358,18 @@ export function PhysicalTrainingPanel({
   const reload = useCallback(() => {
     const plan = readPhysicalPlan();
     setTargets(plan.targets);
-    const next = ensureWorkoutSession(pack, day, dateKey);
-    setSession(next);
+    const hasSchedule = Boolean(plan.weekSchedule[String(new Date().getDay())]);
+    if (unscheduled || !hasSchedule) {
+      setSession(null);
+    } else {
+      setSession(ensureWorkoutSession(dateKey));
+    }
     setProtein(totalIntake(dateKey, 'protein'));
     setWater(totalIntake(dateKey, 'water'));
     setSteps(getStepsDay(dateKey));
     setRecovery(getDayMeta(dateKey).recoveryDone);
     setUnit(getWaterUnit() || plan.targets.waterUnit);
-  }, [pack, day, dateKey]);
+  }, [dateKey, unscheduled]);
 
   useEffect(() => {
     reload();
@@ -391,7 +395,7 @@ export function PhysicalTrainingPanel({
   }, [session, protein, water, steps, recoveryDone, editingId, pendingProtein, pendingWater]);
 
   const progress = session ? workoutProgress(session) : null;
-  const isRecoveryDay = !session && (day.sessionType === 'recovery' || day.sessionType === 'rest_walk');
+  const isRecoveryDay = false;
   const stepsTotal = effectiveSteps(steps);
   const stepsTarget = steps.target || targets.steps;
   const waterTarget =
@@ -406,19 +410,22 @@ export function PhysicalTrainingPanel({
   const waterChips =
     waterUnit === 'ml' ? targets.waterQuickAddsMl : waterUnit === 'L' ? [0.1, 0.25, 0.5, 1] : targets.waterQuickAddsOz;
 
-  const physicalProgress = [
-    {
-      label: 'Exercises completed',
-      done: progress ? progress.allDone : isRecoveryDay,
-    },
-    {
-      label: 'Workout status',
-      done: session?.status === 'completed' || session?.status === 'partial' || isRecoveryDay,
-    },
-    { label: 'Steps target', done: stepsTotal >= stepsTarget },
-    { label: 'Protein target', done: protein >= targets.proteinG },
-    { label: 'Water target', done: water >= waterTarget },
-  ];
+  const physicalProgress = session
+    ? [
+        { label: 'Exercises completed', done: Boolean(progress?.allDone) },
+        {
+          label: 'Workout status',
+          done: session.status === 'completed' || session.status === 'partial',
+        },
+        { label: 'Steps target', done: stepsTotal >= stepsTarget },
+        { label: 'Protein target', done: protein >= targets.proteinG },
+        { label: 'Water target', done: water >= waterTarget },
+      ]
+    : [
+        { label: 'Steps target', done: stepsTotal >= stepsTarget },
+        { label: 'Protein target', done: protein >= targets.proteinG },
+        { label: 'Water target', done: water >= waterTarget },
+      ];
 
   return (
     <aside
@@ -431,7 +438,9 @@ export function PhysicalTrainingPanel({
           <p className="today-column__intro">
             {isSaturdaySabbath()
               ? 'Sabbath — no required workout. Steps, protein, and water stay available.'
-              : 'Today’s workout and health targets.'}
+              : unscheduled || !session
+                ? 'Health targets stay available. Workouts appear after you activate a weekly plan.'
+                : 'Today’s workout and health targets.'}
           </p>
         </header>
 
@@ -518,7 +527,14 @@ export function PhysicalTrainingPanel({
               <p className="path-body">No strength workout scheduled today.</p>
             </div>
           ) : (
-            <p className="path-body">No workout scheduled for today.</p>
+            <div className="today-recovery">
+              <p className="path-body">
+                No workout is scheduled yet. Build this week’s plan to choose your training days.
+              </p>
+              <Link className="path-btn path-btn--ghost" to={startNextWeekPath()} style={{ marginTop: '0.5rem' }}>
+                Build This Week’s Plan
+              </Link>
+            </div>
           )}
         </section>
 

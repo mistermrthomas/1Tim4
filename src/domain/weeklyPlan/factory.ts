@@ -9,19 +9,21 @@ import type {
   WorkDailyAssignment,
   WorkOutcome,
 } from './types';
+import { emptySaturdayReflection } from './types';
 
 function emptyChurch(sermonDate: DateKey): ChurchEntry {
   return {
     sermonDate,
     sermonTitle: '',
     speaker: '',
-    churchOrSeries: '',
+    churchName: '',
     primaryScripture: '',
     sermonNotes: '',
     sermonUrl: '',
-    stoodOutMost: '',
-    whyItStoodOut: '',
-    behaviorChange: '',
+    centralTruth: '',
+    whatNeedsToChange: '',
+    whatToPractice: '',
+    actOfObedience: '',
     additionalContext: '',
     uncertainty: '',
   };
@@ -119,19 +121,7 @@ export function buildDraftWeeklyPlan(weekStartDate: DateKey): WeeklyPlan {
   const workDays: WorkDailyAssignment[] = range.days.flatMap((day): WorkDailyAssignment[] => {
     if (day.dayNumber === 7) return [];
     if (day.dayNumber === 1) {
-      return [
-        {
-          id: newId('wday'),
-          date: day.dateKey,
-          dayNumber: day.dayNumber,
-          title: 'Activate weekly plan',
-          outcomeId: null,
-          priority: 1,
-          status: 'open',
-          notes: '',
-          optional: false,
-        },
-      ];
+      return [];
     }
     return [
       {
@@ -156,12 +146,14 @@ export function buildDraftWeeklyPlan(weekStartDate: DateKey): WeeklyPlan {
     createdAt: now,
     updatedAt: now,
     activatedAt: null,
+    completedAt: null,
     church: emptyChurch(weekStartDate),
     biblical: {
       sermonSummary: '',
       centralPrinciple: '',
       weeklyTheme: '',
       weeklyPractice: '',
+      actOfObedience: '',
       coreScripture: '',
       supportingScriptures: [],
       days: biblicalDays,
@@ -183,6 +175,7 @@ export function buildDraftWeeklyPlan(weekStartDate: DateKey): WeeklyPlan {
       days: workDays,
       approved: false,
     },
+    saturdayReflection: emptySaturdayReflection(),
   };
 }
 
@@ -194,12 +187,14 @@ function parseNoon(dateKey: DateKey): Date {
 export function applyBiblicalDefaultsFromChurch(plan: WeeklyPlan): WeeklyPlan {
   const scripture = plan.church.primaryScripture.trim();
   const practice =
-    plan.church.behaviorChange.trim() ||
+    plan.church.whatToPractice.trim() ||
     plan.biblical.weeklyPractice ||
     'Define one observable practice for this week.';
+  const obedience =
+    plan.church.actOfObedience.trim() || plan.biblical.actOfObedience || practice;
   const theme =
     plan.biblical.weeklyTheme ||
-    plan.church.stoodOutMost.trim() ||
+    plan.church.centralTruth.trim() ||
     plan.church.sermonTitle.trim() ||
     'Weekly biblical focus';
 
@@ -209,11 +204,12 @@ export function applyBiblicalDefaultsFromChurch(plan: WeeklyPlan): WeeklyPlan {
       ...plan.biblical,
       weeklyTheme: theme,
       weeklyPractice: practice,
+      actOfObedience: obedience,
       coreScripture: scripture || plan.biblical.coreScripture,
       centralPrinciple:
         plan.biblical.centralPrinciple ||
-        plan.church.stoodOutMost.trim() ||
-        'Name the central principle from the sermon.',
+        plan.church.centralTruth.trim() ||
+        'Name the central truth from the sermon.',
       sermonSummary:
         plan.biblical.sermonSummary ||
         (plan.church.sermonNotes.trim()
@@ -226,7 +222,7 @@ export function applyBiblicalDefaultsFromChurch(plan: WeeklyPlan): WeeklyPlan {
         focus: day.focus,
       })),
       sourceNotes:
-        'Draft from church notes and personal response. Review against Scripture before activating.',
+        'Draft from sermon notes and weekly biblical focus. Review against Scripture before activating.',
     },
     updatedAt: new Date().toISOString(),
   };

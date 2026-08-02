@@ -1,4 +1,3 @@
-import type { InstalledSeasonPack, SeasonDayEntry } from '../../content/types';
 import { resolveTodaysPrescription } from './planCatalog';
 import { newId, readPhysicalTracker, todayDateKey, writePhysicalTracker } from './store';
 import type {
@@ -11,70 +10,14 @@ import type {
   WorkoutSessionStatus,
 } from './types';
 
-function defaultLoad(equipment: string[]): { load: number | null; loadUnit: ResistanceUnit } {
-  if (equipment.includes('bodyweight') || equipment.includes('none') || equipment.includes('Bodyweight')) {
-    return { load: null, loadUnit: 'bw' };
-  }
-  return { load: 0, loadUnit: 'lb' };
-}
-
-/** Resolve prescribed exercises from the pack workout catalog (fallback). */
-export function resolvePrescribedWorkout(
-  pack: InstalledSeasonPack,
-  day: SeasonDayEntry,
-): {
+/** Today only uses the weekly schedule / planCatalog. */
+function resolvePrescription(date = new Date()): {
   templateId: string;
   templateSessionId: string;
   workoutName: string;
   exercises: PrescribedExercise[];
 } | null {
-  if (day.sessionType !== 'workout' || !day.workoutSessionId) return null;
-
-  for (const template of pack.data.workouts.templates) {
-    const session = template.sessions.find((s) => s.id === day.workoutSessionId);
-    if (!session) continue;
-
-    const exercises: PrescribedExercise[] = session.blocks.flatMap((block) =>
-      block.items.map((item) => {
-        const ex = pack.data.workouts.exercises.find((e) => e.id === item.exerciseId);
-        const equipment = ex?.equipment?.[0] ?? 'none';
-        const load = defaultLoad(ex?.equipment ?? ['none']);
-        return {
-          exerciseId: item.exerciseId,
-          name: ex?.name ?? item.exerciseId,
-          equipment,
-          sets: item.sets,
-          reps: item.reps,
-          load: load.load,
-          loadUnit: load.loadUnit,
-          cautionNote: '',
-          note: '',
-        };
-      }),
-    );
-
-    return {
-      templateId: template.id,
-      templateSessionId: session.id,
-      workoutName: session.title,
-      exercises,
-    };
-  }
-
-  return null;
-}
-
-function resolvePrescription(
-  pack: InstalledSeasonPack,
-  day: SeasonDayEntry,
-  date = new Date(),
-): {
-  templateId: string;
-  templateSessionId: string;
-  workoutName: string;
-  exercises: PrescribedExercise[];
-} | null {
-  return resolveTodaysPrescription(date) ?? resolvePrescribedWorkout(pack, day);
+  return resolveTodaysPrescription(date);
 }
 
 function toLogEntry(ex: PrescribedExercise, order: number): ExerciseLogEntry {
@@ -145,13 +88,9 @@ export function getSessionForDate(dateKey: string): WorkoutSession | null {
   return readPhysicalTracker().sessions.find((s) => s.dateKey === dateKey) ?? null;
 }
 
-/** Ensure a session exists for the date from the physical plan (preferred) or pack. */
-export function ensureWorkoutSession(
-  pack: InstalledSeasonPack,
-  day: SeasonDayEntry,
-  dateKey = todayDateKey(),
-): WorkoutSession | null {
-  const prescribed = resolvePrescription(pack, day);
+/** Ensure a session exists for the date from the weekly physical schedule only. */
+export function ensureWorkoutSession(dateKey = todayDateKey()): WorkoutSession | null {
+  const prescribed = resolvePrescription();
   if (!prescribed) return null;
 
   const state = readPhysicalTracker();
