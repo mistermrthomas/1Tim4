@@ -17,7 +17,11 @@ export function addIntake(
   unit: string,
   note?: string,
   dateKey = todayDateKey(),
+  entryMethod = 'manual',
 ): IntakeEntry {
+  if (amount <= 0) {
+    throw new Error('Intake amount must be positive');
+  }
   const state = readPhysicalTracker();
   const entry: IntakeEntry = {
     id: newId(kind === 'protein' ? 'pro' : 'h2o'),
@@ -26,6 +30,7 @@ export function addIntake(
     amount,
     unit,
     note,
+    entryMethod,
     createdAt: new Date().toISOString(),
   };
   state.intake.push(entry);

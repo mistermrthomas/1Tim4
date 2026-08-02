@@ -253,6 +253,38 @@
     background: color-mix(in srgb, var(--path-gold) 10%, transparent);
   }
 
+  [data-path-theme='light'] .formation-shell__sidebar {
+    background: var(--path-sidebar-bg);
+    backdrop-filter: none;
+    border-right-color: var(--path-sidebar-border);
+  }
+
+  [data-path-theme='light'] .formation-shell__tab {
+    color: var(--path-text-muted);
+  }
+
+  [data-path-theme='light'] .formation-shell__tab:hover {
+    color: var(--path-text);
+    background: var(--path-surface-2);
+    border-color: var(--path-hairline);
+  }
+
+  [data-path-theme='light'] .formation-shell__tab--active {
+    background: var(--path-nav-active-bg);
+    border-color: var(--path-border-strong);
+    color: #1d1c19;
+  }
+
+  [data-path-theme='light'] .formation-shell__tab--active .formation-shell__tab-job {
+    color: var(--path-text-muted);
+  }
+
+  [data-path-theme='light'] .formation-shell__theme {
+    background: var(--path-surface);
+    border-color: var(--path-border);
+    color: var(--path-text-muted);
+  }
+
   .formation-shell__tab-label {
     font-family: var(--path-font-display);
     font-size: 0.86rem;

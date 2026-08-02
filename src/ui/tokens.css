@@ -39,6 +39,8 @@
   --path-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
   --path-glow: 0 0 22px rgba(201, 162, 39, 0.1);
   --path-on-gold: #12100a;
+  --path-nav-active-bg: rgba(201, 162, 39, 0.1);
+  --path-focus-ring: 0 0 0 3px rgba(201, 162, 39, 0.22);
 
   /* Shared fixed backdrop — same image/crop in both themes */
   --path-page-focal: 72% center;
@@ -63,57 +65,65 @@
 [data-path-theme='light'] {
   color-scheme: light;
 
-  --path-bg: #f3f4f6;
-  --path-bg-elevated: #ffffff;
-  --path-surface: rgba(255, 255, 255, 0.96);
-  --path-surface-solid: #ffffff;
-  --path-surface-2: #eef0f3;
-  --path-surface-3: #e5e8ec;
-  --path-border: rgba(17, 24, 32, 0.08);
-  --path-border-strong: rgba(154, 123, 36, 0.42);
-  --path-hairline: rgba(17, 24, 32, 0.08);
+  /* Warm ivory page · warm-white panels · black ink · brass gold */
+  --path-bg: #f5f1e7;
+  --path-bg-elevated: #fbf9f3;
+  --path-surface: #fffefa;
+  --path-surface-solid: #fffefa;
+  --path-surface-2: #f7f2e6;
+  --path-surface-3: #f2e9d6;
+  --path-border: #ddd3bd;
+  --path-border-strong: #b08a24;
+  --path-hairline: #e5decf;
 
-  --path-gold: #9a7b24;
-  --path-gold-bright: #b08e2e;
-  --path-gold-dim: #7a621c;
-  --path-bronze: #8a7020;
+  --path-gold: #a87f17;
+  --path-gold-bright: #b38a1e;
+  --path-gold-dim: #9c7514;
+  --path-bronze: #8f6a12;
+  --path-gold-wash: #eee3c8;
+  --path-gold-wash-strong: #e7d9b5;
 
-  --path-text: #121417;
-  --path-text-muted: #5c6570;
-  --path-text-dim: #8a93a0;
+  --path-text: #171715;
+  --path-text-muted: #69665e;
+  --path-text-dim: #8b877e;
 
   --path-danger: #a13d32;
   --path-success: #4f6d46;
 
-  --path-scripture-bg: rgba(255, 255, 255, 0.88);
-  --path-practice-glow: 0 8px 24px rgba(17, 24, 32, 0.05);
-  --path-sidebar-bg: rgba(255, 255, 255, 0.97);
-  --path-sidebar-border: rgba(17, 24, 32, 0.1);
-  --path-sidebar-shadow: 4px 0 16px rgba(17, 24, 32, 0.04);
-  --path-mobile-nav-bg: rgba(255, 255, 255, 0.94);
-  --path-progress-track: #e5e8ec;
-  --path-shadow: 0 8px 22px rgba(17, 24, 32, 0.05);
-  --path-glow: 0 0 0 transparent;
-  --path-on-gold: #ffffff;
+  --path-scripture-bg: #fffefa;
+  --path-practice-glow: 0 6px 18px rgba(23, 23, 21, 0.06);
+  --path-sidebar-bg: #fcfbf7;
+  --path-sidebar-border: #e3ddcf;
+  --path-sidebar-shadow: 4px 0 18px rgba(23, 23, 21, 0.04);
+  --path-nav-active-bg: #f0e7d1;
+  --path-mobile-nav-bg: #fcfbf7;
+  --path-progress-track: #e7e1d5;
+  --path-shadow: 0 6px 18px rgba(23, 23, 21, 0.05);
+  --path-glow: 0 1px 0 rgba(23, 23, 21, 0.04);
+  --path-on-gold: #171715;
+  --path-focus-ring: 0 0 0 3px rgba(168, 127, 23, 0.22);
 
-  /* Same gym image — grayscale, readable left, ~20–30% visible on the right */
-  --path-page-focal: 72% center;
-  --path-page-filter: grayscale(0.78) brightness(1.02) contrast(1.1) saturate(0.1);
+  /*
+   * Same gym image — crisp grayscale, warm ivory veil (not gray fog).
+   * Image visibility ~10% left / ~18% open mid / ~30% far right.
+   */
+  --path-page-focal: 76% center;
+  --path-page-filter: grayscale(0.96) brightness(0.9) contrast(1.32) saturate(0.08);
   --path-page-veil:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.62) 0%,
-      rgba(243, 244, 246, 0.5) 35%,
-      rgba(243, 244, 246, 0.58) 72%,
-      rgba(243, 244, 246, 0.72) 100%
+      rgba(245, 241, 231, 0.22) 0%,
+      rgba(245, 241, 231, 0.08) 40%,
+      rgba(245, 241, 231, 0.16) 78%,
+      rgba(245, 241, 231, 0.3) 100%
     ),
     linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0.88) 0%,
-      rgba(255, 255, 255, 0.78) 36%,
-      rgba(255, 255, 255, 0.42) 60%,
-      rgba(243, 244, 246, 0.2) 82%,
-      rgba(243, 244, 246, 0.1) 100%
+      rgba(245, 241, 231, 0.9) 0%,
+      rgba(245, 241, 231, 0.86) 30%,
+      rgba(245, 241, 231, 0.78) 52%,
+      rgba(245, 241, 231, 0.66) 74%,
+      rgba(245, 241, 231, 0.52) 100%
     );
 }
 

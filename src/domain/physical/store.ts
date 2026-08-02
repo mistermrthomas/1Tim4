@@ -7,6 +7,7 @@ const EMPTY: PhysicalTrackerState = {
   sessions: [],
   intake: [],
   dayMeta: [],
+  steps: [],
   waterUnit: 'oz',
 };
 
@@ -19,9 +20,18 @@ export function readPhysicalTracker(): PhysicalTrackerState {
     return {
       ...EMPTY,
       ...parsed,
-      sessions: parsed.sessions ?? [],
+      sessions: (parsed.sessions ?? []).map((session) => ({
+        ...session,
+        exercises: (session.exercises ?? []).map((ex) => ({
+          ...ex,
+          setLogs: ex.setLogs ?? [],
+          cautionNote: ex.cautionNote ?? '',
+          note: ex.note ?? '',
+        })),
+      })),
       intake: parsed.intake ?? [],
       dayMeta: parsed.dayMeta ?? [],
+      steps: parsed.steps ?? [],
       waterUnit: parsed.waterUnit ?? 'oz',
     };
   } catch {

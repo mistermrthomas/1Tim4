@@ -3,11 +3,7 @@ import { Link } from 'react-router-dom';
 import type { MorningMode } from '../../domain/formation/types';
 import { loadBiblicalDay, saveBiblicalDay } from '../../domain/biblical/dayLog';
 import { todayDateKey } from '../../domain/physical/store';
-import {
-  buildDailyBrief,
-  resolveActivePlan,
-  resolvePlanConfig,
-} from '../../domain/training/activePlan';
+import { buildDailyBrief, resolveActivePlan } from '../../domain/training/activePlan';
 import { loadSeasonPack } from '../../content/bundled/loadSeasonPack';
 import type { InstalledSeasonPack } from '../../content/types';
 import { Button } from '../../ui/Button';
@@ -199,7 +195,6 @@ export function TodayPage() {
 
   const setCount = model.workoutItems.reduce((sum, item) => sum + item.sets, 0);
   const plan = resolveActivePlan(pack, model.week.weekIndex, `Day ${model.day.dayInWeek}`);
-  const planConfig = resolvePlanConfig(pack);
   const sessionLabel =
     session === 'morning' ? 'Morning' : session === 'midday' ? 'Midday' : 'Evening';
   const brief = buildDailyBrief(
@@ -636,13 +631,7 @@ export function TodayPage() {
           </div>
         </div>
 
-        <PhysicalTrainingPanel
-          pack={pack}
-          day={model.day}
-          proteinTarget={planConfig.physical.foundations.proteinG}
-          waterTargetOz={planConfig.physical.foundations.waterOz}
-          recoveryLabel={planConfig.physical.foundations.recovery}
-        />
+        <PhysicalTrainingPanel pack={pack} day={model.day} />
       </div>
     </div>
   );

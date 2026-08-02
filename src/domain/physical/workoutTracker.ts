@@ -1,22 +1,24 @@
 import type { InstalledSeasonPack, SeasonDayEntry } from '../../content/types';
+import { resolveTodaysPrescription } from './planCatalog';
 import { newId, readPhysicalTracker, todayDateKey, writePhysicalTracker } from './store';
 import type {
   ExerciseLogEntry,
   ExercisePrescription,
   PrescribedExercise,
   ResistanceUnit,
+  SetLog,
   WorkoutSession,
   WorkoutSessionStatus,
 } from './types';
 
 function defaultLoad(equipment: string[]): { load: number | null; loadUnit: ResistanceUnit } {
-  if (equipment.includes('bodyweight') || equipment.includes('none')) {
+  if (equipment.includes('bodyweight') || equipment.includes('none') || equipment.includes('Bodyweight')) {
     return { load: null, loadUnit: 'bw' };
   }
   return { load: 0, loadUnit: 'lb' };
 }
 
-/** Resolve prescribed exercises from the pack workout catalog (source of truth). */
+/** Resolve prescribed exercises from the pack workout catalog (fallback). */
 export function resolvePrescribedWorkout(
   pack: InstalledSeasonPack,
   day: SeasonDayEntry,
@@ -45,6 +47,8 @@ export function resolvePrescribedWorkout(
           reps: item.reps,
           load: load.load,
           loadUnit: load.loadUnit,
+          cautionNote: '',
+          note: '',
         };
       }),
     );
@@ -58,6 +62,19 @@ export function resolvePrescribedWorkout(
   }
 
   return null;
+}
+
+function resolvePrescription(
+  pack: InstalledSeasonPack,
+  day: SeasonDayEntry,
+  date = new Date(),
+): {
+  templateId: string;
+  templateSessionId: string;
+  workoutName: string;
+  exercises: PrescribedExercise[];
+} | null {
+  return resolveTodaysPrescription(date) ?? resolvePrescribedWorkout(pack, day);
 }
 
 function toLogEntry(ex: PrescribedExercise, order: number): ExerciseLogEntry {
@@ -75,34 +92,42 @@ function toLogEntry(ex: PrescribedExercise, order: number): ExerciseLogEntry {
     order,
     prescribed,
     actual: { ...prescribed },
+    setLogs: [],
     completed: false,
     completedAt: null,
     skipped: false,
-    note: '',
+    note: ex.note ?? '',
+    cautionNote: ex.cautionNote ?? '',
   };
 }
 
-export function getSessionForDate(dateKey: string): WorkoutSession | null {
-  return readPhysicalTracker().sessions.find((s) => s.dateKey === dateKey) ?? null;
+function sessionUntouched(session: WorkoutSession): boolean {
+  return (
+    session.status === 'scheduled' &&
+    !session.startedAt &&
+    session.exercises.every((e) => !e.completed && !e.skipped)
+  );
 }
 
-/** Ensure a session exists for the date from the pack prescription. */
-export function ensureWorkoutSession(
-  pack: InstalledSeasonPack,
-  day: SeasonDayEntry,
-  dateKey = todayDateKey(),
-): WorkoutSession | null {
-  const prescribed = resolvePrescribedWorkout(pack, day);
-  if (!prescribed) return null;
+function prescriptionsMatch(
+  session: WorkoutSession,
+  prescribed: { templateSessionId: string; exercises: PrescribedExercise[] },
+): boolean {
+  if (session.templateSessionId !== prescribed.templateSessionId) return false;
+  if (session.exercises.length !== prescribed.exercises.length) return false;
+  return session.exercises.every((ex, i) => ex.exerciseId === prescribed.exercises[i]?.exerciseId);
+}
 
-  const state = readPhysicalTracker();
-  const existing = state.sessions.find((s) => s.dateKey === dateKey);
-  if (existing) {
-    // Keep historical session even if template changes later.
-    return existing;
-  }
-
-  const session: WorkoutSession = {
+function buildSession(
+  dateKey: string,
+  prescribed: {
+    templateId: string;
+    templateSessionId: string;
+    workoutName: string;
+    exercises: PrescribedExercise[];
+  },
+): WorkoutSession {
+  return {
     id: newId('ws'),
     dateKey,
     templateId: prescribed.templateId,
@@ -114,7 +139,36 @@ export function ensureWorkoutSession(
     exercises: prescribed.exercises.map((ex, index) => toLogEntry(ex, index)),
     notes: '',
   };
+}
 
+export function getSessionForDate(dateKey: string): WorkoutSession | null {
+  return readPhysicalTracker().sessions.find((s) => s.dateKey === dateKey) ?? null;
+}
+
+/** Ensure a session exists for the date from the physical plan (preferred) or pack. */
+export function ensureWorkoutSession(
+  pack: InstalledSeasonPack,
+  day: SeasonDayEntry,
+  dateKey = todayDateKey(),
+): WorkoutSession | null {
+  const prescribed = resolvePrescription(pack, day);
+  if (!prescribed) return null;
+
+  const state = readPhysicalTracker();
+  const index = state.sessions.findIndex((s) => s.dateKey === dateKey);
+  const existing = index >= 0 ? state.sessions[index]! : null;
+
+  if (existing) {
+    if (sessionUntouched(existing) && !prescriptionsMatch(existing, prescribed)) {
+      const next = buildSession(dateKey, prescribed);
+      state.sessions[index] = next;
+      writePhysicalTracker(state);
+      return next;
+    }
+    return existing;
+  }
+
+  const session = buildSession(dateKey, prescribed);
   state.sessions.push(session);
   writePhysicalTracker(state);
   return session;
@@ -135,12 +189,11 @@ function updateSession(
 
 function deriveStatus(session: WorkoutSession): WorkoutSessionStatus {
   if (session.status === 'skipped') return 'skipped';
+  if (session.status === 'completed' || session.status === 'partial') return session.status;
   const done = session.exercises.filter((e) => e.completed || e.skipped).length;
   const total = session.exercises.length;
   if (done === 0) return session.startedAt ? 'in_progress' : 'scheduled';
-  if (done >= total && session.exercises.every((e) => e.completed || e.skipped)) {
-    return session.completedAt ? 'completed' : 'in_progress';
-  }
+  if (done >= total) return 'in_progress';
   return 'in_progress';
 }
 
@@ -164,8 +217,17 @@ export function setExerciseCompleted(
     exercise.completed = completed;
     exercise.skipped = false;
     exercise.completedAt = completed ? new Date().toISOString() : null;
-    if (completed && !exercise.actual.sets) {
-      exercise.actual = { ...exercise.prescribed };
+    if (completed) {
+      if (!exercise.actual.sets) exercise.actual = { ...exercise.prescribed };
+      if (exercise.setLogs.length === 0) {
+        const repsNum = Number(String(exercise.actual.reps).split('-')[0]);
+        const perSet = Number.isFinite(repsNum) ? repsNum : 0;
+        exercise.setLogs = Array.from({ length: exercise.actual.sets }, () => ({
+          load: exercise.actual.load,
+          loadUnit: exercise.actual.loadUnit,
+          reps: perSet,
+        }));
+      }
     }
     session.status = deriveStatus(session);
     return session;
@@ -175,16 +237,39 @@ export function setExerciseCompleted(
 export function updateExerciseActual(
   dateKey: string,
   exerciseLogId: string,
-  patch: Partial<ExercisePrescription>,
+  patch: Partial<ExercisePrescription> & { setLogs?: SetLog[]; note?: string; cautionNote?: string },
 ): WorkoutSession | null {
   return updateSession(dateKey, (session) => {
     const exercise = session.exercises.find((e) => e.id === exerciseLogId);
     if (!exercise) return session;
-    exercise.actual = { ...exercise.actual, ...patch };
+    const { setLogs, note, cautionNote, ...rx } = patch;
+    exercise.actual = { ...exercise.actual, ...rx };
+    if (setLogs) exercise.setLogs = setLogs;
+    if (note != null) exercise.note = note;
+    if (cautionNote != null) exercise.cautionNote = cautionNote;
     if (!session.startedAt) {
       session.startedAt = new Date().toISOString();
       session.status = 'in_progress';
     }
+    return session;
+  });
+}
+
+export function skipExercise(
+  dateKey: string,
+  exerciseLogId: string,
+  skipped = true,
+): WorkoutSession | null {
+  return updateSession(dateKey, (session) => {
+    const exercise = session.exercises.find((e) => e.id === exerciseLogId);
+    if (!exercise) return session;
+    exercise.skipped = skipped;
+    if (skipped) {
+      exercise.completed = false;
+      exercise.completedAt = null;
+    }
+    if (!session.startedAt) session.startedAt = new Date().toISOString();
+    session.status = deriveStatus(session);
     return session;
   });
 }
@@ -207,9 +292,33 @@ export function savePartialWorkout(dateKey: string): WorkoutSession | null {
   });
 }
 
+export function skipWorkout(dateKey: string): WorkoutSession | null {
+  return updateSession(dateKey, (session) => {
+    session.status = 'skipped';
+    session.completedAt = new Date().toISOString();
+    return session;
+  });
+}
+
 export function formatLoad(load: number | null, unit: ResistanceUnit): string {
   if (unit === 'bw' || load === null) return 'BW';
   return `${load} ${unit}`;
+}
+
+export function formatSetLogs(setLogs: SetLog[]): string {
+  if (!setLogs.length) return '';
+  return setLogs
+    .map((s) => `${s.loadUnit === 'bw' || s.load == null ? 'BW' : s.load}×${s.reps}`)
+    .join(' | ');
+}
+
+export function summarizeCompleted(exercise: ExerciseLogEntry): string {
+  if (exercise.setLogs.length) {
+    const load = formatLoad(exercise.actual.load, exercise.actual.loadUnit);
+    const totalReps = exercise.setLogs.reduce((sum, s) => sum + s.reps, 0);
+    return `${load} · ${exercise.setLogs.length} sets · ${totalReps} reps`;
+  }
+  return `${formatLoad(exercise.actual.load, exercise.actual.loadUnit)} · ${exercise.actual.sets} × ${exercise.actual.reps}`;
 }
 
 export function workoutProgress(session: WorkoutSession): {
@@ -218,12 +327,14 @@ export function workoutProgress(session: WorkoutSession): {
   allDone: boolean;
   anyDone: boolean;
 } {
-  const total = session.exercises.length;
+  const active = session.exercises.filter((e) => !e.skipped);
+  const total = active.length || session.exercises.length;
   const completedCount = session.exercises.filter((e) => e.completed).length;
+  const finished = session.exercises.every((e) => e.completed || e.skipped);
   return {
     completedCount,
     total,
-    allDone: total > 0 && completedCount === total,
+    allDone: total > 0 && finished,
     anyDone: completedCount > 0,
   };
 }
@@ -232,4 +343,11 @@ export function listCompletedSessions(): WorkoutSession[] {
   return readPhysicalTracker()
     .sessions.filter((s) => s.status === 'completed' || s.status === 'partial')
     .sort((a, b) => b.dateKey.localeCompare(a.dateKey));
+}
+
+export function listExerciseHistory(exerciseId: string): ExerciseLogEntry[] {
+  return readPhysicalTracker()
+    .sessions.filter((s) => s.status === 'completed' || s.status === 'partial')
+    .flatMap((s) => s.exercises.filter((e) => e.exerciseId === exerciseId && e.completed))
+    .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''));
 }

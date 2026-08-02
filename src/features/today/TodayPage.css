@@ -297,6 +297,92 @@
   box-shadow: var(--path-practice-glow);
 }
 
+[data-path-theme='light'] .today-panel {
+  background: var(--path-surface);
+  border-color: var(--path-border);
+  box-shadow: var(--path-shadow);
+}
+
+[data-path-theme='light'] .today-panel.today-panel--physical {
+  background: #fffefa;
+  border: 1px solid var(--path-border-strong);
+  box-shadow: var(--path-practice-glow);
+}
+
+[data-path-theme='light'] .today-panel--physical .today-panel__divider {
+  border-color: #e5decf;
+}
+
+[data-path-theme='light'] .today-panel--physical .today-workout__title,
+[data-path-theme='light'] .today-panel--physical .today-exercise__name,
+[data-path-theme='light'] .today-panel--physical .today-habit__label {
+  color: var(--path-text);
+}
+
+[data-path-theme='light'] .today-panel--physical .today-column__intro,
+[data-path-theme='light'] .today-panel--physical .today-workout__meta,
+[data-path-theme='light'] .today-panel--physical .today-exercise__summary,
+[data-path-theme='light'] .today-panel--physical .today-habit__detail {
+  color: var(--path-text-muted);
+}
+
+[data-path-theme='light'] .today-panel--physical .today-intake,
+[data-path-theme='light'] .today-panel--physical .today-progress {
+  background: transparent;
+}
+
+[data-path-theme='light'] .today-brief {
+  background: #fffefa;
+  border: 1px solid var(--path-border-strong);
+  box-shadow: var(--path-practice-glow);
+}
+
+[data-path-theme='light'] .today-preview__mode {
+  background: var(--path-surface);
+  border-color: var(--path-border);
+  color: var(--path-text-muted);
+}
+
+[data-path-theme='light'] .today-preview__mode--active {
+  background: var(--path-nav-active-bg);
+  border-color: var(--path-border-strong);
+  color: #1d1c19;
+  box-shadow: none;
+}
+
+[data-path-theme='light'] .today-preview__session--active {
+  color: #1d1c19;
+  border-bottom-color: var(--path-border-strong);
+}
+
+[data-path-theme='light'] .today-exercise__fields input,
+[data-path-theme='light'] .today-intake__custom input,
+[data-path-theme='light'] .today-intake__chip {
+  background: var(--path-bg-elevated);
+  border-color: var(--path-border);
+  color: var(--path-text);
+}
+
+[data-path-theme='light'] .today-exercise__fields input:focus,
+[data-path-theme='light'] .today-intake__custom input:focus {
+  border-color: var(--path-gold);
+  box-shadow: var(--path-focus-ring);
+  outline: none;
+}
+
+[data-path-theme='light'] .today-habit__check {
+  border-color: var(--path-border);
+  background: var(--path-surface);
+}
+
+[data-path-theme='light'] .today-exercise__check input {
+  accent-color: var(--path-gold);
+}
+
+[data-path-theme='light'] .today-checkpoint {
+  background: var(--path-surface-2);
+}
+
 .today-panel--physical .today-panel__header {
   gap: 0.25rem;
   padding: 0.05rem 0 0.15rem;
@@ -876,6 +962,59 @@
 .today-exercise__planned {
   font-size: 0.72rem;
   color: var(--path-text-dim);
+}
+
+.today-exercise__caution {
+  margin: 0;
+  padding-left: 1.35rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--path-gold) 75%, var(--path-text-dim));
+}
+
+.today-exercise--skipped {
+  opacity: 0.55;
+}
+
+.today-exercise__skipped-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--path-text-dim);
+}
+
+.today-intake__pending {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--path-gold);
+}
+
+.today-intake__composer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.today-intake__log,
+.today-intake__clear {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--path-gold);
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0.1rem 0;
+}
+
+.today-intake__log:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .today-exercise__editor {

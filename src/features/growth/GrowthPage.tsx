@@ -4,9 +4,10 @@ import { loadSeasonPack } from '../../content/bundled/loadSeasonPack';
 import type { InstalledSeasonPack } from '../../content/types';
 import { loadBiblicalDay } from '../../domain/biblical/dayLog';
 import { totalIntake } from '../../domain/physical/intakeTracker';
+import { readPhysicalPlan } from '../../domain/physical/planCatalog';
+import { effectiveSteps, getStepsDay } from '../../domain/physical/stepsTracker';
 import { todayDateKey } from '../../domain/physical/store';
 import { listCompletedSessions } from '../../domain/physical/workoutTracker';
-import { resolvePlanConfig } from '../../domain/training/activePlan';
 import { ProgressMeter } from '../../ui/ProgressMeter';
 import './GrowthPage.css';
 
@@ -24,7 +25,9 @@ export function GrowthPage() {
   const sessions = useMemo(() => listCompletedSessions(), []);
   const protein = totalIntake(dateKey, 'protein');
   const water = totalIntake(dateKey, 'water');
-  const targets = pack ? resolvePlanConfig(pack).physical.foundations : { proteinG: 120, waterOz: 80 };
+  const stepsEntry = getStepsDay(dateKey);
+  const steps = effectiveSteps(stepsEntry);
+  const targets = useMemo(() => readPhysicalPlan().targets, [pack]);
 
   const completedWorkouts = sessions.filter((s) => s.status === 'completed').length;
   const partialWorkouts = sessions.filter((s) => s.status === 'partial').length;
@@ -91,6 +94,13 @@ export function GrowthPage() {
               label="Workouts completed"
               valueLabel={`${completedWorkouts} complete · ${partialWorkouts} partial`}
               percent={Math.min(100, completedWorkouts * 25)}
+            />
+          </li>
+          <li className="path-surface">
+            <ProgressMeter
+              label="Steps today"
+              valueLabel={`${steps.toLocaleString()} / ${targets.steps.toLocaleString()}`}
+              percent={Math.min(100, Math.round((steps / Math.max(targets.steps, 1)) * 100))}
             />
           </li>
           <li className="path-surface">
