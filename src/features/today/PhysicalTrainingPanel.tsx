@@ -16,6 +16,7 @@ import {
   getStepsDay,
   setStepsTotal,
 } from '../../domain/physical/stepsTracker';
+import { isSaturdaySabbath } from '../../domain/calendar/week';
 import { todayDateKey } from '../../domain/physical/store';
 import type { ExerciseLogEntry, ExercisePrescription, StepsDayEntry, WorkoutSession } from '../../domain/physical/types';
 import {
@@ -427,7 +428,11 @@ export function PhysicalTrainingPanel({
       <div className="today-panel today-panel--physical">
         <header className="today-column__header today-panel__header">
           <h2 className="path-display today-column__title">Physical training</h2>
-          <p className="today-column__intro">Today’s workout and health targets.</p>
+          <p className="today-column__intro">
+            {isSaturdaySabbath()
+              ? 'Sabbath — no required workout. Steps, protein, and water stay available.'
+              : 'Today’s workout and health targets.'}
+          </p>
         </header>
 
         <hr className="today-panel__divider" />

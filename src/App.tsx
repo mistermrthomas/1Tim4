@@ -24,6 +24,7 @@ import { JourneyPage } from './features/journey/JourneyPage';
 import { GrowthPage } from './features/growth/GrowthPage';
 import { CoachPage } from './features/coach/CoachPage';
 import { PlanBuilderPage } from './features/plan/PlanBuilderPage';
+import { WeeklyPlanWorkspace } from './features/weeklyPlan/WeeklyPlanWorkspace';
 import './styles/global.css';
 import './features/shell/FormationShell.css';
 import './styles/desktop.css';
@@ -99,6 +100,8 @@ export default function App() {
               <Route path="/growth" element={<GrowthPage />} />
               <Route path="/coach" element={<CoachPage />} />
               <Route path="/plan" element={<PlanBuilderPage />} />
+              <Route path="/plan/week" element={<WeeklyPlanWorkspace />} />
+              <Route path="/plan/week/:weekStart" element={<WeeklyPlanWorkspace />} />
               <Route path="/preview" element={<Navigate to="/today" replace />} />
             </Route>
             <Route path="*" element={<AppRoutes cloudReloadKey={cloudReloadKey} />} />

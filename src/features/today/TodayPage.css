@@ -383,6 +383,86 @@
   background: var(--path-surface-2);
 }
 
+.today-week-banner {
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.today-week-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.today-week-banner__note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--path-text-muted);
+}
+
+.today-plan-summary {
+  padding: 0.85rem 1rem;
+}
+
+.today-plan-summary__list {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.today-plan-summary__list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  font-size: 0.86rem;
+  color: var(--path-text-muted);
+}
+
+.today-plan-summary__list strong {
+  font-family: var(--path-font-display);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--path-gold);
+  font-weight: 600;
+}
+
+.today-work {
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.today-work__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.today-work__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.today-work__outcome {
+  color: var(--path-text-dim);
+  font-weight: 400;
+}
+
 .today-panel--physical .today-panel__header {
   gap: 0.25rem;
   padding: 0.05rem 0 0.15rem;

@@ -2,11 +2,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { MorningMode } from '../../domain/formation/types';
 import { loadBiblicalDay, saveBiblicalDay } from '../../domain/biblical/dayLog';
+import {
+  followingSundayStart,
+  isSaturdaySabbath,
+  isSundayPlanningDay,
+  toLocalDateKey,
+} from '../../domain/calendar/week';
 import { todayDateKey } from '../../domain/physical/store';
 import { buildDailyBrief, resolveActivePlan } from '../../domain/training/activePlan';
+import { getActivePlanForDate, saveWeeklyPlan } from '../../domain/weeklyPlan/store';
+import type { WeeklyPlan, WorkDailyAssignment } from '../../domain/weeklyPlan/types';
 import { loadSeasonPack } from '../../content/bundled/loadSeasonPack';
 import type { InstalledSeasonPack } from '../../content/types';
 import { Button } from '../../ui/Button';
+import { startNextWeekPath } from '../weeklyPlan/WeeklyPlanWorkspace';
 import { PhysicalTrainingPanel } from './PhysicalTrainingPanel';
 import { pickPreviewDay, resolvePreviewDay } from './resolvePreviewDay';
 import './TodayPage.css';
@@ -82,6 +91,10 @@ export function TodayPage() {
   const [practiceDone, setPracticeDone] = useState(false);
   const [scriptureReviewed, setScriptureReviewed] = useState(false);
   const [biblicalReady, setBiblicalReady] = useState(false);
+  const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan | null>(null);
+  const dateKey = todayDateKey();
+  const sabbath = isSaturdaySabbath();
+  const sundayKickoff = isSundayPlanningDay();
 
   useEffect(() => {
     let cancelled = false;
@@ -96,6 +109,20 @@ export function TodayPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    getActivePlanForDate(dateKey)
+      .then((plan) => {
+        if (!cancelled) setWeeklyPlan(plan);
+      })
+      .catch(() => {
+        if (!cancelled) setWeeklyPlan(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dateKey]);
 
   useEffect(() => {
     const log = loadBiblicalDay(todayDateKey());
@@ -214,6 +241,39 @@ export function TodayPage() {
     sessionLabel,
   );
 
+  const weeklyBiblical = weeklyPlan?.biblical.days.find((d) => d.date === dateKey);
+  const weeklyPhysical = weeklyPlan?.physical.days.find((d) => d.date === dateKey);
+  const weeklyWork = (weeklyPlan?.work.days ?? []).filter(
+    (d) => d.date === dateKey && d.status !== 'removed' && d.title.trim().length > 0,
+  );
+  const weeklyFocus = weeklyBiblical?.focus || weeklyPlan?.biblical.weeklyTheme || brief.focus;
+  const weeklyPractice = weeklyBiblical?.practice || weeklyPlan?.biblical.weeklyPractice || model.assignment.prompt;
+  const weeklyScripture =
+    weeklyBiblical?.scripture || weeklyPlan?.biblical.coreScripture || model.scripture.reference.canonicalLabel;
+  const weeklyTeaching = weeklyBiblical?.teaching || teachingLines[0] || '';
+  const sessionPrompt =
+    session === 'morning'
+      ? weeklyBiblical?.morningPrompt
+      : session === 'midday'
+        ? weeklyBiblical?.middayPrompt
+        : weeklyBiblical?.eveningPrompt;
+
+  const toggleWorkAction = async (action: WorkDailyAssignment) => {
+    if (!weeklyPlan) return;
+    const nextStatus = action.status === 'done' ? 'open' : 'done';
+    const next: WeeklyPlan = {
+      ...weeklyPlan,
+      work: {
+        ...weeklyPlan.work,
+        days: weeklyPlan.work.days.map((d) =>
+          d.id === action.id ? { ...d, status: nextStatus } : d,
+        ),
+      },
+    };
+    const saved = await saveWeeklyPlan(next);
+    setWeeklyPlan(saved);
+  };
+
   const morningProgress = [
     { label: 'Scripture reviewed', done: scriptureReviewed || Boolean(scriptureBody) },
     { label: 'Practice accepted', done: practiceAccepted || practiceDone },
@@ -245,25 +305,90 @@ export function TodayPage() {
             <header className="today-hero">
               <div className="today-hero__row">
                 <h1 className="path-display today-hero__title">Today</h1>
-                <p className="today-hero__theme">{plan.seasonTitle}</p>
+                <p className="today-hero__theme">
+                  {weeklyPlan?.biblical.weeklyTheme || plan.seasonTitle}
+                </p>
               </div>
               <p className="today-hero__focus-label">Today’s focus</p>
-              <p className="today-hero__focus">{brief.focus}</p>
+              <p className="today-hero__focus">{weeklyFocus}</p>
               <p className="today-hero__meta">
-                Week {model.week.weekIndex}: {model.week.theme}
-                <span aria-hidden> · </span>
-                Day {model.day.dayInWeek}
+                {weeklyPlan
+                  ? `${weeklyPlan.weekStartDate} → ${weeklyPlan.weekEndDate}`
+                  : `Week ${model.week.weekIndex}: ${model.week.theme}`}
                 <span aria-hidden> · </span>
                 {sessionLabel}
+                <span aria-hidden> · </span>
+                {toLocalDateKey()}
               </p>
               <p className="today-hero__plan-link">
                 <Link to="/journey">View active plan</Link>
                 <span aria-hidden> · </span>
                 <Link to="/plan">Manage plan</Link>
+                <span aria-hidden> · </span>
+                <Link to={startNextWeekPath()}>Weekly plan</Link>
               </p>
             </header>
           </div>
 
+          {sundayKickoff && (!weeklyPlan || weeklyPlan.status !== 'active') ? (
+            <section className="today-week-banner path-surface">
+              <p className="today-panel__label">Sunday · Weekly kickoff</p>
+              <p className="path-body">
+                Capture church notes, set biblical practice, schedule workouts, and choose three work
+                outcomes for the week ahead.
+              </p>
+              <div className="today-week-banner__actions">
+                <Link className="path-btn path-btn--primary" to={startNextWeekPath()}>
+                  Build this week’s plan
+                </Link>
+                <Link className="path-btn path-btn--ghost" to={`/plan/week/${followingSundayStart()}`}>
+                  Start next week
+                </Link>
+              </div>
+            </section>
+          ) : null}
+
+          {sabbath ? (
+            <section className="today-week-banner today-week-banner--sabbath path-surface">
+              <p className="today-panel__label">Sabbath</p>
+              <p className="path-body">
+                Rest from structured training. Be present with family and friends.
+              </p>
+              <p className="today-week-banner__note">
+                No required biblical lesson, workout, or work plan. Steps, protein, and water remain
+                available if you want them — without pressure.
+              </p>
+            </section>
+          ) : null}
+
+          {weeklyPlan?.status === 'active' && !sabbath ? (
+            <section className="today-plan-summary path-surface" aria-label="Today’s plan">
+              <p className="today-panel__label">Today’s plan</p>
+              <ul className="today-plan-summary__list">
+                <li>
+                  <strong>Biblical</strong>
+                  <span>{weeklyPractice}</span>
+                </li>
+                <li>
+                  <strong>Physical</strong>
+                  <span>
+                    {weeklyPhysical?.type === 'workout'
+                      ? weeklyPhysical.workoutName || 'Workout'
+                      : weeklyPhysical?.type?.replaceAll('_', ' ') || 'Unscheduled'}
+                  </span>
+                </li>
+                <li>
+                  <strong>Work</strong>
+                  <span>
+                    {weeklyWork.filter((w) => w.title.trim()).map((w) => w.title).join(' · ') ||
+                      'No key actions'}
+                  </span>
+                </li>
+              </ul>
+            </section>
+          ) : null}
+
+          {!sabbath ? (
           <section className="today-brief today-brief--biblical" aria-labelledby="today-brief-title">
             <div className="today-brief__head">
               <h2 id="today-brief-title" className="today-brief__title">
@@ -271,12 +396,21 @@ export function TodayPage() {
               </h2>
             </div>
             <ul className="today-brief__list">
-              {brief.spiritual.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
+              {weeklyBiblical ? (
+                <>
+                  <li>{weeklyScripture}</li>
+                  <li>{weeklyPractice}</li>
+                  {sessionPrompt ? <li>{sessionPrompt}</li> : null}
+                </>
+              ) : (
+                brief.spiritual.map((item) => <li key={item}>{item}</li>)
+              )}
             </ul>
           </section>
+          ) : null}
 
+          {!sabbath ? (
+          <>
           <div
             className="today-preview__modes today-grid__modes"
             role="group"
@@ -335,9 +469,11 @@ export function TodayPage() {
 
           <section className="today-practice">
             <p className="today-panel__label">Today’s practice</p>
-            <p className="today-practice__challenge">{model.assignment.prompt}</p>
+            <p className="today-practice__challenge">{weeklyPractice}</p>
             {morningMode !== 'two_minute' ? (
-              <p className="today-practice__signal">{model.assignment.successSignal}</p>
+              <p className="today-practice__signal">
+                {weeklyBiblical?.focus || model.assignment.successSignal}
+              </p>
             ) : null}
             <div className="today-practice__actions">
               <Button
@@ -379,8 +515,8 @@ export function TodayPage() {
               <section className="today-panel__section">
                 <p className="today-panel__label">Scripture</p>
                 <p className="today-section__ref">
-                  {model.scripture.reference.canonicalLabel}
-                  {model.scripture.mode === 'paraphrase' ? ' · paraphrase' : ''}
+                  {weeklyScripture}
+                  {model.scripture.mode === 'paraphrase' && !weeklyBiblical ? ' · paraphrase' : ''}
                 </p>
                 {scriptureBody ? (
                   <blockquote className="path-scripture today-section__scripture">
@@ -400,11 +536,15 @@ export function TodayPage() {
 
               <section className="today-panel__section">
                 <p className="today-panel__label">Teaching</p>
-                {teachingLines.map((line) => (
-                  <p key={line.slice(0, 24)} className="path-body today-block__teaching">
-                    {line}
-                  </p>
-                ))}
+                {weeklyBiblical?.teaching ? (
+                  <p className="path-body today-block__teaching">{weeklyTeaching}</p>
+                ) : (
+                  teachingLines.map((line) => (
+                    <p key={line.slice(0, 24)} className="path-body today-block__teaching">
+                      {line}
+                    </p>
+                  ))
+                )}
               </section>
 
               <hr className="today-panel__divider" />
@@ -629,6 +769,37 @@ export function TodayPage() {
             </div>
           )}
           </div>
+
+          {weeklyPlan?.status === 'active' && weeklyWork.length > 0 ? (
+            <section className="today-work path-surface">
+              <p className="today-panel__label">Work</p>
+              <p className="today-column__intro">Key actions for today — separate from biblical and physical tracks.</p>
+              <ul className="today-work__list">
+                {weeklyWork.map((action) => {
+                  const outcome = weeklyPlan.work.weeklyOutcomes.find((o) => o.id === action.outcomeId);
+                  return (
+                    <li key={action.id} className="today-work__item">
+                      <label className="today-work__check">
+                        <input
+                          type="checkbox"
+                          checked={action.status === 'done'}
+                          onChange={() => void toggleWorkAction(action)}
+                        />
+                        <span>
+                          <strong>{action.title || 'Untitled action'}</strong>
+                          {outcome?.title ? (
+                            <span className="today-work__outcome"> · {outcome.title}</span>
+                          ) : null}
+                        </span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ) : null}
+          </>
+          ) : null}
         </div>
 
         <PhysicalTrainingPanel pack={pack} day={model.day} />

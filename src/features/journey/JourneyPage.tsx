@@ -51,6 +51,9 @@ export function JourneyPage() {
         <Link className="path-btn path-btn--primary" to="/today">
           Train today
         </Link>
+        <Link className="path-btn path-btn--ghost" to="/plan/week">
+          Weekly plan
+        </Link>
         <Link className="path-btn path-btn--ghost" to="/plan">
           Manage plans
         </Link>
