@@ -1,7 +1,8 @@
 .growth-preview {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.35rem;
+  max-width: 56rem;
 }
 
 .growth-preview__hero {
@@ -10,14 +11,28 @@
 
 .growth-preview__title {
   font-size: clamp(2.4rem, 7vw, 3.6rem);
-  margin-top: 0.25rem;
+  margin: 0.25rem 0 0;
 }
 
 .growth-preview__lede {
   margin-top: 0.5rem;
 }
 
-.growth-preview__metrics {
+.growth-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.growth-section__title {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  color: var(--path-gold);
+}
+
+.growth-section__meters,
+.growth-section__cards {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -25,25 +40,79 @@
   gap: 0.55rem;
 }
 
-.growth-preview__metrics li {
+.growth-section__meters > li,
+.growth-section__cards > li {
   padding: 0.85rem 0.95rem;
+}
+
+.growth-section__card-title {
+  margin: 0 0 0.3rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--path-text-dim);
+}
+
+.growth-review {
+  padding: 1rem 1.05rem;
+  display: grid;
+  gap: 0.95rem;
+}
+
+.growth-history {
+  padding: 0.95rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.growth-history__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
 }
 
-.growth-preview__note {
-  max-width: 36rem;
+.growth-history__list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
 }
 
-.growth-preview__cta {
-  align-self: flex-start;
+.growth-history__list span {
+  font-size: 0.84rem;
+  color: var(--path-text-muted);
+}
+
+.growth-history__note {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--path-text-dim);
+}
+
+.growth-preview__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.growth-preview__actions .path-btn {
   text-decoration: none;
   display: inline-flex;
 }
 
-@media (min-width: 960px) {
-  .growth-preview__metrics {
+@media (min-width: 860px) {
+  .growth-section__meters {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .growth-section__cards {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .growth-review {
+    grid-template-columns: 1fr 1fr 1fr;
   }
 }

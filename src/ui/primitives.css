@@ -275,3 +275,9 @@
 .path-fade-in {
   animation: path-fade-up 420ms var(--path-ease) both;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .path-fade-in {
+    animation: none;
+  }
+}

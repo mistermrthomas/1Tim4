@@ -23,6 +23,7 @@ import { TodayPage } from './features/today/TodayPage';
 import { JourneyPage } from './features/journey/JourneyPage';
 import { GrowthPage } from './features/growth/GrowthPage';
 import { CoachPage } from './features/coach/CoachPage';
+import { PlanBuilderPage } from './features/plan/PlanBuilderPage';
 import './styles/global.css';
 import './features/shell/FormationShell.css';
 import './styles/desktop.css';
@@ -97,6 +98,7 @@ export default function App() {
               <Route path="/journey" element={<JourneyPage />} />
               <Route path="/growth" element={<GrowthPage />} />
               <Route path="/coach" element={<CoachPage />} />
+              <Route path="/plan" element={<PlanBuilderPage />} />
               <Route path="/preview" element={<Navigate to="/today" replace />} />
             </Route>
             <Route path="*" element={<AppRoutes cloudReloadKey={cloudReloadKey} />} />

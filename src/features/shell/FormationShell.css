@@ -2,15 +2,52 @@
 @import '../../ui/primitives.css';
 
 .formation-shell {
+  position: relative;
+  isolation: isolate;
   min-height: 100dvh;
   display: grid;
   grid-template-columns: 1fr;
   background: var(--path-bg);
   color: var(--path-text);
   font-family: var(--path-font-body);
-  transition:
-    background var(--path-duration) var(--path-ease),
-    color var(--path-duration) var(--path-ease);
+  transition: color var(--path-duration) var(--path-ease);
+}
+
+/* One static, viewport-fixed background — owned by the shell, not routes. */
+.formation-shell__backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.formation-shell__backdrop picture,
+.formation-shell__backdrop-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.formation-shell__backdrop-image {
+  object-fit: cover;
+  object-position: var(--path-page-focal);
+  filter: var(--path-page-filter);
+}
+
+@media (max-width: 719px) {
+  .formation-shell {
+    --path-page-focal: center center;
+  }
+}
+
+.formation-shell__backdrop-veil {
+  position: absolute;
+  inset: 0;
+  background: var(--path-page-veil);
 }
 
 .formation-shell__sidebar {
@@ -19,7 +56,7 @@
 
 .formation-shell__main {
   position: relative;
-  isolation: isolate;
+  z-index: 1;
   min-width: 0;
   min-height: 100dvh;
   width: 100%;
@@ -27,30 +64,6 @@
   padding: 0;
   max-width: none;
   overflow: visible;
-}
-
-.formation-shell__backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden; /* clip image only — not a scroll container */
-}
-
-.formation-shell__backdrop img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  border: 0;
-  filter: var(--path-page-filter);
-}
-
-.formation-shell__backdrop-veil {
-  position: absolute;
-  inset: 0;
-  background: var(--path-page-veil);
 }
 
 .formation-shell__content {
@@ -133,23 +146,47 @@
 
 @media (min-width: 960px) {
   .formation-shell {
-    grid-template-columns: var(--path-sidebar-width) minmax(0, 1fr);
+    display: block;
   }
 
   .formation-shell__sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--path-sidebar-width);
+    height: 100vh;
+    z-index: 2;
     display: flex;
     flex-direction: column;
-    gap: 1.1rem;
-    padding: 1.35rem 1.1rem 1.15rem;
-    border-right: 1px solid var(--path-hairline);
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.15rem 0.95rem 1rem;
+    border-right: 1px solid var(--path-sidebar-border);
+    box-shadow: var(--path-sidebar-shadow);
     background: var(--path-sidebar-bg);
-    position: sticky;
-    top: 0;
-    align-self: start;
-    min-height: 100dvh;
-    z-index: 2;
-    backdrop-filter: blur(12px);
-    overflow: visible;
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+  }
+
+  .formation-shell__sidebar-top {
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+    min-height: 0;
+  }
+
+  .formation-shell__sidebar-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+
+  .formation-shell__main {
+    margin-left: var(--path-sidebar-width);
+    width: auto;
+    min-width: 0;
   }
 
   .formation-shell__mobile-bar {
@@ -157,28 +194,28 @@
   }
 
   .formation-shell__brand-block {
-    padding: 0 0.35rem;
+    padding: 0 0.3rem;
   }
 
   .formation-shell__mark {
-    width: 2.4rem;
-    height: 2.4rem;
+    width: 2.15rem;
+    height: 2.15rem;
     color: var(--path-gold);
     display: block;
-    margin-bottom: 0.55rem;
+    margin-bottom: 0.4rem;
   }
 
   .formation-shell__brand {
     margin: 0;
     font-family: var(--path-font-display);
-    font-size: 1.55rem;
+    font-size: 1.4rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
   }
 
   .formation-shell__tagline {
-    margin: 0.3rem 0 0;
-    font-size: 0.7rem;
+    margin: 0.22rem 0 0;
+    font-size: 0.66rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--path-gold-dim);
@@ -187,14 +224,14 @@
   .formation-shell__nav {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.18rem;
   }
 
   .formation-shell__tab {
     display: flex;
     flex-direction: column;
-    gap: 0.12rem;
-    padding: 0.7rem 0.8rem;
+    gap: 0.08rem;
+    padding: 0.55rem 0.7rem;
     text-decoration: none;
     color: var(--path-text-muted);
     border: 1px solid transparent;
@@ -202,8 +239,7 @@
     transition:
       border-color var(--path-duration) var(--path-ease),
       background var(--path-duration) var(--path-ease),
-      color var(--path-duration) var(--path-ease),
-      box-shadow var(--path-duration) var(--path-ease);
+      color var(--path-duration) var(--path-ease);
   }
 
   .formation-shell__tab:hover {
@@ -219,30 +255,50 @@
 
   .formation-shell__tab-label {
     font-family: var(--path-font-display);
-    font-size: 0.9rem;
+    font-size: 0.86rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 
   .formation-shell__tab-job {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     color: var(--path-text-dim);
   }
 
   .formation-shell__quote {
-    margin: auto 0 0;
-    padding: 0 0.35rem;
+    margin: 0;
+    padding: 0 0.3rem;
   }
 
   .formation-shell__quote .path-scripture {
-    font-size: 0.92rem;
-    margin: 0 0 0.35rem;
+    font-size: 0.84rem;
+    line-height: 1.4;
+    margin: 0 0 0.28rem;
   }
 
   .formation-shell__footer {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.6rem;
+  }
+
+  .formation-shell__manage {
+    align-self: flex-start;
+    text-decoration: none;
+    color: var(--path-gold);
+    font-family: var(--path-font-display);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.2rem 0;
+  }
+
+  .formation-shell__manage:hover {
+    text-decoration: underline;
+  }
+
+  .formation-shell__manage.active {
+    color: var(--path-text);
   }
 
   .formation-shell__theme {
@@ -252,15 +308,15 @@
   .formation-shell__profile {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 0.7rem;
+    gap: 0.55rem;
     align-items: center;
-    padding-top: 0.65rem;
+    padding-top: 0.55rem;
     border-top: 1px solid var(--path-hairline);
   }
 
   .formation-shell__avatar {
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2rem;
+    height: 2rem;
     border-radius: 999px;
     display: grid;
     place-items: center;
@@ -268,20 +324,23 @@
     color: var(--path-gold);
     font-family: var(--path-font-display);
     letter-spacing: 0.06em;
+    font-size: 0.85rem;
   }
 
   .formation-shell__profile-name {
-    margin: 0 0 0.12rem;
+    margin: 0 0 0.1rem;
     font-weight: 600;
+    font-size: 0.92rem;
   }
 
   .formation-shell__season-bar {
-    margin-top: 0.4rem;
+    margin-top: 0.3rem;
   }
 
   .formation-shell__content {
     max-width: none;
-    padding: 1.25rem 1.75rem 2rem;
+    padding: 1.5rem 1.75rem 2rem;
+    width: 100%;
   }
 
   .formation-shell__mobile-nav {

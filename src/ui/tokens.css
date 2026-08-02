@@ -32,27 +32,31 @@
   --path-scripture-bg: rgba(255, 255, 255, 0.03);
   --path-practice-glow: 0 0 28px rgba(201, 162, 39, 0.12);
   --path-sidebar-bg: rgba(12, 12, 12, 0.96);
+  --path-sidebar-border: rgba(244, 244, 244, 0.08);
+  --path-sidebar-shadow: 4px 0 18px rgba(0, 0, 0, 0.22);
   --path-mobile-nav-bg: rgba(10, 10, 10, 0.94);
   --path-progress-track: rgba(255, 255, 255, 0.08);
   --path-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
   --path-glow: 0 0 22px rgba(201, 162, 39, 0.1);
   --path-on-gold: #12100a;
 
-  /* Full-bleed page backdrop */
-  --path-page-filter: brightness(0.38) contrast(1.1) saturate(0.45);
+  /* Shared fixed backdrop — same image/crop in both themes */
+  --path-page-focal: 72% center;
+  --path-page-filter: brightness(0.72) contrast(1.12) saturate(0.4);
   --path-page-veil:
     linear-gradient(
       180deg,
-      rgba(10, 10, 10, 0.78) 0%,
-      rgba(10, 10, 10, 0.72) 28%,
-      rgba(10, 10, 10, 0.82) 70%,
-      rgba(10, 10, 10, 0.92) 100%
+      rgba(10, 10, 10, 0.62) 0%,
+      rgba(10, 10, 10, 0.48) 32%,
+      rgba(10, 10, 10, 0.58) 72%,
+      rgba(10, 10, 10, 0.78) 100%
     ),
     linear-gradient(
       90deg,
       rgba(10, 10, 10, 0.88) 0%,
-      rgba(10, 10, 10, 0.55) 48%,
-      rgba(10, 10, 10, 0.42) 100%
+      rgba(10, 10, 10, 0.72) 36%,
+      rgba(10, 10, 10, 0.38) 64%,
+      rgba(10, 10, 10, 0.18) 100%
     );
 }
 
@@ -61,7 +65,7 @@
 
   --path-bg: #f3f4f6;
   --path-bg-elevated: #ffffff;
-  --path-surface: rgba(255, 255, 255, 0.94);
+  --path-surface: rgba(255, 255, 255, 0.96);
   --path-surface-solid: #ffffff;
   --path-surface-2: #eef0f3;
   --path-surface-3: #e5e8ec;
@@ -81,30 +85,35 @@
   --path-danger: #a13d32;
   --path-success: #4f6d46;
 
-  --path-scripture-bg: rgba(255, 255, 255, 0.72);
+  --path-scripture-bg: rgba(255, 255, 255, 0.88);
   --path-practice-glow: 0 8px 24px rgba(17, 24, 32, 0.05);
-  --path-sidebar-bg: rgba(255, 255, 255, 0.96);
+  --path-sidebar-bg: rgba(255, 255, 255, 0.97);
+  --path-sidebar-border: rgba(17, 24, 32, 0.1);
+  --path-sidebar-shadow: 4px 0 16px rgba(17, 24, 32, 0.04);
   --path-mobile-nav-bg: rgba(255, 255, 255, 0.94);
   --path-progress-track: #e5e8ec;
   --path-shadow: 0 8px 22px rgba(17, 24, 32, 0.05);
   --path-glow: 0 0 0 transparent;
   --path-on-gold: #ffffff;
 
-  /* Full-bleed page backdrop — high-key, desaturated, under white veil */
-  --path-page-filter: grayscale(0.9) brightness(1.35) contrast(0.82) saturate(0.05);
+  /* Same gym image — grayscale, readable left, ~20–30% visible on the right */
+  --path-page-focal: 72% center;
+  --path-page-filter: grayscale(0.78) brightness(1.02) contrast(1.1) saturate(0.1);
   --path-page-veil:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.9) 0%,
-      rgba(243, 244, 246, 0.86) 35%,
-      rgba(243, 244, 246, 0.9) 70%,
-      rgba(243, 244, 246, 0.94) 100%
+      rgba(255, 255, 255, 0.62) 0%,
+      rgba(243, 244, 246, 0.5) 35%,
+      rgba(243, 244, 246, 0.58) 72%,
+      rgba(243, 244, 246, 0.72) 100%
     ),
     linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0.92) 0%,
-      rgba(255, 255, 255, 0.78) 55%,
-      rgba(243, 244, 246, 0.72) 100%
+      rgba(255, 255, 255, 0.88) 0%,
+      rgba(255, 255, 255, 0.78) 36%,
+      rgba(255, 255, 255, 0.42) 60%,
+      rgba(243, 244, 246, 0.2) 82%,
+      rgba(243, 244, 246, 0.1) 100%
     );
 }
 
@@ -113,9 +122,9 @@
   --path-font-body: 'DM Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --path-font-scripture: 'Source Serif 4', Georgia, 'Times New Roman', serif;
 
-  --path-radius-sm: 4px;
+  --path-radius-sm: 5px;
   --path-radius: 8px;
-  --path-radius-lg: 12px;
+  --path-radius-lg: 10px;
   --path-space-1: 0.25rem;
   --path-space-2: 0.5rem;
   --path-space-3: 0.75rem;

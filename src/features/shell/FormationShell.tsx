@@ -7,9 +7,9 @@ import './FormationShell.css';
 
 const TABS = [
   { to: '/today', label: 'Today', job: 'Train today' },
-  { to: '/journey', label: 'Journey', job: 'Where am I going?' },
-  { to: '/growth', label: 'Growth', job: 'How am I changing?' },
-  { to: '/coach', label: 'Coach', job: 'Guidance' },
+  { to: '/journey', label: 'Journey', job: 'Goals and plan' },
+  { to: '/growth', label: 'Growth', job: 'Review progress' },
+  { to: '/coach', label: 'Coach', job: 'Guidance & adjustments' },
 ] as const;
 
 export function FormationShell() {
@@ -25,58 +25,89 @@ export function FormationShell() {
 
   return (
     <div className="formation-shell" data-path-theme={theme}>
+      <div className="formation-shell__backdrop" aria-hidden>
+        <picture>
+          <source
+            media="(max-width: 719px)"
+            srcSet={PATH_MEDIA.appBackgroundMobile}
+            type="image/webp"
+          />
+          <source
+            media="(max-width: 719px)"
+            srcSet={PATH_MEDIA.appBackgroundMobileFallback}
+          />
+          <source srcSet={PATH_MEDIA.appBackground} type="image/webp" />
+          <img
+            className="formation-shell__backdrop-image"
+            src={PATH_MEDIA.appBackgroundFallback}
+            alt=""
+            decoding="async"
+            fetchPriority="high"
+          />
+        </picture>
+        <div className="formation-shell__backdrop-veil" />
+      </div>
+
       <aside className="formation-shell__sidebar">
-        <div className="formation-shell__brand-block">
-          <PathMark className="formation-shell__mark" />
-          <p className="formation-shell__brand">{APP_NAME}</p>
-          <p className="formation-shell__tagline">{TAGLINE}</p>
+        <div className="formation-shell__sidebar-top">
+          <div className="formation-shell__brand-block">
+            <PathMark className="formation-shell__mark" />
+            <p className="formation-shell__brand">{APP_NAME}</p>
+            <p className="formation-shell__tagline">{TAGLINE}</p>
+          </div>
+
+          <nav className="formation-shell__nav" aria-label="Primary">
+            {TABS.map((tab) => (
+              <NavLink
+                key={tab.to}
+                to={tab.to}
+                className={({ isActive }) =>
+                  `formation-shell__tab${isActive ? ' formation-shell__tab--active' : ''}`
+                }
+                end={tab.to === '/today'}
+              >
+                <span className="formation-shell__tab-label">{tab.label}</span>
+                <span className="formation-shell__tab-job">{tab.job}</span>
+              </NavLink>
+            ))}
+          </nav>
         </div>
 
-        <nav className="formation-shell__nav" aria-label="Primary">
-          {TABS.map((tab) => (
-            <NavLink
-              key={tab.to}
-              to={tab.to}
-              className={({ isActive }) =>
-                `formation-shell__tab${isActive ? ' formation-shell__tab--active' : ''}`
-              }
-              end={tab.to === '/today'}
-            >
-              <span className="formation-shell__tab-label">{tab.label}</span>
-              <span className="formation-shell__tab-job">{tab.job}</span>
+        <div className="formation-shell__sidebar-bottom">
+          <figure className="formation-shell__quote">
+            <p className="path-scripture">
+              “But those who wait for Yahweh will renew their strength.”
+            </p>
+            <p className="path-label">Isaiah 40:31 · WEB</p>
+          </figure>
+
+          <div className="formation-shell__footer">
+            <NavLink to="/plan" className="formation-shell__manage">
+              Manage plan
             </NavLink>
-          ))}
-        </nav>
 
-        <figure className="formation-shell__quote">
-          <p className="path-scripture">
-            “But those who wait for Yahweh will renew their strength.”
-          </p>
-          <p className="path-label">Isaiah 40:31 · WEB</p>
-        </figure>
+            <button
+              type="button"
+              className="formation-shell__theme"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+            >
+              <span className="formation-shell__theme-icon" aria-hidden>
+                {theme === 'dark' ? '☀' : '☾'}
+              </span>
+              <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            </button>
 
-        <div className="formation-shell__footer">
-          <button
-            type="button"
-            className="formation-shell__theme"
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-          >
-            <span className="formation-shell__theme-icon" aria-hidden>
-              {theme === 'dark' ? '☀' : '☾'}
-            </span>
-            <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
-          </button>
-
-          <div className="formation-shell__profile">
-            <div className="formation-shell__avatar" aria-hidden>
-              M
-            </div>
-            <div>
-              <p className="formation-shell__profile-name">Preview</p>
-              <p className="path-label">Season 01 · Week 1 of 6</p>
-              <div className="path-progress__track formation-shell__season-bar" aria-hidden>
-                <div className="path-progress__fill" style={{ width: '16%' }} />
+            <div className="formation-shell__profile">
+              <div className="formation-shell__avatar" aria-hidden>
+                M
+              </div>
+              <div>
+                <p className="formation-shell__profile-name">Preview</p>
+                <p className="path-label">Season 01 · Week 1 of 6</p>
+                <div className="path-progress__track formation-shell__season-bar" aria-hidden>
+                  <div className="path-progress__fill" style={{ width: '16%' }} />
+                </div>
               </div>
             </div>
           </div>
@@ -84,10 +115,6 @@ export function FormationShell() {
       </aside>
 
       <main className="formation-shell__main">
-        <div className="formation-shell__backdrop" aria-hidden>
-          <img src={PATH_MEDIA.heroStudy} alt="" />
-          <div className="formation-shell__backdrop-veil" />
-        </div>
         <div className="formation-shell__content">
           <div className="formation-shell__mobile-bar">
             <button
