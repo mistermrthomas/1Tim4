@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import type { SermonPlan } from '../../../shared/sermonPlanSchema';
+import { applySermonPlanToWeeklyPlan } from '../../domain/aiPlanning/applySermonPlan';
+import {
+  notesAreMeaningful,
+  requestSermonPlan,
+  SermonPlanClientError,
+} from '../../domain/aiPlanning/client';
+import { readAiPlanningSettings } from '../../domain/aiPlanning/settings';
 import {
   followingSundayStart,
   nextSundayStart,
@@ -25,6 +33,14 @@ const STEPS = [
   'Work plan',
   'Review & activate',
 ] as const;
+
+const LOADING_MESSAGES = [
+  'Building your week from the sermon notes…',
+  'Identifying the central truth…',
+  'Developing the Monday–Friday progression…',
+  'Turning the message into concrete practices…',
+  'Preparing the Saturday reflection…',
+];
 
 const PHYSICAL_TYPES: Array<{ value: PhysicalDayType; label: string }> = [
   { value: 'workout', label: 'Workout' },
@@ -52,12 +68,19 @@ export function WeeklyPlanWorkspace() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0]!);
+  const [adjustment, setAdjustment] = useState('');
+  const [lastAiPlan, setLastAiPlan] = useState<SermonPlan | null>(null);
+  const [pendingAiPlan, setPendingAiPlan] = useState<SermonPlan | null>(null);
   const templates = useMemo(() => readPhysicalPlan().templates, []);
 
   const load = useCallback(async () => {
     try {
       const next = await ensureWeeklyPlanByRef(ref);
       setPlan(next);
+      setLastAiPlan(next.biblical.aiProposal ?? null);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -68,9 +91,87 @@ export function WeeklyPlanWorkspace() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!generating) return;
+    let i = 0;
+    const id = window.setInterval(() => {
+      i = (i + 1) % LOADING_MESSAGES.length;
+      setLoadingMsg(LOADING_MESSAGES[i]!);
+    }, 2200);
+    return () => window.clearInterval(id);
+  }, [generating]);
+
   const patch = (updater: (prev: WeeklyPlan) => WeeklyPlan) => {
     setPlan((prev) => (prev ? updater(prev) : prev));
     setMessage(null);
+  };
+
+  const generateBiblicalPlan = async (opts?: { regenerate?: boolean }) => {
+    if (!plan || generating) return;
+    if (!notesAreMeaningful(plan.church.sermonNotes)) {
+      setAiError('Add meaningful sermon notes (at least a few sentences) before generating.');
+      return;
+    }
+    setGenerating(true);
+    setAiError(null);
+    setMessage(null);
+    setLoadingMsg(LOADING_MESSAGES[0]!);
+    try {
+      const settings = await readAiPlanningSettings();
+      const result = await requestSermonPlan({
+        sermonTitle: plan.church.sermonTitle,
+        sermonDate: plan.church.sermonDate,
+        sermonNotes: plan.church.sermonNotes,
+        primaryScripture: plan.church.primaryScripture || undefined,
+        sermonSpeaker: plan.church.speaker || undefined,
+        churchName: plan.church.churchName || undefined,
+        sermonUrl: plan.church.sermonUrl || undefined,
+        additionalContext: plan.church.additionalContext || undefined,
+        planningPrompt: settings.planningPrompt,
+        model: settings.model,
+        adjustmentInstruction: opts?.regenerate ? adjustment : undefined,
+        currentPlan: opts?.regenerate ? lastAiPlan ?? plan.biblical.aiProposal ?? undefined : undefined,
+      });
+      if (opts?.regenerate) {
+        setPendingAiPlan(result.plan);
+        setMessage('Regenerated plan ready — accept to replace the current draft.');
+      } else {
+        const next = applySermonPlanToWeeklyPlan(plan, result.plan, {
+          modelUsed: result.modelUsed,
+          promptVersion: settings.promptVersion,
+        });
+        const saved = await saveWeeklyPlan(next);
+        setPlan(saved);
+        setLastAiPlan(result.plan);
+        setStep(2);
+        setMessage('Biblical plan generated — review and edit before activating.');
+      }
+    } catch (e) {
+      if (e instanceof SermonPlanClientError) {
+        setAiError(e.message);
+      } else {
+        setAiError(e instanceof Error ? e.message : 'Generation failed');
+      }
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const acceptPendingAi = async () => {
+    if (!plan || !pendingAiPlan) return;
+    const settings = await readAiPlanningSettings();
+    const next = applySermonPlanToWeeklyPlan(plan, pendingAiPlan, {
+      modelUsed: plan.aiMeta?.modelUsed || 'unknown',
+      promptVersion: settings.promptVersion,
+      regenerated: true,
+    });
+    const saved = await saveWeeklyPlan(next);
+    setPlan(saved);
+    setLastAiPlan(pendingAiPlan);
+    setPendingAiPlan(null);
+    setAdjustment('');
+    setMessage('Updated biblical plan from regeneration.');
+    setStep(2);
   };
 
   const saveDraft = async () => {
@@ -135,8 +236,19 @@ export function WeeklyPlanWorkspace() {
         <Link className="path-btn path-btn--ghost" to="/workouts">
           Workouts
         </Link>
+        <Link className="path-btn path-btn--ghost" to="/settings">
+          Settings
+        </Link>
         {message ? <p className="weekly-plan__status">{message}</p> : null}
       </div>
+
+      {generating ? (
+        <div className="weekly-plan__loading-banner path-surface" role="status" aria-live="polite">
+          <p className="weekly-plan__h3">AI planning</p>
+          <p className="path-body">{loadingMsg}</p>
+          <p className="weekly-plan__note">Your sermon notes stay saved. This may take a moment.</p>
+        </div>
+      ) : null}
 
       <div className="weekly-plan__steps" role="tablist" aria-label="Planning steps">
         {STEPS.map((label, index) => (
@@ -260,13 +372,50 @@ export function WeeklyPlanWorkspace() {
                 }
               />
             </label>
+            <label className="path-field weekly-plan__span-2">
+              <span>Additional personal context (optional)</span>
+              <textarea
+                rows={4}
+                placeholder="What you are struggling with, a decision, a relationship, hurry, pride, resistance — anything you want the plan to address."
+                value={plan.church.additionalContext}
+                onChange={(e) =>
+                  patch((p) => ({
+                    ...p,
+                    church: { ...p.church, additionalContext: e.target.value },
+                  }))
+                }
+              />
+            </label>
           </div>
+          <p className="weekly-plan__note">
+            AI suggestions are based on your notes — not divine revelation. Review against Scripture
+            before activating. You can also build the week manually.
+          </p>
+          {aiError ? <p className="weekly-plan__error">{aiError}</p> : null}
           <div className="weekly-plan__toolbar">
-            <Button onClick={() => setStep(1)}>Continue to weekly biblical focus</Button>
-            <Button variant="ghost" onClick={() => void saveDraft()} disabled={saving}>
+            <Button
+              onClick={() => void generateBiblicalPlan()}
+              disabled={generating || !notesAreMeaningful(plan.church.sermonNotes)}
+            >
+              Generate This Week’s Biblical Plan
+            </Button>
+            <Button variant="ghost" onClick={() => setStep(1)} disabled={generating}>
+              Continue manually
+            </Button>
+            <Button variant="ghost" onClick={() => void saveDraft()} disabled={saving || generating}>
               Save draft
             </Button>
           </div>
+          {aiError ? (
+            <div className="weekly-plan__toolbar">
+              <Button variant="ghost" onClick={() => void generateBiblicalPlan()} disabled={generating}>
+                Try Again
+              </Button>
+              <Button variant="ghost" onClick={() => setStep(2)}>
+                Continue Manually
+              </Button>
+            </div>
+          ) : null}
         </section>
       )}
 
@@ -339,8 +488,23 @@ export function WeeklyPlanWorkspace() {
         <section className="weekly-plan__section path-surface">
           <h2 className="weekly-plan__h2">3. Faith plan</h2>
           <p className="weekly-plan__note">
-            Review all content against Scripture and your own judgment before activating.
+            Review all content against Scripture and your own judgment before activating. Based on
+            your notes — edit freely. This is not divine revelation.
           </p>
+          {pendingAiPlan ? (
+            <div className="weekly-plan__pending path-surface">
+              <p className="path-body">
+                A regenerated plan is ready. Accepting replaces the current faith-track draft (sermon
+                notes are kept).
+              </p>
+              <div className="weekly-plan__toolbar">
+                <Button onClick={() => void acceptPendingAi()}>Accept regenerated plan</Button>
+                <Button variant="ghost" onClick={() => setPendingAiPlan(null)}>
+                  Keep current draft
+                </Button>
+              </div>
+            </div>
+          ) : null}
           <div className="weekly-plan__grid">
             <label className="path-field weekly-plan__span-2">
               <span>Weekly biblical theme</span>
@@ -350,6 +514,9 @@ export function WeeklyPlanWorkspace() {
                   patch((p) => ({
                     ...p,
                     biblical: { ...p.biblical, weeklyTheme: e.target.value },
+                    aiMeta: p.aiMeta
+                      ? { ...p.aiMeta, generationSource: p.aiMeta.generationSource === 'manual' ? 'manual' : 'ai-edited' }
+                      : p.aiMeta,
                   }))
                 }
               />
@@ -402,6 +569,121 @@ export function WeeklyPlanWorkspace() {
                 }
               />
             </label>
+            <label className="path-field weekly-plan__span-2">
+              <span>Why this matters</span>
+              <textarea
+                rows={2}
+                value={plan.biblical.whyThisMatters || plan.biblical.sermonSummary}
+                onChange={(e) =>
+                  patch((p) => ({
+                    ...p,
+                    biblical: {
+                      ...p.biblical,
+                      whyThisMatters: e.target.value,
+                      sermonSummary: e.target.value,
+                    },
+                  }))
+                }
+              />
+            </label>
+            <label className="path-field weekly-plan__span-2">
+              <span>Supporting Scriptures (comma-separated)</span>
+              <input
+                value={plan.biblical.supportingScriptures.join(', ')}
+                onChange={(e) =>
+                  patch((p) => ({
+                    ...p,
+                    biblical: {
+                      ...p.biblical,
+                      supportingScriptures: e.target.value
+                        .split(',')
+                        .map((s) => s.trim())
+                        .filter(Boolean),
+                    },
+                  }))
+                }
+              />
+            </label>
+            <label className="path-field weekly-plan__span-2">
+              <span>Watch for</span>
+              <input
+                value={(plan.biblical.watchFor ?? []).join(' · ')}
+                onChange={(e) =>
+                  patch((p) => ({
+                    ...p,
+                    biblical: {
+                      ...p.biblical,
+                      watchFor: e.target.value
+                        .split('·')
+                        .map((s) => s.trim())
+                        .filter(Boolean),
+                    },
+                  }))
+                }
+              />
+            </label>
+            <label className="path-field weekly-plan__span-2">
+              <span>Weekly prayer</span>
+              <textarea
+                rows={2}
+                value={plan.biblical.weeklyPrayer || ''}
+                onChange={(e) =>
+                  patch((p) => ({
+                    ...p,
+                    biblical: { ...p.biblical, weeklyPrayer: e.target.value },
+                  }))
+                }
+              />
+            </label>
+          </div>
+
+          <div className="weekly-plan__regen path-surface">
+            <h3 className="weekly-plan__h3">Regenerate</h3>
+            <label className="path-field">
+              <span>What should change?</span>
+              <textarea
+                rows={2}
+                placeholder="Make practices more challenging, less journaling, focus more on a passage…"
+                value={adjustment}
+                onChange={(e) => setAdjustment(e.target.value)}
+              />
+            </label>
+            <div className="weekly-plan__toolbar">
+              <Button
+                variant="ghost"
+                onClick={() => void generateBiblicalPlan({ regenerate: true })}
+                disabled={generating || !notesAreMeaningful(plan.church.sermonNotes)}
+              >
+                Regenerate complete plan
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (!window.confirm('Discard the generated biblical plan fields?')) return;
+                  patch((p) => ({
+                    ...p,
+                    biblical: {
+                      ...p.biblical,
+                      weeklyTheme: '',
+                      centralPrinciple: '',
+                      weeklyPractice: '',
+                      actOfObedience: '',
+                      aiProposal: null,
+                    },
+                    aiMeta: {
+                      generationSource: 'manual',
+                      generatedAt: null,
+                      promptVersion: null,
+                      modelUsed: null,
+                    },
+                  }));
+                  setLastAiPlan(null);
+                }}
+              >
+                Discard generated result
+              </Button>
+            </div>
+            {aiError ? <p className="weekly-plan__error">{aiError}</p> : null}
           </div>
 
           {plan.biblical.days.map((day, index) => (

@@ -1,6 +1,16 @@
+import type { SermonPlan } from '../../../shared/sermonPlanSchema';
 import type { DateKey } from '../calendar/week';
 
 export type WeeklyPlanStatus = 'draft' | 'active' | 'completed' | 'archived';
+
+export type GenerationSource = 'manual' | 'ai' | 'ai-edited';
+
+export interface WeeklyPlanAiMeta {
+  generationSource: GenerationSource;
+  generatedAt: string | null;
+  promptVersion: string | null;
+  modelUsed: string | null;
+}
 
 export type PhysicalDayType =
   | 'workout'
@@ -60,6 +70,12 @@ export interface BiblicalWeeklyPlan {
   days: BiblicalDailyAssignment[];
   sourceNotes: string;
   approved: boolean;
+  whyThisMatters?: string;
+  watchFor?: string[];
+  weeklyPrayer?: string;
+  /** Last validated AI proposal (editable copy lives in fields above). */
+  aiProposal?: SermonPlan | null;
+  saturdayAi?: SermonPlan['saturday'] | null;
 }
 
 export interface PhysicalDailyAssignment {
@@ -135,6 +151,7 @@ export interface WeeklyPlan {
   physical: PhysicalWeeklyPlan;
   work: WorkWeeklyPlan;
   saturdayReflection: SaturdayReflection;
+  aiMeta?: WeeklyPlanAiMeta;
 }
 
 export interface WeeklyPlanIndex {
@@ -159,6 +176,15 @@ export function emptySaturdayReflection(): SaturdayReflection {
   };
 }
 
+export function emptyAiMeta(): WeeklyPlanAiMeta {
+  return {
+    generationSource: 'manual',
+    generatedAt: null,
+    promptVersion: null,
+    modelUsed: null,
+  };
+}
+
 /** Normalize legacy church/biblical fields after load. */
 export function normalizeWeeklyPlan(plan: WeeklyPlan): WeeklyPlan {
   const church = plan.church ?? ({} as ChurchEntry);
@@ -166,6 +192,7 @@ export function normalizeWeeklyPlan(plan: WeeklyPlan): WeeklyPlan {
     ...plan,
     completedAt: plan.completedAt ?? null,
     saturdayReflection: plan.saturdayReflection ?? emptySaturdayReflection(),
+    aiMeta: plan.aiMeta ?? emptyAiMeta(),
     church: {
       sermonDate: church.sermonDate ?? plan.weekStartDate,
       sermonTitle: church.sermonTitle ?? '',

@@ -1,5 +1,11 @@
 {
   "functions": {
+    "api/ai/sermon-plan.ts": {
+      "maxDuration": 60
+    },
+    "api/ai/connection-test.ts": {
+      "maxDuration": 15
+    },
     "api/assessment-plan.ts": {
       "maxDuration": 30
     },

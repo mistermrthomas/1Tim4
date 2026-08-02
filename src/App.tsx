@@ -26,6 +26,7 @@ import { GrowthPage } from './features/growth/GrowthPage';
 import { CoachPage } from './features/coach/CoachPage';
 import { ExercisesPage } from './features/catalog/ExercisesPage';
 import { WorkoutsPage } from './features/catalog/WorkoutsPage';
+import { SettingsPage } from './features/settings/SettingsPage';
 import { WeeklyPlanWorkspace } from './features/weeklyPlan/WeeklyPlanWorkspace';
 import './styles/global.css';
 import './features/shell/FormationShell.css';
@@ -110,6 +111,7 @@ export default function App() {
               <Route path="/plan/week/:weekId" element={<WeeklyPlanWorkspace />} />
               <Route path="/exercises" element={<ExercisesPage />} />
               <Route path="/workouts" element={<WorkoutsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
               <Route path="/seasons" element={<Navigate to="/journey" replace />} />
               <Route path="/season/:id" element={<Navigate to="/journey" replace />} />
               <Route path="/journey/season/:id" element={<Navigate to="/journey" replace />} />

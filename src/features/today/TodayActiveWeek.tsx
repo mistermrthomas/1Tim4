@@ -293,13 +293,21 @@ export function TodayActiveWeek({
                   <h2 className="today-brief__title">Today’s spiritual assignment</h2>
                 </div>
                 <ul className="today-brief__list">
-                  {scripture ? <li>{scripture}</li> : null}
-                  {practice ? <li>{practice}</li> : null}
+                  {weeklyPlan.church.sermonTitle ? (
+                    <li>Sermon: {weeklyPlan.church.sermonTitle}</li>
+                  ) : null}
+                  {theme ? <li>This week: {theme}</li> : null}
+                  {focus ? <li>Today’s focus: {focus}</li> : null}
+                  {scripture ? <li>Scripture: {scripture}</li> : null}
+                  {practice ? <li>Concrete action: {practice}</li> : null}
                   {weeklyPlan.biblical.actOfObedience ? (
-                    <li>Act of obedience: {weeklyPlan.biblical.actOfObedience}</li>
+                    <li>Weekly act of obedience: {weeklyPlan.biblical.actOfObedience}</li>
                   ) : null}
                   {sessionPrompt ? <li>{sessionPrompt}</li> : null}
                 </ul>
+                <p className="today-hero__plan-link">
+                  <Link to={`/plan/week/${weeklyPlan.weekStartDate}`}>View This Week</Link>
+                </p>
               </section>
 
               <div className="today-preview__modes today-grid__modes" role="group" aria-label="Session">
@@ -347,9 +355,15 @@ export function TodayActiveWeek({
                         Mark reviewed
                       </Button>
                     </section>
+                    <section className="today-panel__section">
+                      <p className="today-panel__label">Morning practice</p>
+                      <p className="path-body">
+                        {weeklyBiblical?.morningPrompt || 'Spend 10–15 minutes with today’s focus.'}
+                      </p>
+                    </section>
                     {weeklyBiblical?.teaching ? (
                       <section className="today-panel__section">
-                        <p className="today-panel__label">Teaching</p>
+                        <p className="today-panel__label">Explanation</p>
                         <p className="path-body today-block__teaching">{weeklyBiblical.teaching}</p>
                       </section>
                     ) : null}

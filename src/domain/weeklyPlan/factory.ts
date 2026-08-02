@@ -9,7 +9,7 @@ import type {
   WorkDailyAssignment,
   WorkOutcome,
 } from './types';
-import { emptySaturdayReflection } from './types';
+import { emptyAiMeta, emptySaturdayReflection } from './types';
 
 function emptyChurch(sermonDate: DateKey): ChurchEntry {
   return {
@@ -176,6 +176,7 @@ export function buildDraftWeeklyPlan(weekStartDate: DateKey): WeeklyPlan {
       approved: false,
     },
     saturdayReflection: emptySaturdayReflection(),
+    aiMeta: emptyAiMeta(),
   };
 }
 

@@ -85,6 +85,9 @@ export function FormationShell() {
             <NavLink to="/plan/week" className="formation-shell__manage">
               Weekly plan
             </NavLink>
+            <NavLink to="/settings" className="formation-shell__manage">
+              Settings
+            </NavLink>
             <NavLink to="/workouts" className="formation-shell__manage">
               Workouts
             </NavLink>

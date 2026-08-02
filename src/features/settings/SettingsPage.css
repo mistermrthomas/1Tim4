@@ -1,0 +1,69 @@
+.settings-page {
+  max-width: 48rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.settings-page__hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.settings-page__title {
+  margin: 0;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+}
+
+.settings-page__section {
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.settings-page__h2 {
+  margin: 0;
+  font-family: var(--path-font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--path-gold);
+}
+
+.settings-page__help,
+.settings-page__meta {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--path-text-muted);
+}
+
+.settings-page__prompt {
+  min-height: 18rem;
+  font-family: var(--path-font-body, inherit);
+  line-height: 1.45;
+}
+
+.settings-page__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.settings-page__ok {
+  margin: 0;
+  color: var(--path-gold);
+  font-size: 0.9rem;
+}
+
+.settings-page__error {
+  margin: 0;
+  color: #c45c4a;
+  font-size: 0.9rem;
+}
+
+.settings-page__loading {
+  padding: 2rem;
+}

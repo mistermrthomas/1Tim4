@@ -76,6 +76,16 @@
   text-transform: uppercase;
 }
 
+.weekly-plan__loading-banner,
+.weekly-plan__pending,
+.weekly-plan__regen {
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
 .weekly-plan__h2 {
   margin: 0;
   font-family: var(--path-font-display);
