@@ -53,6 +53,11 @@ export interface WorkoutSession {
   completedAt: string | null;
   exercises: ExerciseLogEntry[];
   notes: string;
+  /** Optional brief post-session coaching check-in (Stage 1+). */
+  difficultyRating?: 1 | 2 | 3 | 4 | 5 | null;
+  painNotes?: string;
+  adjustNextTime?: string;
+  skipReason?: string;
 }
 
 export type IntakeKind = 'protein' | 'water';

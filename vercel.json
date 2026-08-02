@@ -3,6 +3,9 @@
     "api/ai/sermon-plan.ts": {
       "maxDuration": 60
     },
+    "api/ai/training-plan.ts": {
+      "maxDuration": 60
+    },
     "api/ai/connection-test.ts": {
       "maxDuration": 15
     },

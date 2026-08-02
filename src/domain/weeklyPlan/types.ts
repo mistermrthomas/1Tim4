@@ -1,5 +1,8 @@
 import type { SermonPlan } from '../../../shared/sermonPlanSchema';
+import type { TrainingPlan } from '../../../shared/trainingPlanSchema';
 import type { DateKey } from '../calendar/week';
+import type { ResistanceUnit } from '../physical/types';
+import type { TrainingWeekSummary } from '../physical/trainingWeekSummary';
 
 export type WeeklyPlanStatus = 'draft' | 'active' | 'completed' | 'archived';
 
@@ -25,13 +28,96 @@ export type WorkoutClassification =
   | 'accessory'
   | 'finisher'
   | 'mobility'
-  | 'recovery';
+  | 'recovery'
+  | 'cardio';
+
+/** Week-specific exercise row (AI or manual override). */
+export interface ScheduledExerciseSpec {
+  exerciseId: string;
+  sets: number;
+  reps: string;
+  load: number | null;
+  loadUnit: ResistanceUnit;
+  note: string;
+  cautionNote: string;
+  order: number;
+  restSeconds?: number;
+  progressionInstruction?: string;
+}
 
 /** One scheduled workout block on a physical day (ordered). */
 export interface ScheduledWorkoutBlock {
   id: string;
-  workoutTemplateId: string;
+  /** Optional reusable template id; week exercises win when present. */
+  workoutTemplateId: string | null;
   order: number;
+  workoutName?: string;
+  classification?: WorkoutClassification;
+  estimatedMinutes?: number;
+  rationale?: string;
+  /** Authoritative exercise list for this week when non-empty. */
+  exercises?: ScheduledExerciseSpec[];
+}
+
+export type TrainingPrimaryGoal =
+  | 'build_muscle'
+  | 'lose_fat'
+  | 'maintain_consistency'
+  | 'improve_strength'
+  | 'improve_mobility'
+  | 'recover_reduce_fatigue'
+  | 'get_back_on_track'
+  | 'custom';
+
+export interface TrainingCoachingIntake {
+  primaryGoal: TrainingPrimaryGoal;
+  secondaryGoal: TrainingPrimaryGoal | null;
+  customGoalContext: string;
+  trainingDaysCount: 3 | 4 | 5 | 6;
+  /** PATH dayNumber 1=Sun … 7=Sat */
+  preferredDays: number[];
+  minutesPerWorkout: number;
+  includeWalkingCardio: boolean;
+  mustRestDays: number[];
+  lastWeek: {
+    plannedCount: number | null;
+    completedCount: number | null;
+    feltStrong: string;
+    tooEasy: string;
+    tooDifficult: string;
+    painDiscomfort: string;
+    skippedWhy: string;
+  };
+  /** Quick constraint tags */
+  constraints: string[];
+  constraintNotes: string;
+  /** Snapshot used at generation time (history and/or manual). */
+  priorWeekSummary?: TrainingWeekSummary | null;
+}
+
+export function emptyTrainingCoachingIntake(): TrainingCoachingIntake {
+  return {
+    primaryGoal: 'maintain_consistency',
+    secondaryGoal: null,
+    customGoalContext: '',
+    trainingDaysCount: 4,
+    preferredDays: [2, 3, 5, 6],
+    minutesPerWorkout: 45,
+    includeWalkingCardio: true,
+    mustRestDays: [7],
+    lastWeek: {
+      plannedCount: null,
+      completedCount: null,
+      feltStrong: '',
+      tooEasy: '',
+      tooDifficult: '',
+      painDiscomfort: '',
+      skippedWhy: '',
+    },
+    constraints: [],
+    constraintNotes: '',
+    priorWeekSummary: null,
+  };
 }
 
 /** Sermon capture — starting context for the week (not nested under a season). */
@@ -115,6 +201,16 @@ export interface PhysicalWeeklyPlan {
   desiredWorkoutCount: number;
   days: PhysicalDailyAssignment[];
   approved: boolean;
+  /** Sunday coaching questionnaire answers. */
+  coachingIntake?: TrainingCoachingIntake | null;
+  /** Last validated AI training proposal. */
+  aiProposal?: TrainingPlan | null;
+  aiMeta?: {
+    generationSource: GenerationSource;
+    generatedAt: string | null;
+    promptVersion: string | null;
+    modelUsed: string | null;
+  };
 }
 
 export interface WorkOutcome {
@@ -215,10 +311,15 @@ export function normalizeWeeklyPlan(plan: WeeklyPlan): WeeklyPlan {
     let scheduledWorkouts: ScheduledWorkoutBlock[];
     if (existing && existing.length > 0) {
       scheduledWorkouts = existing
-        .filter((b) => Boolean(b?.workoutTemplateId))
+        .filter(
+          (b) =>
+            Boolean(b?.workoutTemplateId) ||
+            (Array.isArray(b?.exercises) && b.exercises.length > 0),
+        )
         .map((block, index) => ({
+          ...block,
           id: block.id || `sw_legacy_${day.id}_${index}`,
-          workoutTemplateId: block.workoutTemplateId,
+          workoutTemplateId: block.workoutTemplateId ?? null,
           order: typeof block.order === 'number' ? block.order : index,
         }))
         .sort((a, b) => a.order - b.order)
@@ -279,6 +380,9 @@ export function normalizeWeeklyPlan(plan: WeeklyPlan): WeeklyPlan {
       desiredWorkoutCount: plan.physical?.desiredWorkoutCount ?? 4,
       approved: plan.physical?.approved ?? false,
       days: physicalDays,
+      coachingIntake: plan.physical?.coachingIntake ?? null,
+      aiProposal: plan.physical?.aiProposal ?? null,
+      aiMeta: plan.physical?.aiMeta ?? undefined,
     },
   };
 }

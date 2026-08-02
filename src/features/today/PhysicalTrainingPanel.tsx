@@ -29,6 +29,7 @@ import {
   ensureWorkoutSessions,
   formatLoad,
   savePartialWorkout,
+  saveSessionFeedback,
   setExerciseCompleted,
   skipExercise,
   skipWorkout,
@@ -40,6 +41,72 @@ import {
 import { classificationLabel } from '../../domain/weeklyPlan/physicalWorkouts';
 import { startNextWeekPath } from '../weeklyPlan/WeeklyPlanWorkspace';
 import { Button } from '../../ui/Button';
+
+function SessionFeedback({
+  session,
+  onSave,
+}: {
+  session: WorkoutSession;
+  onSave: (feedback: {
+    difficultyRating?: 1 | 2 | 3 | 4 | 5 | null;
+    painNotes?: string;
+    adjustNextTime?: string;
+  }) => void;
+}) {
+  const [difficulty, setDifficulty] = useState<number | ''>(session.difficultyRating ?? '');
+  const [pain, setPain] = useState(session.painNotes ?? '');
+  const [adjust, setAdjust] = useState(session.adjustNextTime ?? '');
+  const [saved, setSaved] = useState(false);
+
+  return (
+    <div className="today-session-feedback">
+      <p className="today-workout__done">
+        {session.status === 'partial' ? 'Partial workout saved.' : 'Workout saved to history.'}
+      </p>
+      <p className="today-workout__meta">Quick check-in for next Sunday’s plan</p>
+      <label className="path-field">
+        <span>How difficult was this?</span>
+        <select
+          value={difficulty}
+          onChange={(e) => setDifficulty(e.target.value ? Number(e.target.value) : '')}
+        >
+          <option value="">—</option>
+          <option value={1}>1 · Easy</option>
+          <option value={2}>2</option>
+          <option value={3}>3 · Right</option>
+          <option value={4}>4</option>
+          <option value={5}>5 · Very hard</option>
+        </select>
+      </label>
+      <label className="path-field">
+        <span>Any pain or discomfort?</span>
+        <input value={pain} onChange={(e) => setPain(e.target.value)} placeholder="Optional" />
+      </label>
+      <label className="path-field">
+        <span>Anything to adjust next time?</span>
+        <input
+          value={adjust}
+          onChange={(e) => setAdjust(e.target.value)}
+          placeholder="Optional"
+        />
+      </label>
+      <Button
+        variant="ghost"
+        className="today-workout__btn"
+        onClick={() => {
+          onSave({
+            difficultyRating: difficulty === '' ? null : (difficulty as 1 | 2 | 3 | 4 | 5),
+            painNotes: pain,
+            adjustNextTime: adjust,
+          });
+          setSaved(true);
+        }}
+      >
+        {saved ? 'Feedback saved' : 'Save feedback'}
+      </Button>
+    </div>
+  );
+}
 
 function SessionProgress({
   title,
@@ -617,11 +684,13 @@ export function PhysicalTrainingPanel({
                                 Save partial
                               </Button>
                             ) : null}
-                            {session.status === 'completed' ? (
-                              <p className="today-workout__done">Workout saved to history.</p>
-                            ) : null}
-                            {session.status === 'partial' ? (
-                              <p className="today-workout__done">Partial workout saved.</p>
+                            {session.status === 'completed' || session.status === 'partial' ? (
+                              <SessionFeedback
+                                session={session}
+                                onSave={(feedback) =>
+                                  patchSession(saveSessionFeedback(session.id, feedback))
+                                }
+                              />
                             ) : null}
                           </div>
                         </>

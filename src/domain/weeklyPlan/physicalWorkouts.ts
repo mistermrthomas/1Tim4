@@ -16,6 +16,8 @@ export function classificationLabel(kind: WorkoutClassification | undefined): st
       return 'Mobility';
     case 'recovery':
       return 'Recovery';
+    case 'cardio':
+      return 'Cardio';
     default:
       return 'Workout';
   }
@@ -28,12 +30,38 @@ export function templateClassification(template: CatalogTemplate | undefined): W
 export function makeScheduledWorkout(
   workoutTemplateId: string,
   order: number,
+  templates?: CatalogTemplate[],
 ): ScheduledWorkoutBlock {
+  const tmpl = templates?.find((t) => t.id === workoutTemplateId);
   return {
     id: newId('sw'),
     workoutTemplateId,
     order,
+    workoutName: tmpl?.name,
+    classification: tmpl?.classification,
+    exercises: tmpl?.exercises.map((row, i) => ({
+      exerciseId: row.exerciseId,
+      sets: row.sets,
+      reps: row.reps,
+      load: row.load,
+      loadUnit: row.loadUnit,
+      note: row.note,
+      cautionNote: row.cautionNote,
+      order: i,
+    })),
   };
+}
+
+function blockIsSchedulable(block: ScheduledWorkoutBlock): boolean {
+  return Boolean(block.workoutTemplateId) || (Array.isArray(block.exercises) && block.exercises.length > 0);
+}
+
+function blockDisplayName(block: ScheduledWorkoutBlock, templates: CatalogTemplate[]): string {
+  if (block.workoutName?.trim()) return block.workoutName.trim();
+  if (block.workoutTemplateId) {
+    return templates.find((t) => t.id === block.workoutTemplateId)?.name ?? 'Workout';
+  }
+  return 'Workout';
 }
 
 /** Normalize legacy single-template days into ordered scheduledWorkouts. */
@@ -44,11 +72,12 @@ export function normalizePhysicalDay(day: PhysicalDailyAssignment): PhysicalDail
   if (existing && existing.length > 0) {
     scheduledWorkouts = existing
       .map((block, index) => ({
+        ...block,
         id: block.id || newId('sw'),
-        workoutTemplateId: block.workoutTemplateId,
+        workoutTemplateId: block.workoutTemplateId ?? null,
         order: typeof block.order === 'number' ? block.order : index,
       }))
-      .filter((block) => Boolean(block.workoutTemplateId))
+      .filter(blockIsSchedulable)
       .sort((a, b) => a.order - b.order)
       .map((block, index) => ({ ...block, order: index }));
   } else if (day.workoutTemplateId) {
@@ -73,9 +102,7 @@ export function physicalDayWorkoutNames(
   if (!normalized.scheduledWorkouts.length) {
     return day.workoutName || '';
   }
-  return normalized.scheduledWorkouts
-    .map((block) => templates.find((t) => t.id === block.workoutTemplateId)?.name ?? 'Workout')
-    .join(' + ');
+  return normalized.scheduledWorkouts.map((block) => blockDisplayName(block, templates)).join(' + ');
 }
 
 export function setDayWorkouts(
@@ -84,7 +111,7 @@ export function setDayWorkouts(
   templates: CatalogTemplate[],
 ): PhysicalDailyAssignment {
   const scheduledWorkouts = blocks
-    .filter((b) => Boolean(b.workoutTemplateId))
+    .filter(blockIsSchedulable)
     .map((block, index) => ({ ...block, order: index }));
   const workoutName = physicalDayWorkoutNames(
     { ...day, scheduledWorkouts, workoutTemplateId: scheduledWorkouts[0]?.workoutTemplateId ?? null },
@@ -95,7 +122,7 @@ export function setDayWorkouts(
     scheduledWorkouts,
     workoutTemplateId: scheduledWorkouts[0]?.workoutTemplateId ?? null,
     workoutName,
-    type: scheduledWorkouts.length > 0 ? 'workout' : day.type === 'workout' ? 'unscheduled' : day.type,
+    type: scheduledWorkouts.length > 0 ? (day.type === 'recovery' ? 'recovery' : 'workout') : day.type === 'workout' ? 'unscheduled' : day.type,
     isRequired: scheduledWorkouts.length > 0 ? day.isRequired || day.type === 'workout' : false,
   };
 }
@@ -111,7 +138,7 @@ export function addWorkoutToDay(
   }
   const next = [
     ...normalized.scheduledWorkouts,
-    makeScheduledWorkout(workoutTemplateId, normalized.scheduledWorkouts.length),
+    makeScheduledWorkout(workoutTemplateId, normalized.scheduledWorkouts.length, templates),
   ];
   return setDayWorkouts(
     { ...normalized, type: 'workout', isRequired: true },

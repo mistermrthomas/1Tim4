@@ -70,8 +70,24 @@ export interface PhysicalPlanTargets {
 /** One scheduled workout slot for a weekday (ordered). */
 export interface WeekScheduleSlot {
   id: string;
-  workoutTemplateId: string;
+  workoutTemplateId: string | null;
   order: number;
+  workoutName?: string;
+  classification?: WorkoutClassification;
+  estimatedMinutes?: number;
+  rationale?: string;
+  exercises?: Array<{
+    exerciseId: string;
+    sets: number;
+    reps: string;
+    load: number | null;
+    loadUnit: ResistanceUnit;
+    note: string;
+    cautionNote: string;
+    order: number;
+    restSeconds?: number;
+    progressionInstruction?: string;
+  }>;
 }
 
 /**
@@ -147,11 +163,21 @@ export function normalizeWeekDaySlots(value: unknown, dayKey = '0'): WeekSchedul
       }));
   }
   return (value as WeekScheduleSlot[])
-    .filter((slot) => Boolean(slot?.workoutTemplateId))
+    .filter(
+      (slot) =>
+        Boolean(slot?.workoutTemplateId) || (Array.isArray(slot?.exercises) && slot.exercises.length > 0),
+    )
     .map((slot, order) => ({
-      id: slot.id || `slot_${dayKey}_${slot.workoutTemplateId}_${order}`,
-      workoutTemplateId: slot.workoutTemplateId,
+      id:
+        slot.id ||
+        `slot_${dayKey}_${slot.workoutTemplateId || 'custom'}_${order}`,
+      workoutTemplateId: slot.workoutTemplateId ?? null,
       order: typeof slot.order === 'number' ? slot.order : order,
+      workoutName: slot.workoutName,
+      classification: slot.classification,
+      estimatedMinutes: slot.estimatedMinutes,
+      rationale: slot.rationale,
+      exercises: slot.exercises,
     }))
     .sort((a, b) => a.order - b.order)
     .map((slot, order) => ({ ...slot, order }));
@@ -868,7 +894,41 @@ function resolveSlotPrescription(
   plan: PhysicalPlanCatalog,
   slot: WeekScheduleSlot,
 ): ResolvedWorkoutPrescription | null {
-  const template = plan.templates.find((t) => t.id === slot.workoutTemplateId);
+  const template = slot.workoutTemplateId
+    ? plan.templates.find((t) => t.id === slot.workoutTemplateId)
+    : undefined;
+
+  const inline = Array.isArray(slot.exercises) ? [...slot.exercises].sort((a, b) => a.order - b.order) : [];
+  if (inline.length > 0) {
+    const templateId = slot.workoutTemplateId || `custom_${slot.id}`;
+    return {
+      scheduledWorkoutId: slot.id,
+      templateId,
+      templateSessionId: `${templateId}.session`,
+      workoutName: slot.workoutName || template?.name || 'Workout',
+      classification: slot.classification ?? template?.classification ?? 'primary',
+      estimatedDuration:
+        slot.estimatedMinutes != null
+          ? `${slot.estimatedMinutes} min`
+          : template?.estimatedDuration,
+      order: slot.order,
+      exercises: inline.map((row) => {
+        const lib = plan.exercises.find((e) => e.id === row.exerciseId);
+        return {
+          exerciseId: row.exerciseId,
+          name: lib?.name ?? row.exerciseId,
+          equipment: lib?.equipment ?? 'none',
+          sets: row.sets,
+          reps: row.reps,
+          load: row.load,
+          loadUnit: row.loadUnit,
+          cautionNote: row.cautionNote || lib?.cautionNote || '',
+          note: row.note || row.progressionInstruction || lib?.notes || '',
+        };
+      }),
+    };
+  }
+
   if (!template || template.exercises.length === 0) return null;
 
   const ordered = [...template.exercises].sort((a, b) => a.order - b.order);
@@ -876,9 +936,12 @@ function resolveSlotPrescription(
     scheduledWorkoutId: slot.id,
     templateId: template.id,
     templateSessionId: `${template.id}.session`,
-    workoutName: template.name,
-    classification: template.classification ?? 'primary',
-    estimatedDuration: template.estimatedDuration,
+    workoutName: slot.workoutName || template.name,
+    classification: slot.classification ?? template.classification ?? 'primary',
+    estimatedDuration:
+      slot.estimatedMinutes != null
+        ? `${slot.estimatedMinutes} min`
+        : template.estimatedDuration,
     order: slot.order,
     exercises: ordered.map((row) => {
       const lib = plan.exercises.find((e) => e.id === row.exerciseId);

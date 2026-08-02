@@ -298,10 +298,29 @@ export function savePartialWorkout(sessionId: string): WorkoutSession | null {
   });
 }
 
-export function skipWorkout(sessionId: string): WorkoutSession | null {
+export function skipWorkout(sessionId: string, skipReason?: string): WorkoutSession | null {
   return updateSessionById(sessionId, (session) => {
     session.status = 'skipped';
     session.completedAt = new Date().toISOString();
+    if (skipReason?.trim()) session.skipReason = skipReason.trim();
+    return session;
+  });
+}
+
+export function saveSessionFeedback(
+  sessionId: string,
+  feedback: {
+    difficultyRating?: 1 | 2 | 3 | 4 | 5 | null;
+    painNotes?: string;
+    adjustNextTime?: string;
+  },
+): WorkoutSession | null {
+  return updateSessionById(sessionId, (session) => {
+    if (feedback.difficultyRating !== undefined) {
+      session.difficultyRating = feedback.difficultyRating;
+    }
+    if (feedback.painNotes !== undefined) session.painNotes = feedback.painNotes;
+    if (feedback.adjustNextTime !== undefined) session.adjustNextTime = feedback.adjustNextTime;
     return session;
   });
 }

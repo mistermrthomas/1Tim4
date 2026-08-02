@@ -16,21 +16,12 @@ import {
 import { readPhysicalPlan } from '../../domain/physical/planCatalog';
 import { newId } from '../../domain/physical/store';
 import { activateAndSyncWeeklyPlan } from '../../domain/weeklyPlan/activate';
-import {
-  applyBiblicalDefaultsFromChurch,
-  suggestPhysicalSchedule,
-} from '../../domain/weeklyPlan/factory';
-import {
-  addWorkoutToDay,
-  classificationLabel,
-  moveWorkoutInDay,
-  normalizePhysicalDay,
-  removeWorkoutFromDay,
-  templateClassification,
-} from '../../domain/weeklyPlan/physicalWorkouts';
+import { applyBiblicalDefaultsFromChurch } from '../../domain/weeklyPlan/factory';
+import { normalizePhysicalDay } from '../../domain/weeklyPlan/physicalWorkouts';
 import { ensureWeeklyPlanByRef, saveWeeklyPlan } from '../../domain/weeklyPlan/store';
-import type { PhysicalDayType, WeeklyPlan } from '../../domain/weeklyPlan/types';
+import type { WeeklyPlan } from '../../domain/weeklyPlan/types';
 import { Button } from '../../ui/Button';
+import { TrainingPlanStep } from './TrainingPlanStep';
 import './WeeklyPlanWorkspace.css';
 
 const STEPS = [
@@ -48,14 +39,6 @@ const LOADING_MESSAGES = [
   'Developing the Monday–Friday progression…',
   'Turning the message into concrete practices…',
   'Preparing the Saturday reflection…',
-];
-
-const PHYSICAL_TYPES: Array<{ value: PhysicalDayType; label: string }> = [
-  { value: 'workout', label: 'Workout' },
-  { value: 'recovery', label: 'Recovery' },
-  { value: 'optional_movement', label: 'Optional movement' },
-  { value: 'rest', label: 'Full rest' },
-  { value: 'unscheduled', label: 'Unscheduled' },
 ];
 
 function hasSermonContent(plan: WeeklyPlan): boolean {
@@ -823,208 +806,13 @@ export function WeeklyPlanWorkspace() {
         </section>
       )}
 
-      {step === 3 && (
-        <section className="weekly-plan__section path-surface">
-          <h2 className="weekly-plan__h2">4. Training plan</h2>
-          <p className="weekly-plan__note">
-            Assign workouts from your catalog. Saturday defaults to Sabbath / full rest. Training is
-            not an extension of the sermon.
-          </p>
-          <div className="weekly-plan__toolbar">
-            <Button
-              variant="ghost"
-              onClick={() => patch((p) => suggestPhysicalSchedule(p, p.physical.desiredWorkoutCount))}
-            >
-              Suggest 4-day rhythm
-            </Button>
-          </div>
-          {plan.physical.days.map((day, index) => {
-            const normalized = normalizePhysicalDay(day);
-            const assignedIds = new Set(
-              normalized.scheduledWorkouts.map((b) => b.workoutTemplateId),
-            );
-            const addable = templates.filter((t) => !assignedIds.has(t.id));
-            return (
-              <div key={day.id} className="weekly-plan__day">
-                <p className="weekly-plan__day-label">{shortWeekdayLabel(day.dayNumber)}</p>
-                <div className="weekly-plan__grid">
-                  <label className="path-field">
-                    <span>Day type</span>
-                    <select
-                      value={day.type}
-                      onChange={(e) => {
-                        const type = e.target.value as PhysicalDayType;
-                        patch((p) => {
-                          const days = [...p.physical.days];
-                          const clearWorkouts = type !== 'workout' && type !== 'recovery';
-                          days[index] = {
-                            ...normalizePhysicalDay(day),
-                            type,
-                            scheduledWorkouts: clearWorkouts
-                              ? []
-                              : normalizePhysicalDay(day).scheduledWorkouts,
-                            workoutTemplateId: clearWorkouts
-                              ? null
-                              : normalizePhysicalDay(day).workoutTemplateId,
-                            workoutName:
-                              type === 'rest'
-                                ? 'Sabbath / Full Rest'
-                                : type === 'workout' || type === 'recovery'
-                                  ? day.workoutName
-                                  : type.replaceAll('_', ' '),
-                            isRequired: type === 'workout',
-                          };
-                          return { ...p, physical: { ...p.physical, days } };
-                        });
-                      }}
-                    >
-                      {PHYSICAL_TYPES.map((t) => (
-                        <option key={t.value} value={t.value}>
-                          {t.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-
-                {(day.type === 'workout' || day.type === 'recovery') && (
-                  <div className="weekly-plan__workout-stack">
-                    {normalized.scheduledWorkouts.length === 0 ? (
-                      <p className="weekly-plan__note">No workouts assigned yet.</p>
-                    ) : (
-                      normalized.scheduledWorkouts.map((block, blockIndex) => {
-                        const tmpl = templates.find((t) => t.id === block.workoutTemplateId);
-                        const kind = templateClassification(tmpl);
-                        return (
-                          <div key={block.id} className="weekly-plan__workout-card">
-                            <div className="weekly-plan__workout-card-main">
-                              <p className="weekly-plan__workout-card-name">
-                                {tmpl?.name ?? 'Workout'}
-                              </p>
-                              <p className="weekly-plan__workout-card-meta">
-                                {classificationLabel(kind)}
-                                {tmpl?.estimatedDuration ? ` · ${tmpl.estimatedDuration}` : ''}
-                                {tmpl ? ` · ${tmpl.exercises.length} exercises` : ''}
-                              </p>
-                            </div>
-                            <div className="weekly-plan__workout-card-actions">
-                              <button
-                                type="button"
-                                className="weekly-plan__icon-btn"
-                                disabled={blockIndex === 0}
-                                aria-label="Move up"
-                                onClick={() =>
-                                  patch((p) => {
-                                    const days = [...p.physical.days];
-                                    days[index] = moveWorkoutInDay(
-                                      days[index]!,
-                                      block.id,
-                                      -1,
-                                      templates,
-                                    );
-                                    return { ...p, physical: { ...p.physical, days } };
-                                  })
-                                }
-                              >
-                                ↑
-                              </button>
-                              <button
-                                type="button"
-                                className="weekly-plan__icon-btn"
-                                disabled={blockIndex >= normalized.scheduledWorkouts.length - 1}
-                                aria-label="Move down"
-                                onClick={() =>
-                                  patch((p) => {
-                                    const days = [...p.physical.days];
-                                    days[index] = moveWorkoutInDay(
-                                      days[index]!,
-                                      block.id,
-                                      1,
-                                      templates,
-                                    );
-                                    return { ...p, physical: { ...p.physical, days } };
-                                  })
-                                }
-                              >
-                                ↓
-                              </button>
-                              <button
-                                type="button"
-                                className="weekly-plan__icon-btn weekly-plan__icon-btn--danger"
-                                aria-label="Remove workout"
-                                onClick={() =>
-                                  patch((p) => {
-                                    const days = [...p.physical.days];
-                                    days[index] = removeWorkoutFromDay(
-                                      days[index]!,
-                                      block.id,
-                                      templates,
-                                    );
-                                    return { ...p, physical: { ...p.physical, days } };
-                                  })
-                                }
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-
-                    <div className="weekly-plan__add-workout">
-                      <label className="path-field">
-                        <span>Add another workout</span>
-                        <select
-                          value=""
-                          disabled={addable.length === 0}
-                          onChange={(e) => {
-                            const id = e.target.value;
-                            if (!id) return;
-                            patch((p) => {
-                              const days = [...p.physical.days];
-                              days[index] = addWorkoutToDay(
-                                { ...days[index]!, type: 'workout', isRequired: true },
-                                id,
-                                templates,
-                              );
-                              return { ...p, physical: { ...p.physical, days } };
-                            });
-                          }}
-                        >
-                          <option value="">
-                            {addable.length ? 'Choose a template…' : 'All templates assigned'}
-                          </option>
-                          {addable.map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {t.name}
-                              {t.classification && t.classification !== 'primary'
-                                ? ` (${classificationLabel(t.classification)})`
-                                : ''}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          <div className="weekly-plan__toolbar">
-            <Button
-              onClick={() =>
-                patch((p) => ({ ...p, physical: { ...p.physical, approved: true } }))
-              }
-            >
-              Approve training track
-            </Button>
-            <Button onClick={() => setStep(4)}>Continue</Button>
-            <Button variant="ghost" onClick={() => setStep(2)}>
-              Back
-            </Button>
-          </div>
-        </section>
+      {step === 3 && plan && (
+        <TrainingPlanStep
+          plan={plan}
+          patch={patch}
+          onContinue={() => setStep(4)}
+          onBack={() => setStep(2)}
+        />
       )}
 
       {step === 4 && (

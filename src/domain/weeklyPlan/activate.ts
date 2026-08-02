@@ -21,22 +21,22 @@ export function syncPhysicalScheduleFromWeeklyPlan(plan: WeeklyPlan): void {
   for (const day of plan.physical.days) {
     const key = weekdayKeyFromDayNumber(day.dayNumber);
     const normalized = normalizePhysicalDay(day);
-    if (day.type === 'workout' && normalized.scheduledWorkouts.length > 0) {
+    const hasBlocks = normalized.scheduledWorkouts.length > 0;
+    if (
+      (day.type === 'workout' || day.type === 'recovery' || day.type === 'optional_movement') &&
+      hasBlocks
+    ) {
       const slots: WeekScheduleSlot[] = normalized.scheduledWorkouts.map((block) => ({
         id: block.id,
         workoutTemplateId: block.workoutTemplateId,
         order: block.order,
+        workoutName: block.workoutName,
+        classification: block.classification,
+        estimatedMinutes: block.estimatedMinutes,
+        rationale: block.rationale,
+        exercises: block.exercises,
       }));
       schedule[key] = slots;
-    } else if (
-      (day.type === 'recovery' || day.type === 'optional_movement') &&
-      normalized.scheduledWorkouts.length > 0
-    ) {
-      schedule[key] = normalized.scheduledWorkouts.map((block) => ({
-        id: block.id,
-        workoutTemplateId: block.workoutTemplateId,
-        order: block.order,
-      }));
     } else {
       schedule[key] = [];
     }
