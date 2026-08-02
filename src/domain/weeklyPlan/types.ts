@@ -19,6 +19,21 @@ export type PhysicalDayType =
   | 'rest'
   | 'unscheduled';
 
+/** Organizational metadata for a workout template / scheduled block. */
+export type WorkoutClassification =
+  | 'primary'
+  | 'accessory'
+  | 'finisher'
+  | 'mobility'
+  | 'recovery';
+
+/** One scheduled workout block on a physical day (ordered). */
+export interface ScheduledWorkoutBlock {
+  id: string;
+  workoutTemplateId: string;
+  order: number;
+}
+
 /** Sermon capture — starting context for the week (not nested under a season). */
 export interface ChurchEntry {
   sermonDate: DateKey;
@@ -83,7 +98,14 @@ export interface PhysicalDailyAssignment {
   date: DateKey;
   dayNumber: number;
   type: PhysicalDayType;
+  /** Ordered workout blocks for the day (primary + finishers, etc.). */
+  scheduledWorkouts: ScheduledWorkoutBlock[];
+  /**
+   * First scheduled template id (legacy / convenience).
+   * Prefer `scheduledWorkouts`. Migrated from single-template days.
+   */
   workoutTemplateId: string | null;
+  /** Display summary, e.g. "Chest and Triceps + Core Finisher". */
   workoutName: string;
   notes: string;
   isRequired: boolean;
@@ -185,9 +207,40 @@ export function emptyAiMeta(): WeeklyPlanAiMeta {
   };
 }
 
-/** Normalize legacy church/biblical fields after load. */
+/** Normalize legacy church/biblical/physical fields after load. */
 export function normalizeWeeklyPlan(plan: WeeklyPlan): WeeklyPlan {
   const church = plan.church ?? ({} as ChurchEntry);
+  const physicalDays = (plan.physical?.days ?? []).map((day) => {
+    const existing = Array.isArray(day.scheduledWorkouts) ? day.scheduledWorkouts : null;
+    let scheduledWorkouts: ScheduledWorkoutBlock[];
+    if (existing && existing.length > 0) {
+      scheduledWorkouts = existing
+        .filter((b) => Boolean(b?.workoutTemplateId))
+        .map((block, index) => ({
+          id: block.id || `sw_legacy_${day.id}_${index}`,
+          workoutTemplateId: block.workoutTemplateId,
+          order: typeof block.order === 'number' ? block.order : index,
+        }))
+        .sort((a, b) => a.order - b.order)
+        .map((block, index) => ({ ...block, order: index }));
+    } else if (day.workoutTemplateId) {
+      scheduledWorkouts = [
+        {
+          id: `sw_legacy_${day.id}`,
+          workoutTemplateId: day.workoutTemplateId,
+          order: 0,
+        },
+      ];
+    } else {
+      scheduledWorkouts = [];
+    }
+    return {
+      ...day,
+      scheduledWorkouts,
+      workoutTemplateId: scheduledWorkouts[0]?.workoutTemplateId ?? null,
+    };
+  });
+
   return {
     ...plan,
     completedAt: plan.completedAt ?? null,
@@ -220,6 +273,12 @@ export function normalizeWeeklyPlan(plan: WeeklyPlan): WeeklyPlan {
       weeklyPractice: plan.biblical?.weeklyPractice ?? '',
       coreScripture: plan.biblical?.coreScripture ?? '',
       sourceNotes: plan.biblical?.sourceNotes ?? '',
+    },
+    physical: {
+      ...plan.physical,
+      desiredWorkoutCount: plan.physical?.desiredWorkoutCount ?? 4,
+      approved: plan.physical?.approved ?? false,
+      days: physicalDays,
     },
   };
 }

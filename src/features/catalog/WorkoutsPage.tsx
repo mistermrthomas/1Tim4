@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { readPhysicalPlan } from '../../domain/physical/planCatalog';
+import { readPhysicalPlan, type PhysicalPlanCatalog } from '../../domain/physical/planCatalog';
 import './CatalogPages.css';
 
 export function WorkoutsPage() {
-  const [plan] = useState(() => readPhysicalPlan());
+  const [plan, setPlan] = useState<PhysicalPlanCatalog>(() => readPhysicalPlan());
+  useEffect(() => {
+    setPlan(readPhysicalPlan());
+  }, []);
 
   return (
     <div className="catalog-page path-fade-in">
@@ -28,6 +31,10 @@ export function WorkoutsPage() {
         {plan.templates.map((tmpl) => (
           <li key={tmpl.id} className="path-surface catalog-page__card">
             <h2 className="catalog-page__card-title">{tmpl.name}</h2>
+            <p className="path-body" style={{ opacity: 0.75, marginBottom: '0.35rem' }}>
+              {(tmpl.classification ?? 'primary').replace('_', ' ')}
+              {tmpl.estimatedDuration ? ` · ${tmpl.estimatedDuration}` : ''}
+            </p>
             <p className="path-body">
               {tmpl.exercises.length
                 ? tmpl.exercises

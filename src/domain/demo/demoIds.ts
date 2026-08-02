@@ -3,7 +3,7 @@
  * Never use these IDs for real user-authored plans going forward.
  */
 
-export const CATALOG_SEED_VERSION = 2;
+export const CATALOG_SEED_VERSION = 3;
 
 /** localStorage flag: one-time demo purge completed for this browser. */
 export const DEMO_PURGE_FLAG_KEY = 'path-demo-purge-v3';

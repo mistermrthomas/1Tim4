@@ -10,7 +10,11 @@ import {
   totalIntake,
   undoLastIntake,
 } from '../../domain/physical/intakeTracker';
-import { readPhysicalPlan, updatePlanTargets } from '../../domain/physical/planCatalog';
+import {
+  readPhysicalPlan,
+  updatePlanTargets,
+  type ResolvedWorkoutPrescription,
+} from '../../domain/physical/planCatalog';
 import {
   adjustSteps,
   effectiveSteps,
@@ -21,16 +25,19 @@ import { todayDateKey } from '../../domain/physical/store';
 import type { ExerciseLogEntry, ExercisePrescription, StepsDayEntry, WorkoutSession } from '../../domain/physical/types';
 import {
   completeWorkout,
-  ensureWorkoutSession,
+  dayWorkoutsSummary,
+  ensureWorkoutSessions,
   formatLoad,
   savePartialWorkout,
   setExerciseCompleted,
   skipExercise,
+  skipWorkout,
   startWorkout,
   summarizeCompleted,
   updateExerciseActual,
   workoutProgress,
 } from '../../domain/physical/workoutTracker';
+import { classificationLabel } from '../../domain/weeklyPlan/physicalWorkouts';
 import { startNextWeekPath } from '../weeklyPlan/WeeklyPlanWorkspace';
 import { Button } from '../../ui/Button';
 
@@ -342,7 +349,9 @@ export function PhysicalTrainingPanel({
   const dateKey = todayDateKey();
   const rootRef = useRef<HTMLElement | null>(null);
   const [sticky, setSticky] = useState(false);
-  const [session, setSession] = useState<WorkoutSession | null>(null);
+  const [sessions, setSessions] = useState<WorkoutSession[]>([]);
+  const [metaById, setMetaById] = useState<Record<string, ResolvedWorkoutPrescription>>({});
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [protein, setProtein] = useState(0);
   const [water, setWater] = useState(0);
   const [steps, setSteps] = useState<StepsDayEntry>(() => getStepsDay(dateKey));
@@ -355,14 +364,44 @@ export function PhysicalTrainingPanel({
   const [stepsDraft, setStepsDraft] = useState('');
   const [targets, setTargets] = useState(() => readPhysicalPlan().targets);
 
+  const patchSession = useCallback((next: WorkoutSession | null) => {
+    if (!next) return;
+    setSessions((prev) => prev.map((s) => (s.id === next.id ? next : s)));
+  }, []);
+
   const reload = useCallback(() => {
     const plan = readPhysicalPlan();
     setTargets(plan.targets);
-    const hasSchedule = Boolean(plan.weekSchedule[String(new Date().getDay())]);
+    const daySlots = plan.weekSchedule[String(new Date().getDay())] ?? [];
+    const hasSchedule = daySlots.length > 0;
     if (unscheduled || !hasSchedule) {
-      setSession(null);
+      setSessions([]);
+      setMetaById({});
+      setActiveSessionId(null);
     } else {
-      setSession(ensureWorkoutSession(dateKey));
+      const nextSessions = ensureWorkoutSessions(dateKey);
+      setSessions(nextSessions);
+      const meta: Record<string, ResolvedWorkoutPrescription> = {};
+      for (const slot of daySlots) {
+        const tmpl = plan.templates.find((t) => t.id === slot.workoutTemplateId);
+        if (!tmpl) continue;
+        meta[slot.id] = {
+          scheduledWorkoutId: slot.id,
+          templateId: tmpl.id,
+          templateSessionId: `${tmpl.id}.session`,
+          workoutName: tmpl.name,
+          classification: tmpl.classification ?? 'primary',
+          estimatedDuration: tmpl.estimatedDuration,
+          order: slot.order,
+          exercises: [],
+        };
+      }
+      setMetaById(meta);
+      setActiveSessionId((prev) => {
+        if (prev && nextSessions.some((s) => s.id === prev)) return prev;
+        const inProgress = nextSessions.find((s) => s.status === 'in_progress');
+        return inProgress?.id ?? nextSessions[0]?.id ?? null;
+      });
     }
     setProtein(totalIntake(dateKey, 'protein'));
     setWater(totalIntake(dateKey, 'water'));
@@ -392,9 +431,9 @@ export function PhysicalTrainingPanel({
       desktopMq.removeEventListener('change', update);
       window.removeEventListener('resize', update);
     };
-  }, [session, protein, water, steps, recoveryDone, editingId, pendingProtein, pendingWater]);
+  }, [sessions, protein, water, steps, recoveryDone, editingId, pendingProtein, pendingWater]);
 
-  const progress = session ? workoutProgress(session) : null;
+  const daySummary = dayWorkoutsSummary(sessions);
   const isRecoveryDay = false;
   const stepsTotal = effectiveSteps(steps);
   const stepsTarget = steps.target || targets.steps;
@@ -410,12 +449,11 @@ export function PhysicalTrainingPanel({
   const waterChips =
     waterUnit === 'ml' ? targets.waterQuickAddsMl : waterUnit === 'L' ? [0.1, 0.25, 0.5, 1] : targets.waterQuickAddsOz;
 
-  const physicalProgress = session
+  const physicalProgress = sessions.length
     ? [
-        { label: 'Exercises completed', done: Boolean(progress?.allDone) },
         {
-          label: 'Workout status',
-          done: session.status === 'completed' || session.status === 'partial',
+          label: 'Workouts completed',
+          done: daySummary.allDone,
         },
         { label: 'Steps target', done: stepsTotal >= stepsTarget },
         { label: 'Protein target', done: protein >= targets.proteinG },
@@ -438,87 +476,165 @@ export function PhysicalTrainingPanel({
           <p className="today-column__intro">
             {isSaturdaySabbath()
               ? 'Sabbath — no required workout. Steps, protein, and water stay available.'
-              : unscheduled || !session
+              : unscheduled || sessions.length === 0
                 ? 'Health targets stay available. Workouts appear after you activate a weekly plan.'
-                : 'Today’s workout and health targets.'}
+                : 'Today’s training blocks and health targets.'}
           </p>
         </header>
 
         <hr className="today-panel__divider" />
 
         <section className="today-panel__section today-workout">
-          <p className="today-panel__label">Today’s workout</p>
+          <p className="today-panel__label">Today’s training</p>
 
-          {session ? (
+          {sessions.length > 0 ? (
             <>
-              <div className="today-workout__summary">
-                <div className="today-workout__summary-text">
-                  <p className="today-workout__title">{session.workoutName}</p>
-                  <p className="today-workout__meta">
-                    {progress?.completedCount ?? 0} of {progress?.total ?? 0} exercises
-                  </p>
-                </div>
-                {session.status === 'scheduled' ? (
-                  <Button
-                    variant="ghost"
-                    className="today-workout__btn"
-                    onClick={() => setSession(startWorkout(dateKey))}
-                  >
-                    Start
-                  </Button>
-                ) : null}
-              </div>
+              <p className="today-workout__day-summary">
+                {daySummary.completedCount} of {daySummary.total} workout
+                {daySummary.total === 1 ? '' : 's'} completed
+              </p>
 
-              <ul className="today-exercise-list">
-                {session.exercises.map((exercise) => (
-                  <ExerciseRow
-                    key={exercise.id}
-                    exercise={exercise}
-                    locked={session.status === 'completed' || session.status === 'skipped'}
-                    editing={editingId === exercise.id}
-                    onToggle={(completed) => {
-                      if (!session.startedAt) startWorkout(dateKey);
-                      setSession(setExerciseCompleted(dateKey, exercise.id, completed));
-                    }}
-                    onStartEdit={() => setEditingId(exercise.id)}
-                    onCancelEdit={() => setEditingId(null)}
-                    onSaveEdit={(actual) => {
-                      if (!session.startedAt) startWorkout(dateKey);
-                      setSession(updateExerciseActual(dateKey, exercise.id, actual));
-                      setEditingId(null);
-                    }}
-                    onSkip={() => {
-                      setSession(skipExercise(dateKey, exercise.id, true));
-                      setEditingId(null);
-                    }}
-                  />
-                ))}
-              </ul>
+              <div className="today-workout__cards">
+                {sessions.map((session) => {
+                  const progress = workoutProgress(session);
+                  const meta = metaById[session.scheduledWorkoutId];
+                  const kind = meta?.classification ?? 'primary';
+                  const expanded = activeSessionId === session.id;
+                  const statusLabel =
+                    session.status === 'completed'
+                      ? 'Completed'
+                      : session.status === 'skipped'
+                        ? 'Skipped'
+                        : session.status === 'partial'
+                          ? 'Partial'
+                          : session.status === 'in_progress'
+                            ? 'In progress'
+                            : 'Not started';
+                  return (
+                    <div
+                      key={session.id}
+                      className={`today-workout-card${expanded ? ' today-workout-card--active' : ''}${
+                        session.status === 'skipped' ? ' today-workout-card--skipped' : ''
+                      }${session.status === 'completed' ? ' today-workout-card--done' : ''}`}
+                    >
+                      <div className="today-workout__summary">
+                        <button
+                          type="button"
+                          className="today-workout__summary-text today-workout__summary-text--button"
+                          onClick={() => setActiveSessionId(session.id)}
+                        >
+                          <p className="today-workout__title">{session.workoutName}</p>
+                          <p className="today-workout__meta">
+                            {classificationLabel(kind)}
+                            {meta?.estimatedDuration ? ` · ${meta.estimatedDuration}` : ''}
+                            {' · '}
+                            {progress.completedCount} of {progress.total} exercises
+                            {' · '}
+                            {statusLabel}
+                          </p>
+                        </button>
+                        <div className="today-workout-card__actions">
+                          {session.status === 'scheduled' || session.status === 'in_progress' ? (
+                            <Button
+                              variant="ghost"
+                              className="today-workout__btn"
+                              onClick={() => {
+                                setActiveSessionId(session.id);
+                                if (session.status === 'scheduled') {
+                                  patchSession(startWorkout(session.id));
+                                }
+                              }}
+                            >
+                              {session.status === 'scheduled' ? 'Start' : 'Resume'}
+                            </Button>
+                          ) : null}
+                          {session.status !== 'completed' && session.status !== 'skipped' ? (
+                            <Button
+                              variant="ghost"
+                              className="today-workout__btn"
+                              onClick={() => {
+                                patchSession(skipWorkout(session.id));
+                                setEditingId(null);
+                              }}
+                            >
+                              Skip
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
 
-              <div className="today-workout__actions">
-                {session.status !== 'completed' && progress?.allDone ? (
-                  <Button
-                    className="today-workout__btn"
-                    onClick={() => setSession(completeWorkout(dateKey))}
-                  >
-                    Complete workout
-                  </Button>
-                ) : null}
-                {session.status === 'in_progress' && progress?.anyDone && !progress.allDone ? (
-                  <Button
-                    variant="ghost"
-                    className="today-workout__btn"
-                    onClick={() => setSession(savePartialWorkout(dateKey))}
-                  >
-                    Save partial
-                  </Button>
-                ) : null}
-                {session.status === 'completed' ? (
-                  <p className="today-workout__done">Workout saved to history.</p>
-                ) : null}
-                {session.status === 'partial' ? (
-                  <p className="today-workout__done">Partial workout saved.</p>
-                ) : null}
+                      {expanded && session.status !== 'skipped' ? (
+                        <>
+                          <ul className="today-exercise-list">
+                            {session.exercises.map((exercise) => (
+                              <ExerciseRow
+                                key={exercise.id}
+                                exercise={exercise}
+                                locked={
+                                  session.status === 'completed' || session.status === 'skipped'
+                                }
+                                editing={editingId === exercise.id}
+                                onToggle={(completed) => {
+                                  if (!session.startedAt) startWorkout(session.id);
+                                  patchSession(
+                                    setExerciseCompleted(session.id, exercise.id, completed),
+                                  );
+                                }}
+                                onStartEdit={() => setEditingId(exercise.id)}
+                                onCancelEdit={() => setEditingId(null)}
+                                onSaveEdit={(actual) => {
+                                  if (!session.startedAt) startWorkout(session.id);
+                                  patchSession(
+                                    updateExerciseActual(session.id, exercise.id, actual),
+                                  );
+                                  setEditingId(null);
+                                }}
+                                onSkip={() => {
+                                  patchSession(skipExercise(session.id, exercise.id, true));
+                                  setEditingId(null);
+                                }}
+                              />
+                            ))}
+                          </ul>
+
+                          <div className="today-workout__actions">
+                            {session.status !== 'completed' && progress.allDone ? (
+                              <Button
+                                className="today-workout__btn"
+                                onClick={() => patchSession(completeWorkout(session.id))}
+                              >
+                                Complete workout
+                              </Button>
+                            ) : null}
+                            {session.status === 'in_progress' &&
+                            progress.anyDone &&
+                            !progress.allDone ? (
+                              <Button
+                                variant="ghost"
+                                className="today-workout__btn"
+                                onClick={() => patchSession(savePartialWorkout(session.id))}
+                              >
+                                Save partial
+                              </Button>
+                            ) : null}
+                            {session.status === 'completed' ? (
+                              <p className="today-workout__done">Workout saved to history.</p>
+                            ) : null}
+                            {session.status === 'partial' ? (
+                              <p className="today-workout__done">Partial workout saved.</p>
+                            ) : null}
+                          </div>
+                        </>
+                      ) : null}
+
+                      {expanded && session.status === 'skipped' ? (
+                        <p className="today-workout__done today-workout__done--skipped">
+                          Skipped for today — distinct from completed.
+                        </p>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
             </>
           ) : isRecoveryDay || targets.recoveryEnabled ? (

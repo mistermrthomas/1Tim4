@@ -42,9 +42,12 @@ export interface ExerciseLogEntry {
 export interface WorkoutSession {
   id: string;
   dateKey: string;
+  /** Links to ScheduledWorkoutBlock.id / WeekScheduleSlot.id for the day. */
+  scheduledWorkoutId: string;
   templateId: string;
   templateSessionId: string;
   workoutName: string;
+  order: number;
   status: WorkoutSessionStatus;
   startedAt: string | null;
   completedAt: string | null;

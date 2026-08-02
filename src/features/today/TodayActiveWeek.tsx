@@ -271,8 +271,14 @@ export function TodayActiveWeek({
                 <li>
                   <strong>Training</strong>
                   <span>
-                    {weeklyPhysical?.type === 'workout'
-                      ? weeklyPhysical.workoutName || 'Workout'
+                    {weeklyPhysical &&
+                    (weeklyPhysical.type === 'workout' ||
+                      weeklyPhysical.scheduledWorkouts.length > 0)
+                      ? weeklyPhysical.workoutName ||
+                        weeklyPhysical.scheduledWorkouts
+                          .map((b) => b.workoutTemplateId)
+                          .join(' + ') ||
+                        'Workout'
                       : weeklyPhysical?.type?.replaceAll('_', ' ') || 'Unscheduled'}
                   </span>
                 </li>

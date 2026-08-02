@@ -1,5 +1,11 @@
-import { readPhysicalPlan, writePhysicalPlan, type WeekSchedule } from '../physical/planCatalog';
+import {
+  readPhysicalPlan,
+  writePhysicalPlan,
+  type WeekSchedule,
+  type WeekScheduleSlot,
+} from '../physical/planCatalog';
 import { activateWeeklyPlan, saveWeeklyPlan } from './store';
+import { normalizePhysicalDay } from './physicalWorkouts';
 import type { WeeklyPlan } from './types';
 
 /** Map PATH dayNumber (1=Sun) → JS weekday key for planCatalog. */
@@ -14,10 +20,25 @@ export function syncPhysicalScheduleFromWeeklyPlan(plan: WeeklyPlan): void {
 
   for (const day of plan.physical.days) {
     const key = weekdayKeyFromDayNumber(day.dayNumber);
-    if (day.type === 'workout' && day.workoutTemplateId) {
-      schedule[key] = day.workoutTemplateId;
+    const normalized = normalizePhysicalDay(day);
+    if (day.type === 'workout' && normalized.scheduledWorkouts.length > 0) {
+      const slots: WeekScheduleSlot[] = normalized.scheduledWorkouts.map((block) => ({
+        id: block.id,
+        workoutTemplateId: block.workoutTemplateId,
+        order: block.order,
+      }));
+      schedule[key] = slots;
+    } else if (
+      (day.type === 'recovery' || day.type === 'optional_movement') &&
+      normalized.scheduledWorkouts.length > 0
+    ) {
+      schedule[key] = normalized.scheduledWorkouts.map((block) => ({
+        id: block.id,
+        workoutTemplateId: block.workoutTemplateId,
+        order: block.order,
+      }));
     } else {
-      schedule[key] = null;
+      schedule[key] = [];
     }
   }
 
@@ -26,7 +47,6 @@ export function syncPhysicalScheduleFromWeeklyPlan(plan: WeeklyPlan): void {
     weekSchedule: schedule,
     targets: {
       ...catalog.targets,
-      // keep existing targets; workout count is informational
     },
   });
 }

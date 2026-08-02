@@ -95,20 +95,26 @@ export function buildDraftWeeklyPlan(weekStartDate: DateKey): WeeklyPlan {
   });
 
   const physicalDays: PhysicalDailyAssignment[] = range.days.map((day) => {
-    const templateId = catalog.weekSchedule[String(day.weekday)] ?? null;
-    const template = templateId
-      ? catalog.templates.find((t) => t.id === templateId)
-      : undefined;
+    const slots = catalog.weekSchedule[String(day.weekday)] ?? [];
+    const scheduledWorkouts = slots.map((slot, order) => ({
+      id: slot.id || newId('sw'),
+      workoutTemplateId: slot.workoutTemplateId,
+      order,
+    }));
+    const names = scheduledWorkouts
+      .map((b) => catalog.templates.find((t) => t.id === b.workoutTemplateId)?.name)
+      .filter(Boolean);
     const isSat = day.dayNumber === 7;
     return {
       id: newId('pday'),
       date: day.dateKey,
       dayNumber: day.dayNumber,
-      type: isSat ? 'rest' : template ? 'workout' : 'unscheduled',
-      workoutTemplateId: isSat ? null : templateId,
-      workoutName: isSat ? 'Sabbath / Full Rest' : (template?.name ?? ''),
+      type: isSat ? 'rest' : scheduledWorkouts.length ? 'workout' : 'unscheduled',
+      scheduledWorkouts: isSat ? [] : scheduledWorkouts,
+      workoutTemplateId: isSat ? null : (scheduledWorkouts[0]?.workoutTemplateId ?? null),
+      workoutName: isSat ? 'Sabbath / Full Rest' : names.join(' + '),
       notes: isSat ? 'Rest from structured training.' : '',
-      isRequired: !isSat && Boolean(template),
+      isRequired: !isSat && scheduledWorkouts.length > 0,
     };
   });
 
@@ -232,7 +238,10 @@ export function applyBiblicalDefaultsFromChurch(plan: WeeklyPlan): WeeklyPlan {
 export function suggestPhysicalSchedule(plan: WeeklyPlan, desiredCount = 4): WeeklyPlan {
   const catalog = readPhysicalPlan();
   const strength = catalog.templates.filter(
-    (t) => t.exercises.length > 0 && !/recovery|conditioning/i.test(t.name),
+    (t) =>
+      t.exercises.length > 0 &&
+      (t.classification ?? 'primary') === 'primary' &&
+      !/recovery|conditioning|finisher/i.test(t.name),
   );
   const recovery = catalog.templates.find((t) => /recovery/i.test(t.name));
   const pick = (i: number) => strength[i % Math.max(strength.length, 1)];
@@ -255,6 +264,7 @@ export function suggestPhysicalSchedule(plan: WeeklyPlan, desiredCount = 4): Wee
       return {
         ...day,
         type: 'rest' as const,
+        scheduledWorkouts: [],
         workoutTemplateId: null,
         workoutName: 'Sabbath / Full Rest',
         isRequired: false,
@@ -262,9 +272,13 @@ export function suggestPhysicalSchedule(plan: WeeklyPlan, desiredCount = 4): Wee
       };
     }
     if (kind === 'recovery') {
+      const scheduledWorkouts = recovery
+        ? [{ id: newId('sw'), workoutTemplateId: recovery.id, order: 0 }]
+        : [];
       return {
         ...day,
         type: 'recovery' as const,
+        scheduledWorkouts,
         workoutTemplateId: recovery?.id ?? null,
         workoutName: recovery?.name ?? 'Recovery',
         isRequired: false,
@@ -275,6 +289,7 @@ export function suggestPhysicalSchedule(plan: WeeklyPlan, desiredCount = 4): Wee
       return {
         ...day,
         type: 'optional_movement' as const,
+        scheduledWorkouts: [],
         workoutTemplateId: null,
         workoutName: 'Optional movement / make-up',
         isRequired: false,
@@ -285,6 +300,7 @@ export function suggestPhysicalSchedule(plan: WeeklyPlan, desiredCount = 4): Wee
       return {
         ...day,
         type: 'unscheduled' as const,
+        scheduledWorkouts: [],
         workoutTemplateId: null,
         workoutName: '',
         isRequired: false,
@@ -293,9 +309,13 @@ export function suggestPhysicalSchedule(plan: WeeklyPlan, desiredCount = 4): Wee
     }
     const tmpl = pick(workoutIdx);
     workoutIdx += 1;
+    const scheduledWorkouts = tmpl
+      ? [{ id: newId('sw'), workoutTemplateId: tmpl.id, order: 0 }]
+      : [];
     return {
       ...day,
       type: 'workout' as const,
+      scheduledWorkouts,
       workoutTemplateId: tmpl?.id ?? null,
       workoutName: tmpl?.name ?? 'Workout',
       isRequired: true,

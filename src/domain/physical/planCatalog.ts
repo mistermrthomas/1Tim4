@@ -1,6 +1,7 @@
 /** User-editable physical plan: exercise library, templates, weekly schedule, targets. */
 
 import { CATALOG_SEED_VERSION } from '../demo/demoIds';
+import type { WorkoutClassification } from '../weeklyPlan/types';
 import { newId } from './store';
 import type { PrescribedExercise, ResistanceUnit } from './types';
 
@@ -46,6 +47,10 @@ export interface CatalogTemplateExercise {
 export interface CatalogTemplate {
   id: string;
   name: string;
+  /** Organizational metadata — does not restrict scheduling. */
+  classification: WorkoutClassification;
+  /** Human-readable duration hint, e.g. "6–10 minutes". */
+  estimatedDuration?: string;
   exercises: CatalogTemplateExercise[];
 }
 
@@ -62,8 +67,18 @@ export interface PhysicalPlanTargets {
   waterQuickAddsMl: number[];
 }
 
-/** Keys '0'..'6' = Sunday..Saturday → template id or null (rest / unscheduled). */
-export type WeekSchedule = Record<string, string | null>;
+/** One scheduled workout slot for a weekday (ordered). */
+export interface WeekScheduleSlot {
+  id: string;
+  workoutTemplateId: string;
+  order: number;
+}
+
+/**
+ * Keys '0'..'6' = Sunday..Saturday → ordered workout slots (empty = rest / unscheduled).
+ * Legacy values were `string | null` (single template id).
+ */
+export type WeekSchedule = Record<string, WeekScheduleSlot[]>;
 
 export interface PhysicalPlanCatalog {
   version: 1;
@@ -103,14 +118,52 @@ function ex(
 
 export function emptyWeekSchedule(): WeekSchedule {
   return {
-    '0': null,
-    '1': null,
-    '2': null,
-    '3': null,
-    '4': null,
-    '5': null,
-    '6': null,
+    '0': [],
+    '1': [],
+    '2': [],
+    '3': [],
+    '4': [],
+    '5': [],
+    '6': [],
   };
+}
+
+/** Normalize legacy `string | null` or string[] into ordered slots. */
+export function normalizeWeekDaySlots(value: unknown, dayKey = '0'): WeekScheduleSlot[] {
+  if (value == null) return [];
+  if (typeof value === 'string') {
+    if (!value) return [];
+    return [{ id: `slot_${dayKey}_${value}`, workoutTemplateId: value, order: 0 }];
+  }
+  if (!Array.isArray(value)) return [];
+  if (value.length === 0) return [];
+  if (typeof value[0] === 'string') {
+    return (value as string[])
+      .filter(Boolean)
+      .map((workoutTemplateId, order) => ({
+        id: `slot_${dayKey}_${workoutTemplateId}_${order}`,
+        workoutTemplateId,
+        order,
+      }));
+  }
+  return (value as WeekScheduleSlot[])
+    .filter((slot) => Boolean(slot?.workoutTemplateId))
+    .map((slot, order) => ({
+      id: slot.id || `slot_${dayKey}_${slot.workoutTemplateId}_${order}`,
+      workoutTemplateId: slot.workoutTemplateId,
+      order: typeof slot.order === 'number' ? slot.order : order,
+    }))
+    .sort((a, b) => a.order - b.order)
+    .map((slot, order) => ({ ...slot, order }));
+}
+
+export function normalizeWeekSchedule(raw: Record<string, unknown> | WeekSchedule | undefined): WeekSchedule {
+  const base = emptyWeekSchedule();
+  if (!raw) return base;
+  for (const key of Object.keys(base)) {
+    base[key] = normalizeWeekDaySlots((raw as Record<string, unknown>)[key], key);
+  }
+  return base;
 }
 
 function seedExercises(): CatalogExercise[] {
@@ -335,11 +388,35 @@ function seedExercises(): CatalogExercise[] {
     // —— Core ——
     ex({
       id: 'bowflex_abdominal_crunch',
-      name: 'Abdominal Crunch',
+      name: 'Ab Crunch',
       equipment: 'Bowflex Xtreme 2 SE',
       muscleGroups: ['core'],
       defaultLoad: null,
       defaultLoadUnit: 'lb',
+      defaultSets: 3,
+      defaultReps: '12-15',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_oblique_twist_left',
+      name: 'Oblique Twist — Left',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['core'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      defaultSets: 3,
+      defaultReps: '10-15',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_oblique_twist_right',
+      name: 'Oblique Twist — Right',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['core'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      defaultSets: 3,
+      defaultReps: '10-15',
       needsWorkingWeight: true,
     }),
 
@@ -516,12 +593,50 @@ function seedTemplates(exercises: CatalogExercise[]): CatalogTemplate[] {
     'bowflex_oh_rope_triceps',
   ].map((id, order) => item(id, exercises, { order }));
 
+  const coreFinisherItems = [
+    item('bowflex_abdominal_crunch', exercises, { order: 0, sets: 3, reps: '12-15' }),
+    item('bowflex_oblique_twist_left', exercises, { order: 1, sets: 3, reps: '10-15' }),
+    item('bowflex_oblique_twist_right', exercises, { order: 2, sets: 3, reps: '10-15' }),
+  ];
+
   return [
-    { id: 'tmpl_chest_triceps', name: 'Chest and Triceps', exercises: chestItems },
-    { id: 'tmpl_back_biceps', name: 'Back and Biceps', exercises: [] },
-    { id: 'tmpl_lower_body', name: 'Lower Body', exercises: [] },
-    { id: 'tmpl_full_body', name: 'Full Body', exercises: [] },
-    { id: 'tmpl_recovery', name: 'Recovery', exercises: [] },
+    {
+      id: 'tmpl_chest_triceps',
+      name: 'Chest and Triceps',
+      classification: 'primary',
+      exercises: chestItems,
+    },
+    {
+      id: 'tmpl_back_biceps',
+      name: 'Back and Biceps',
+      classification: 'primary',
+      exercises: [],
+    },
+    {
+      id: 'tmpl_lower_body',
+      name: 'Lower Body',
+      classification: 'primary',
+      exercises: [],
+    },
+    {
+      id: 'tmpl_full_body',
+      name: 'Full Body',
+      classification: 'primary',
+      exercises: [],
+    },
+    {
+      id: 'tmpl_core_finisher',
+      name: 'Core Finisher',
+      classification: 'finisher',
+      estimatedDuration: '6–10 minutes',
+      exercises: coreFinisherItems,
+    },
+    {
+      id: 'tmpl_recovery',
+      name: 'Recovery',
+      classification: 'recovery',
+      exercises: [],
+    },
   ];
 }
 
@@ -565,10 +680,15 @@ function mergeExercises(
     byId.set(item.id, {
       ...(base ?? item),
       ...item,
+      // Keep seed display names for known renames (Abdominal Crunch → Ab Crunch).
+      name:
+        item.id === 'bowflex_abdominal_crunch' ? (base?.name ?? item.name) : item.name || base?.name || '',
       cautionNote: item.cautionNote || base?.cautionNote || '',
       notes: item.notes || base?.notes || '',
       useCautiously: item.useCautiously ?? base?.useCautiously,
       avoidAutoSchedule: item.avoidAutoSchedule ?? base?.avoidAutoSchedule,
+      defaultSets: item.defaultSets ?? base?.defaultSets ?? 3,
+      defaultReps: item.defaultReps || base?.defaultReps || '12',
     });
   }
   const ordered: CatalogExercise[] = [];
@@ -607,44 +727,78 @@ function mergeTemplates(
       byId.set(t.id, def);
       continue;
     }
-    byId.set(t.id, t);
+    // Seed Core Finisher when missing or empty; keep user edits if they customized it.
+    if (t.id === 'tmpl_core_finisher' && def && (!t.exercises || t.exercises.length === 0)) {
+      byId.set(t.id, def);
+      continue;
+    }
+    byId.set(t.id, {
+      ...def,
+      ...t,
+      classification: t.classification ?? def?.classification ?? 'primary',
+      estimatedDuration: t.estimatedDuration ?? def?.estimatedDuration,
+      exercises: t.exercises ?? def?.exercises ?? [],
+    });
   }
   // Ensure Recovery template exists (renamed from Conditioning)
   if (!byId.has('tmpl_recovery') && byId.has('tmpl_conditioning')) {
     const old = byId.get('tmpl_conditioning')!;
-    byId.set('tmpl_recovery', { ...old, id: 'tmpl_recovery', name: 'Recovery' });
+    byId.set('tmpl_recovery', {
+      ...old,
+      id: 'tmpl_recovery',
+      name: 'Recovery',
+      classification: 'recovery',
+    });
     byId.delete('tmpl_conditioning');
   }
-  const order = ['tmpl_chest_triceps', 'tmpl_back_biceps', 'tmpl_lower_body', 'tmpl_full_body', 'tmpl_recovery'];
+  // Ensure seeded templates always exist (e.g. Core Finisher for existing catalogs).
+  for (const def of defaults) {
+    if (!byId.has(def.id)) byId.set(def.id, def);
+  }
+  const order = [
+    'tmpl_chest_triceps',
+    'tmpl_back_biceps',
+    'tmpl_lower_body',
+    'tmpl_full_body',
+    'tmpl_core_finisher',
+    'tmpl_recovery',
+  ];
   const ordered: CatalogTemplate[] = [];
   const seen = new Set<string>();
   for (const id of order) {
     const t = byId.get(id);
     if (t) {
-      ordered.push(t);
+      ordered.push({
+        ...t,
+        classification: t.classification ?? 'primary',
+      });
       seen.add(id);
     }
   }
   for (const t of byId.values()) {
-    if (!seen.has(t.id)) ordered.push(t);
+    if (!seen.has(t.id)) {
+      ordered.push({
+        ...t,
+        classification: t.classification ?? 'primary',
+      });
+    }
   }
   return ordered;
 }
 
 /** Upgrade stored plan to current catalog seed without inventing a schedule. */
 export function migratePhysicalPlanCatalog(
-  parsed: Partial<PhysicalPlanCatalog> & { weekSchedule?: WeekSchedule },
+  parsed: Partial<PhysicalPlanCatalog> & { weekSchedule?: WeekSchedule | Record<string, unknown> },
 ): PhysicalPlanCatalog {
   const defaults = buildDefaultPhysicalPlan();
   const priorVersion = parsed.catalogSeedVersion ?? 1;
   const templates = mergeTemplates(parsed.templates, defaults.templates);
 
   let weekSchedule = emptyWeekSchedule();
-  if (priorVersion >= CATALOG_SEED_VERSION && parsed.weekSchedule) {
-    // After clean seed, preserve user/weekly-plan schedules.
-    weekSchedule = { ...emptyWeekSchedule(), ...parsed.weekSchedule };
+  // v1 demo schedules are dropped; v2+ user/weekly-plan schedules are preserved and reshaped.
+  if (priorVersion >= 2 && parsed.weekSchedule) {
+    weekSchedule = normalizeWeekSchedule(parsed.weekSchedule as Record<string, unknown>);
   }
-  // priorVersion < 2: drop demo Mon–Sat assignments intentionally.
 
   return {
     version: 1,
@@ -666,9 +820,13 @@ export function readPhysicalPlan(): PhysicalPlanCatalog {
     }
     const parsed = JSON.parse(raw) as Partial<PhysicalPlanCatalog>;
     const migrated = migratePhysicalPlanCatalog(parsed);
+    const storedHasCore = (parsed.templates ?? []).some((t) => t.id === 'tmpl_core_finisher');
+    const migratedHasCore = migrated.templates.some((t) => t.id === 'tmpl_core_finisher');
     if (
       parsed.catalogSeedVersion !== migrated.catalogSeedVersion ||
-      (parsed.exercises?.length ?? 0) < migrated.exercises.length
+      (parsed.exercises?.length ?? 0) < migrated.exercises.length ||
+      (parsed.templates?.length ?? 0) < migrated.templates.length ||
+      (migratedHasCore && !storedHasCore)
     ) {
       localStorage.setItem(PHYSICAL_PLAN_KEY, JSON.stringify(migrated));
     }
@@ -695,26 +853,33 @@ export function weekdayKey(date = new Date()): string {
   return String(date.getDay());
 }
 
-export function resolveTodaysPrescription(
-  date = new Date(),
-): {
+export type ResolvedWorkoutPrescription = {
+  scheduledWorkoutId: string;
   templateId: string;
   templateSessionId: string;
   workoutName: string;
+  classification: WorkoutClassification;
+  estimatedDuration?: string;
+  order: number;
   exercises: Array<PrescribedExercise & { cautionNote: string; note: string }>;
-} | null {
-  const plan = readPhysicalPlan();
-  const templateId = plan.weekSchedule[weekdayKey(date)] ?? null;
-  if (!templateId) return null;
+};
 
-  const template = plan.templates.find((t) => t.id === templateId);
+function resolveSlotPrescription(
+  plan: PhysicalPlanCatalog,
+  slot: WeekScheduleSlot,
+): ResolvedWorkoutPrescription | null {
+  const template = plan.templates.find((t) => t.id === slot.workoutTemplateId);
   if (!template || template.exercises.length === 0) return null;
 
   const ordered = [...template.exercises].sort((a, b) => a.order - b.order);
   return {
+    scheduledWorkoutId: slot.id,
     templateId: template.id,
     templateSessionId: `${template.id}.session`,
     workoutName: template.name,
+    classification: template.classification ?? 'primary',
+    estimatedDuration: template.estimatedDuration,
+    order: slot.order,
     exercises: ordered.map((row) => {
       const lib = plan.exercises.find((e) => e.id === row.exerciseId);
       return {
@@ -730,6 +895,22 @@ export function resolveTodaysPrescription(
       };
     }),
   };
+}
+
+/** All scheduled workouts for a date (ordered). Empty templates are skipped. */
+export function resolveTodaysPrescriptions(date = new Date()): ResolvedWorkoutPrescription[] {
+  const plan = readPhysicalPlan();
+  const slots = normalizeWeekDaySlots(plan.weekSchedule[weekdayKey(date)], weekdayKey(date));
+  return slots
+    .map((slot) => resolveSlotPrescription(plan, slot))
+    .filter((p): p is ResolvedWorkoutPrescription => Boolean(p));
+}
+
+/** @deprecated Prefer resolveTodaysPrescriptions — returns the first scheduled workout only. */
+export function resolveTodaysPrescription(
+  date = new Date(),
+): ResolvedWorkoutPrescription | null {
+  return resolveTodaysPrescriptions(date)[0] ?? null;
 }
 
 export function addCatalogExercise(
@@ -778,6 +959,7 @@ export function duplicateTemplate(templateId: string): CatalogTemplate | null {
     ...structuredClone(source),
     id: newId('tmpl'),
     name: `${source.name} (copy)`,
+    classification: source.classification ?? 'primary',
   };
   plan.templates.push(copy);
   writePhysicalPlan(plan);
@@ -786,7 +968,15 @@ export function duplicateTemplate(templateId: string): CatalogTemplate | null {
 
 export function setWeekdayTemplate(weekday: string, templateId: string | null): void {
   const plan = readPhysicalPlan();
-  plan.weekSchedule[weekday] = templateId;
+  plan.weekSchedule[weekday] = templateId
+    ? [{ id: newId('slot'), workoutTemplateId: templateId, order: 0 }]
+    : [];
+  writePhysicalPlan(plan);
+}
+
+export function setWeekdaySlots(weekday: string, slots: WeekScheduleSlot[]): void {
+  const plan = readPhysicalPlan();
+  plan.weekSchedule[weekday] = slots.map((slot, order) => ({ ...slot, order }));
   writePhysicalPlan(plan);
 }
 

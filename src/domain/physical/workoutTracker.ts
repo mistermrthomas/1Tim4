@@ -1,4 +1,7 @@
-import { resolveTodaysPrescription } from './planCatalog';
+import {
+  resolveTodaysPrescriptions,
+  type ResolvedWorkoutPrescription,
+} from './planCatalog';
 import { newId, readPhysicalTracker, todayDateKey, writePhysicalTracker } from './store';
 import type {
   ExerciseLogEntry,
@@ -9,16 +12,6 @@ import type {
   WorkoutSession,
   WorkoutSessionStatus,
 } from './types';
-
-/** Today only uses the weekly schedule / planCatalog. */
-function resolvePrescription(date = new Date()): {
-  templateId: string;
-  templateSessionId: string;
-  workoutName: string;
-  exercises: PrescribedExercise[];
-} | null {
-  return resolveTodaysPrescription(date);
-}
 
 function toLogEntry(ex: PrescribedExercise, order: number): ExerciseLogEntry {
   const prescribed: ExercisePrescription = {
@@ -54,7 +47,7 @@ function sessionUntouched(session: WorkoutSession): boolean {
 
 function prescriptionsMatch(
   session: WorkoutSession,
-  prescribed: { templateSessionId: string; exercises: PrescribedExercise[] },
+  prescribed: ResolvedWorkoutPrescription,
 ): boolean {
   if (session.templateSessionId !== prescribed.templateSessionId) return false;
   if (session.exercises.length !== prescribed.exercises.length) return false;
@@ -63,19 +56,16 @@ function prescriptionsMatch(
 
 function buildSession(
   dateKey: string,
-  prescribed: {
-    templateId: string;
-    templateSessionId: string;
-    workoutName: string;
-    exercises: PrescribedExercise[];
-  },
+  prescribed: ResolvedWorkoutPrescription,
 ): WorkoutSession {
   return {
     id: newId('ws'),
     dateKey,
+    scheduledWorkoutId: prescribed.scheduledWorkoutId,
     templateId: prescribed.templateId,
     templateSessionId: prescribed.templateSessionId,
     workoutName: prescribed.workoutName,
+    order: prescribed.order,
     status: 'scheduled',
     startedAt: null,
     completedAt: null,
@@ -84,41 +74,118 @@ function buildSession(
   };
 }
 
-export function getSessionForDate(dateKey: string): WorkoutSession | null {
-  return readPhysicalTracker().sessions.find((s) => s.dateKey === dateKey) ?? null;
+function migrateLegacySession(
+  session: WorkoutSession,
+  prescriptions: ResolvedWorkoutPrescription[],
+): WorkoutSession {
+  if (session.scheduledWorkoutId) return session;
+  const match =
+    prescriptions.find((p) => p.templateId === session.templateId) ?? prescriptions[0];
+  return {
+    ...session,
+    scheduledWorkoutId: match?.scheduledWorkoutId ?? `legacy_${session.id}`,
+    order: match?.order ?? session.order ?? 0,
+  };
 }
 
-/** Ensure a session exists for the date from the weekly physical schedule only. */
-export function ensureWorkoutSession(dateKey = todayDateKey()): WorkoutSession | null {
-  const prescribed = resolvePrescription();
-  if (!prescribed) return null;
+export function getSessionsForDate(dateKey: string): WorkoutSession[] {
+  const state = readPhysicalTracker();
+  return state.sessions
+    .filter((s) => s.dateKey === dateKey)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+}
+
+export function getSessionForDate(dateKey: string): WorkoutSession | null {
+  return getSessionsForDate(dateKey)[0] ?? null;
+}
+
+export function getSessionById(sessionId: string): WorkoutSession | null {
+  return readPhysicalTracker().sessions.find((s) => s.id === sessionId) ?? null;
+}
+
+/** Ensure one session exists per scheduled workout slot for the date. */
+export function ensureWorkoutSessions(dateKey = todayDateKey()): WorkoutSession[] {
+  const prescriptions = resolveTodaysPrescriptions();
+  if (!prescriptions.length) return [];
 
   const state = readPhysicalTracker();
-  const index = state.sessions.findIndex((s) => s.dateKey === dateKey);
-  const existing = index >= 0 ? state.sessions[index]! : null;
+  const migrated = state.sessions.map((s) =>
+    s.dateKey === dateKey ? migrateLegacySession(s, prescriptions) : s,
+  );
+  state.sessions = migrated;
 
-  if (existing) {
-    if (sessionUntouched(existing) && !prescriptionsMatch(existing, prescribed)) {
-      const next = buildSession(dateKey, prescribed);
-      state.sessions[index] = next;
-      writePhysicalTracker(state);
-      return next;
+  const daySessions = migrated.filter((s) => s.dateKey === dateKey);
+  const nextDay: WorkoutSession[] = [];
+  let changed = migrated !== state.sessions;
+
+  for (const prescribed of prescriptions) {
+    const existing =
+      daySessions.find((s) => s.scheduledWorkoutId === prescribed.scheduledWorkoutId) ??
+      daySessions.find(
+        (s) =>
+          s.templateId === prescribed.templateId &&
+          !nextDay.some((kept) => kept.id === s.id),
+      );
+
+    if (existing) {
+      if (sessionUntouched(existing) && !prescriptionsMatch(existing, prescribed)) {
+        const rebuilt = buildSession(dateKey, prescribed);
+        nextDay.push(rebuilt);
+        changed = true;
+      } else {
+        const patched = {
+          ...existing,
+          scheduledWorkoutId: prescribed.scheduledWorkoutId,
+          order: prescribed.order,
+          workoutName: existing.workoutName || prescribed.workoutName,
+        };
+        nextDay.push(patched);
+        if (
+          patched.scheduledWorkoutId !== existing.scheduledWorkoutId ||
+          patched.order !== existing.order
+        ) {
+          changed = true;
+        }
+      }
+    } else {
+      nextDay.push(buildSession(dateKey, prescribed));
+      changed = true;
     }
-    return existing;
   }
 
-  const session = buildSession(dateKey, prescribed);
-  state.sessions.push(session);
-  writePhysicalTracker(state);
-  return session;
+  // Drop untouched orphan sessions for this date that are no longer scheduled.
+  const keepIds = new Set(nextDay.map((s) => s.id));
+  const orphans = daySessions.filter((s) => !keepIds.has(s.id));
+  for (const orphan of orphans) {
+    if (!sessionUntouched(orphan) && orphan.status !== 'scheduled') {
+      nextDay.push(orphan);
+    } else {
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    state.sessions = [
+      ...state.sessions.filter((s) => s.dateKey !== dateKey),
+      ...nextDay.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    ];
+    writePhysicalTracker(state);
+  }
+
+  return nextDay.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }
 
-function updateSession(
-  dateKey: string,
+/** @deprecated Prefer ensureWorkoutSessions. */
+export function ensureWorkoutSession(dateKey = todayDateKey()): WorkoutSession | null {
+  return ensureWorkoutSessions(dateKey)[0] ?? null;
+}
+
+function updateSessionById(
+  sessionId: string,
   mutate: (session: WorkoutSession) => WorkoutSession,
 ): WorkoutSession | null {
   const state = readPhysicalTracker();
-  const index = state.sessions.findIndex((s) => s.dateKey === dateKey);
+  const index = state.sessions.findIndex((s) => s.id === sessionId);
   if (index < 0) return null;
   const next = mutate(structuredClone(state.sessions[index]!));
   state.sessions[index] = next;
@@ -136,8 +203,8 @@ function deriveStatus(session: WorkoutSession): WorkoutSessionStatus {
   return 'in_progress';
 }
 
-export function startWorkout(dateKey: string): WorkoutSession | null {
-  return updateSession(dateKey, (session) => {
+export function startWorkout(sessionId: string): WorkoutSession | null {
+  return updateSessionById(sessionId, (session) => {
     if (!session.startedAt) session.startedAt = new Date().toISOString();
     session.status = 'in_progress';
     return session;
@@ -145,11 +212,11 @@ export function startWorkout(dateKey: string): WorkoutSession | null {
 }
 
 export function setExerciseCompleted(
-  dateKey: string,
+  sessionId: string,
   exerciseLogId: string,
   completed: boolean,
 ): WorkoutSession | null {
-  return updateSession(dateKey, (session) => {
+  return updateSessionById(sessionId, (session) => {
     if (!session.startedAt) session.startedAt = new Date().toISOString();
     const exercise = session.exercises.find((e) => e.id === exerciseLogId);
     if (!exercise) return session;
@@ -174,11 +241,11 @@ export function setExerciseCompleted(
 }
 
 export function updateExerciseActual(
-  dateKey: string,
+  sessionId: string,
   exerciseLogId: string,
   patch: Partial<ExercisePrescription> & { setLogs?: SetLog[]; note?: string; cautionNote?: string },
 ): WorkoutSession | null {
-  return updateSession(dateKey, (session) => {
+  return updateSessionById(sessionId, (session) => {
     const exercise = session.exercises.find((e) => e.id === exerciseLogId);
     if (!exercise) return session;
     const { setLogs, note, cautionNote, ...rx } = patch;
@@ -195,11 +262,11 @@ export function updateExerciseActual(
 }
 
 export function skipExercise(
-  dateKey: string,
+  sessionId: string,
   exerciseLogId: string,
   skipped = true,
 ): WorkoutSession | null {
-  return updateSession(dateKey, (session) => {
+  return updateSessionById(sessionId, (session) => {
     const exercise = session.exercises.find((e) => e.id === exerciseLogId);
     if (!exercise) return session;
     exercise.skipped = skipped;
@@ -213,8 +280,8 @@ export function skipExercise(
   });
 }
 
-export function completeWorkout(dateKey: string): WorkoutSession | null {
-  return updateSession(dateKey, (session) => {
+export function completeWorkout(sessionId: string): WorkoutSession | null {
+  return updateSessionById(sessionId, (session) => {
     session.status = 'completed';
     session.completedAt = new Date().toISOString();
     if (!session.startedAt) session.startedAt = session.completedAt;
@@ -222,8 +289,8 @@ export function completeWorkout(dateKey: string): WorkoutSession | null {
   });
 }
 
-export function savePartialWorkout(dateKey: string): WorkoutSession | null {
-  return updateSession(dateKey, (session) => {
+export function savePartialWorkout(sessionId: string): WorkoutSession | null {
+  return updateSessionById(sessionId, (session) => {
     session.status = 'partial';
     session.completedAt = new Date().toISOString();
     if (!session.startedAt) session.startedAt = session.completedAt;
@@ -231,8 +298,8 @@ export function savePartialWorkout(dateKey: string): WorkoutSession | null {
   });
 }
 
-export function skipWorkout(dateKey: string): WorkoutSession | null {
-  return updateSession(dateKey, (session) => {
+export function skipWorkout(sessionId: string): WorkoutSession | null {
+  return updateSessionById(sessionId, (session) => {
     session.status = 'skipped';
     session.completedAt = new Date().toISOString();
     return session;
@@ -275,6 +342,28 @@ export function workoutProgress(session: WorkoutSession): {
     total,
     allDone: total > 0 && finished,
     anyDone: completedCount > 0,
+  };
+}
+
+/** Day training target met when every scheduled block is completed or skipped. */
+export function dayWorkoutsComplete(sessions: WorkoutSession[]): boolean {
+  if (!sessions.length) return false;
+  return sessions.every((s) => s.status === 'completed' || s.status === 'skipped' || s.status === 'partial');
+}
+
+export function dayWorkoutsSummary(sessions: WorkoutSession[]): {
+  completedCount: number;
+  total: number;
+  allDone: boolean;
+} {
+  const total = sessions.length;
+  const completedCount = sessions.filter(
+    (s) => s.status === 'completed' || s.status === 'skipped' || s.status === 'partial',
+  ).length;
+  return {
+    completedCount,
+    total,
+    allDone: total > 0 && completedCount >= total,
   };
 }
 

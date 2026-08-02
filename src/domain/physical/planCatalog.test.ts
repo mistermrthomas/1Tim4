@@ -4,9 +4,11 @@ import {
   buildDefaultPhysicalPlan,
   emptyWeekSchedule,
   migratePhysicalPlanCatalog,
+  normalizeWeekDaySlots,
   PHYSICAL_PLAN_KEY,
   readPhysicalPlan,
   resolveTodaysPrescription,
+  resolveTodaysPrescriptions,
 } from './planCatalog';
 
 function installMemoryLocalStorage() {
@@ -45,9 +47,23 @@ describe('physical plan catalog seed', () => {
     expect(plan.exercises.some((e) => /lateral/i.test(e.name))).toBe(false);
   });
 
+  it('includes Core Finisher and core exercises without duplicates', () => {
+    const plan = buildDefaultPhysicalPlan();
+    const crunch = plan.exercises.filter((e) => /ab crunch|abdominal crunch/i.test(e.name));
+    expect(crunch).toHaveLength(1);
+    expect(crunch[0]?.name).toBe('Ab Crunch');
+    expect(plan.exercises.some((e) => e.name === 'Oblique Twist — Left')).toBe(true);
+    expect(plan.exercises.some((e) => e.name === 'Oblique Twist — Right')).toBe(true);
+    const finisher = plan.templates.find((t) => t.id === 'tmpl_core_finisher');
+    expect(finisher?.classification).toBe('finisher');
+    expect(finisher?.estimatedDuration).toBe('6–10 minutes');
+    expect(finisher?.exercises).toHaveLength(3);
+  });
+
   it('does not assign a workout on Today from catalog alone', () => {
     readPhysicalPlan();
     expect(resolveTodaysPrescription(new Date(2026, 7, 2, 12))).toBeNull();
+    expect(resolveTodaysPrescriptions(new Date(2026, 7, 2, 12))).toEqual([]);
   });
 
   it('clears demo schedules when migrating from seed v1', () => {
@@ -62,7 +78,7 @@ describe('physical plan catalog seed', () => {
         '4': 'tmpl_full_body',
         '5': 'tmpl_chest_triceps',
         '6': 'tmpl_chest_triceps',
-      },
+      } as never,
       exercises: [],
       templates: [],
       targets: buildDefaultPhysicalPlan().targets,
@@ -70,6 +86,40 @@ describe('physical plan catalog seed', () => {
     expect(migrated.weekSchedule).toEqual(emptyWeekSchedule());
     expect(migrated.exercises.length).toBeGreaterThan(20);
     localStorage.setItem(PHYSICAL_PLAN_KEY, JSON.stringify(migrated));
-    expect(readPhysicalPlan().weekSchedule['1']).toBeNull();
+    expect(readPhysicalPlan().weekSchedule['1']).toEqual([]);
+  });
+
+  it('preserves and reshapes v2 single-template schedules into ordered slots', () => {
+    const migrated = migratePhysicalPlanCatalog({
+      version: 1,
+      catalogSeedVersion: 2,
+      weekSchedule: {
+        '0': 'tmpl_chest_triceps',
+        '1': null,
+        '2': [],
+        '3': ['tmpl_lower_body', 'tmpl_core_finisher'],
+        '4': null,
+        '5': null,
+        '6': null,
+      } as never,
+      exercises: [],
+      templates: [],
+      targets: buildDefaultPhysicalPlan().targets,
+    });
+    expect(migrated.weekSchedule['0']).toHaveLength(1);
+    expect(migrated.weekSchedule['0']![0]?.workoutTemplateId).toBe('tmpl_chest_triceps');
+    expect(migrated.weekSchedule['3']).toHaveLength(2);
+    expect(migrated.weekSchedule['3']!.map((s) => s.workoutTemplateId)).toEqual([
+      'tmpl_lower_body',
+      'tmpl_core_finisher',
+    ]);
+    expect(migrated.templates.some((t) => t.id === 'tmpl_core_finisher')).toBe(true);
+  });
+
+  it('normalizes legacy string day values', () => {
+    const slots = normalizeWeekDaySlots('tmpl_chest_triceps', '1');
+    expect(slots).toHaveLength(1);
+    expect(slots[0]?.workoutTemplateId).toBe('tmpl_chest_triceps');
+    expect(normalizeWeekDaySlots(null)).toEqual([]);
   });
 });
