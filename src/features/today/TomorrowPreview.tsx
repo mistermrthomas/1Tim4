@@ -123,12 +123,14 @@ export function TomorrowPreview({
   compact = false,
   showPrepare = true,
   planLink,
+  readinessNote,
 }: {
   plan: WeeklyPlan | null;
   targetDate: DateKey;
   compact?: boolean;
   showPrepare?: boolean;
   planLink?: string;
+  readinessNote?: string;
 }) {
   const model = buildTomorrowPreviewModel(plan, targetDate);
   const [readiness, setReadiness] = useState<TomorrowReadiness>(() =>
@@ -145,41 +147,44 @@ export function TomorrowPreview({
     <section className={`tomorrow-preview path-surface${compact ? ' tomorrow-preview--compact' : ''}`}>
       <p className="today-panel__label">{model.title}</p>
       <p className="tomorrow-preview__subtitle">{model.subtitle}</p>
+      {readinessNote ? (
+        <p className="tomorrow-preview__readiness">{readinessNote}</p>
+      ) : null}
 
       {model.isSundayPlanning ? (
-        <ul className="tomorrow-preview__list">
-          <li>
-            <strong>Focus</strong>
-            <span>{model.focus}</span>
-          </li>
-          <li>
-            <strong>Practice</strong>
-            <span>{model.practice}</span>
-          </li>
-        </ul>
+        <dl className="tomorrow-preview__list">
+          <div className="tomorrow-preview__row">
+            <dt>Focus</dt>
+            <dd>{model.focus}</dd>
+          </div>
+          <div className="tomorrow-preview__row">
+            <dt>Practice</dt>
+            <dd>{model.practice}</dd>
+          </div>
+        </dl>
       ) : (
-        <ul className="tomorrow-preview__list">
-          <li>
-            <strong>Read</strong>
-            <span>{model.read || '—'}</span>
-          </li>
-          <li>
-            <strong>Focus</strong>
-            <span>{model.focus || 'Complete the biblical plan to preview tomorrow’s focus.'}</span>
-          </li>
-          <li>
-            <strong>Practice</strong>
-            <span>{model.practice || '—'}</span>
-          </li>
-          <li>
-            <strong>Training</strong>
-            <span>{model.training || model.trainingMissing || '—'}</span>
-          </li>
-          <li>
-            <strong>Work</strong>
-            <span>{model.work || model.workMissing || '—'}</span>
-          </li>
-        </ul>
+        <dl className="tomorrow-preview__list">
+          <div className="tomorrow-preview__row">
+            <dt>Read</dt>
+            <dd>{model.read || '—'}</dd>
+          </div>
+          <div className="tomorrow-preview__row">
+            <dt>Focus</dt>
+            <dd>{model.focus || 'Complete the biblical plan to preview tomorrow’s focus.'}</dd>
+          </div>
+          <div className="tomorrow-preview__row">
+            <dt>Practice</dt>
+            <dd>{model.practice || '—'}</dd>
+          </div>
+          <div className="tomorrow-preview__row">
+            <dt>Training</dt>
+            <dd>{model.training || model.trainingMissing || '—'}</dd>
+          </div>
+          <div className="tomorrow-preview__row">
+            <dt>Work</dt>
+            <dd>{model.work || model.workMissing || '—'}</dd>
+          </div>
+        </dl>
       )}
 
       {planLink ? (
@@ -191,7 +196,7 @@ export function TomorrowPreview({
       {showPrepare && !model.isSundayPlanning ? (
         <div className="tomorrow-preview__prepare">
           {!showChecklist ? (
-            <Button variant="ghost" onClick={() => setShowChecklist(true)}>
+            <Button className="tomorrow-preview__prepare-btn" onClick={() => setShowChecklist(true)}>
               Prepare for tomorrow
             </Button>
           ) : (

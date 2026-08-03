@@ -63,6 +63,35 @@ function workOutcomesCount(plan: WeeklyPlan): number {
   return plan.work.weeklyOutcomes.filter((o) => o.title.trim().length > 0).length;
 }
 
+function countTrainingDays(plan: WeeklyPlan): number {
+  return plan.physical.days.filter(
+    (d) => normalizePhysicalDay(d).scheduledWorkouts.length > 0,
+  ).length;
+}
+
+function countCoreFinishers(plan: WeeklyPlan): number {
+  return plan.physical.days.reduce((total, day) => {
+    const blocks = normalizePhysicalDay(day).scheduledWorkouts;
+    return (
+      total +
+      blocks.filter(
+        (block) =>
+          block.workoutTemplateId === 'tmpl_core_finisher' ||
+          /core\s*finisher/i.test(block.workoutName ?? ''),
+      ).length
+    );
+  }, 0);
+}
+
+function completeTrainingSummary(plan: WeeklyPlan): string {
+  const trainingDays = countTrainingDays(plan);
+  if (trainingDays <= 0) return 'Training / recovery schedule approved';
+  const finishers = countCoreFinishers(plan);
+  const daysLabel = `${trainingDays} training day${trainingDays === 1 ? '' : 's'}`;
+  if (finishers <= 0) return daysLabel;
+  return `${daysLabel} · ${finishers} core finisher${finishers === 1 ? '' : 's'}`;
+}
+
 export function deriveBiblicalStatus(plan: WeeklyPlan): SetupItemView {
   const sermon = hasSermonContent(plan);
   const notesOk = notesAreMeaningful(plan.church.sermonNotes);
@@ -125,22 +154,13 @@ export function deriveTrainingStatus(plan: WeeklyPlan): SetupItemView {
   const schedule = trainingSchedulePresent(plan);
   const intake = plan.physical.coachingIntake;
   const hasIntake = Boolean(intake?.primaryGoal);
-  const trainingDays = plan.physical.days.filter(
-    (d) => normalizePhysicalDay(d).scheduledWorkouts.length > 0,
-  ).length;
-  const minutes = intake?.minutesPerWorkout;
 
   if (approved && schedule) {
     return {
       id: 'training',
       title: 'Training Plan',
       status: 'complete',
-      summary:
-        trainingDays > 0
-          ? `${trainingDays} training day${trainingDays === 1 ? '' : 's'}${
-              minutes ? ` · approximately ${minutes} minutes per session` : ''
-            }`
-          : 'Training / recovery schedule approved',
+      summary: completeTrainingSummary(plan),
       primaryAction: 'Review',
       secondaryAction: 'Edit',
       step: 3,
@@ -186,18 +206,11 @@ export function deriveWorkStatus(plan: WeeklyPlan): SetupItemView {
   const approved = plan.work.approved;
 
   if (approved && count > 0) {
-    const titles = plan.work.weeklyOutcomes
-      .map((o) => o.title.trim())
-      .filter(Boolean)
-      .slice(0, 3);
     return {
       id: 'work',
       title: 'Work Plan',
       status: 'complete',
-      summary:
-        titles.length === 3
-          ? titles.join(' · ')
-          : `${count} weekly outcome${count === 1 ? '' : 's'} planned`,
+      summary: `${count} weekly outcome${count === 1 ? '' : 's'}`,
       primaryAction: 'Review',
       secondaryAction: 'Edit',
       step: 4,

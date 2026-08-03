@@ -33,6 +33,26 @@ describe('deriveWeeklySetup', () => {
     const setup = deriveWeeklySetup(plan);
     expect(setup.biblicalComplete).toBe(true);
     expect(setup.items[0]?.status).toBe('complete');
-    expect(setup.items[0]?.summary).toContain('Attention');
+    expect(setup.items[0]?.summary).toBe('Transforming Our Lives Through Attention');
+  });
+
+  it('summarizes completed work as outcome count, not goal titles', () => {
+    let plan = buildDraftWeeklyPlan('2026-08-02');
+    plan = {
+      ...plan,
+      work: {
+        ...plan.work,
+        approved: true,
+        weeklyOutcomes: [
+          { id: 'w1', title: 'Ship onboarding polish', order: 0 },
+          { id: 'w2', title: 'Close Q3 forecast', order: 1 },
+          { id: 'w3', title: 'Mentor review', order: 2 },
+        ],
+      },
+    };
+    const setup = deriveWeeklySetup(plan);
+    expect(setup.workComplete).toBe(true);
+    expect(setup.items[2]?.summary).toBe('3 weekly outcomes');
+    expect(setup.items[2]?.summary).not.toContain('Ship');
   });
 });
