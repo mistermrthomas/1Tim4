@@ -1,0 +1,17 @@
+---
+description: After shipping code changes, commit, push to main, and confirm Vercel production deploy.
+alwaysApply: true
+---
+
+# Always deploy
+
+When finishing a feature, fix, or other code change the user asked for:
+
+1. Verify the build (and relevant tests when practical).
+2. Commit the relevant changes with a concise message.
+3. Push to `main` / the tracked remote branch to trigger Vercel.
+4. Confirm the production deploy is Ready (Vercel status and/or https://1-tim4.vercel.app).
+5. Report the commit SHA and deploy result briefly.
+
+Do this by default unless the user explicitly says not to deploy or to keep changes local-only.
+Do not force-push or skip hooks unless the user explicitly requests it.
