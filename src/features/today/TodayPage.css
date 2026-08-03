@@ -1431,41 +1431,233 @@
 }
 
 .sunday-home__layout {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
-  align-items: start;
+  align-items: stretch;
+}
+
+.sunday-home__main,
+.sunday-home__rail {
+  display: contents;
 }
 
 .sunday-home__activated {
   order: 1;
 }
 
-.sunday-home__physical {
+.sunday-home__sermon {
   order: 2;
-  min-width: 0;
 }
 
-.sunday-home__tomorrow {
+.sunday-home__focus {
   order: 3;
-  min-width: 0;
 }
 
-.sunday-home__setup {
+.sunday-home__monday {
   order: 4;
+}
+
+.sunday-home__physical {
+  order: 5;
   min-width: 0;
 }
 
-.sunday-home__summary {
-  order: 5;
-}
-
-.sunday-home__complete {
+.sunday-home__work {
   order: 6;
   min-width: 0;
 }
 
-.sunday-home__health {
+.sunday-home__weekdays {
   order: 7;
+}
+
+.sunday-home__actions {
+  order: 7;
+}
+
+.sunday-home__health {
+  order: 8;
+}
+
+.sunday-home__activate-card {
+  order: 9;
+}
+
+.sunday-home__complete {
+  order: 10;
+  min-width: 0;
+}
+
+.sunday-biblical {
+  padding: 1.35rem 1.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.sunday-biblical__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+}
+
+.sunday-biblical__badge {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--path-text-dim);
+}
+
+.sunday-biblical__badge--complete {
+  color: var(--path-gold);
+}
+
+.sunday-biblical__title {
+  margin: 0;
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  line-height: 1.2;
+}
+
+.sunday-biblical__fields {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.sunday-biblical__fields--compact {
+  gap: 0.45rem;
+}
+
+.sunday-biblical__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.sunday-biblical__field dt {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--path-text-dim);
+  font-weight: 600;
+}
+
+.sunday-biblical__field dd {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--path-text);
+}
+
+.sunday-biblical__hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--path-text-muted);
+  line-height: 1.4;
+}
+
+.sunday-biblical__focus-text {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.4;
+  color: var(--path-text);
+}
+
+.sunday-biblical__practice {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.95rem;
+  color: var(--path-text-muted);
+  line-height: 1.4;
+}
+
+.sunday-biblical__practice span {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--path-text-dim);
+  font-weight: 600;
+}
+
+.sunday-biblical__monday-sub {
+  margin: -0.25rem 0 0;
+  font-size: 0.86rem;
+  color: var(--path-text-dim);
+}
+
+.sunday-biblical__days {
+  list-style: none;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sunday-biblical__day {
+  padding: 0.75rem 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.sunday-biblical__day:first-child {
+  border-top: 0;
+  padding-top: 0.15rem;
+}
+
+.sunday-biblical__day-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.sunday-biblical__day-head strong {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--path-gold);
+}
+
+.sunday-biblical__day-head span {
+  font-size: 0.92rem;
+  color: var(--path-text);
+}
+
+.sunday-biblical__day-scripture {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--path-text);
+  line-height: 1.35;
+}
+
+.sunday-biblical__day-focus {
+  margin: 0.2rem 0 0;
+  font-size: 0.88rem;
+  color: var(--path-text-muted);
+  line-height: 1.4;
+}
+
+.sunday-biblical__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.sunday-activate {
+  padding: 1.25rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
 }
 
 .sunday-physical {
@@ -1540,6 +1732,59 @@
   font-size: 0.85rem;
 }
 
+.sunday-work {
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.sunday-work__list {
+  margin: 0.1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sunday-work__row {
+  display: grid;
+  grid-template-columns: 5.25rem minmax(0, 1fr);
+  gap: 0.25rem 0.55rem;
+  align-items: start;
+}
+
+.sunday-work__row dt {
+  margin: 0;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--path-text-dim);
+  font-weight: 600;
+  line-height: 1.4;
+  padding-top: 0.08rem;
+}
+
+.sunday-work__row dd {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  color: var(--path-text-muted);
+}
+
+.sunday-work__action {
+  margin-top: 0.25rem;
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0.5rem 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+  font-size: 0.78rem;
+}
+
 .sunday-home__meta {
   margin: 0;
   font-size: 0.82rem;
@@ -1582,167 +1827,6 @@
   box-sizing: border-box;
 }
 
-.sunday-setup {
-  padding: 1.25rem 1.35rem;
-}
-
-.sunday-setup__list {
-  list-style: none;
-  margin: 0.55rem 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.sunday-setup__item {
-  display: grid;
-  grid-template-columns: 1.25rem minmax(0, 1fr);
-  gap: 0.45rem 0.65rem;
-  padding: 0.95rem 0;
-  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-}
-
-.sunday-setup__item:first-child {
-  border-top: 0;
-  padding-top: 0.2rem;
-}
-
-.sunday-setup__item--complete {
-  padding: 0.9rem 0;
-  align-items: start;
-}
-
-.sunday-setup__item--not_started,
-.sunday-setup__item--in_progress,
-.sunday-setup__item--needs_review {
-  padding: 1.05rem 0;
-}
-
-.sunday-setup__status {
-  color: var(--path-gold);
-  font-size: 0.9rem;
-  line-height: 1.45;
-  padding-top: 0.1rem;
-}
-
-.sunday-setup__compact {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.35rem 1rem;
-  min-width: 0;
-}
-
-.sunday-setup__compact-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  min-width: 0;
-  flex: 1 1 12rem;
-}
-
-.sunday-setup__compact-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.55rem 0.75rem;
-  flex: 0 1 auto;
-}
-
-.sunday-setup__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.35rem 0.75rem;
-}
-
-.sunday-setup__title {
-  margin: 0;
-  font-size: 0.98rem;
-  font-weight: 650;
-  line-height: 1.3;
-}
-
-.sunday-setup__badge {
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--path-text-dim);
-  white-space: nowrap;
-}
-
-.sunday-setup__item--complete .sunday-setup__badge {
-  color: var(--path-gold);
-}
-
-.sunday-setup__summary {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--path-text-muted);
-  line-height: 1.4;
-}
-
-.sunday-setup__item:not(.sunday-setup__item--complete) .sunday-setup__summary {
-  margin-top: 0.35rem;
-}
-
-.sunday-setup__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.55rem 0.75rem;
-  margin-top: 0.65rem;
-}
-
-.sunday-setup__primary {
-  padding: 0.7rem 1.05rem;
-  min-height: 2.75rem;
-  font-size: 0.85rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  box-sizing: border-box;
-}
-
-.sunday-setup__text-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.55rem 0.75rem;
-}
-
-.sunday-setup__text-action {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--path-text-muted);
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  cursor: pointer;
-  padding: 0.15rem 0;
-}
-
-.sunday-setup__text-action:hover {
-  color: var(--path-gold);
-}
-
-.sunday-setup__activate {
-  margin-top: 1rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.5rem;
-}
-
 .sunday-setup__activate-hint {
   margin: 0;
   font-size: 0.84rem;
@@ -1766,38 +1850,6 @@
 .sunday-setup__override:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-.sunday-week-summary {
-  padding: 1.15rem 1.35rem;
-}
-
-.sunday-week-summary__list {
-  list-style: none;
-  margin: 0.45rem 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.sunday-week-summary__list li {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.sunday-week-summary__list strong {
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--path-text-dim);
-  font-weight: 600;
-}
-
-.sunday-week-summary__list span {
-  font-size: 0.92rem;
-  line-height: 1.35;
 }
 
 .sunday-health {
@@ -1947,96 +1999,56 @@
 }
 
 @media (max-width: 719px) {
-  .sunday-setup__compact {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.4rem;
-  }
-
-  .sunday-setup__compact-meta {
-    justify-content: flex-start;
-  }
-
   .tomorrow-preview__row,
-  .sunday-physical__row {
+  .sunday-physical__row,
+  .sunday-work__row {
     grid-template-columns: 1fr;
     gap: 0.1rem;
   }
 }
 
-@media (min-width: 720px) and (max-width: 959px) {
-  .sunday-setup__compact-copy {
-    flex: 1 1 100%;
-  }
-}
-
 @media (min-width: 960px) {
   .sunday-home__layout {
-    grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
-    gap: 1.25rem 1.35rem;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+    gap: 1.25rem 1.5rem;
     align-items: start;
   }
 
-  .sunday-home__layout:not(.sunday-home__layout--active) {
-    grid-template-areas:
-      'setup physical'
-      'setup tomorrow'
-      'setup health';
+  .sunday-home__main,
+  .sunday-home__rail {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
   }
 
-  .sunday-home__layout--active {
-    grid-template-areas:
-      'activated physical'
-      'setup tomorrow'
-      'setup health'
-      'summary .'
-      'complete .';
+  .sunday-home__main {
+    grid-column: 1;
   }
 
-  .sunday-home__activated {
-    grid-area: activated;
-    order: unset;
-  }
-
-  .sunday-home__physical {
-    grid-area: physical;
-    order: unset;
+  .sunday-home__rail {
+    grid-column: 2;
     position: sticky;
     top: 1.25rem;
   }
 
-  .sunday-home__tomorrow {
-    grid-area: tomorrow;
-    order: unset;
-  }
-
-  .sunday-home__setup {
-    grid-area: setup;
-    order: unset;
-  }
-
-  .sunday-home__summary {
-    grid-area: summary;
-    order: unset;
-  }
-
-  .sunday-home__complete {
-    grid-area: complete;
-    order: unset;
-  }
-
+  .sunday-home__activated,
+  .sunday-home__sermon,
+  .sunday-home__focus,
+  .sunday-home__monday,
+  .sunday-home__physical,
+  .sunday-home__work,
+  .sunday-home__weekdays,
+  .sunday-home__actions,
+  .sunday-home__activate-card,
+  .sunday-home__complete,
   .sunday-home__health {
-    grid-area: health;
     order: unset;
   }
 
-  .sunday-setup__item--complete .sunday-setup__compact {
-    flex-wrap: nowrap;
-    align-items: center;
-  }
-
-  .sunday-setup__item--complete .sunday-setup__compact-copy {
-    flex: 1 1 auto;
+  .sunday-biblical__title {
+    font-size: clamp(1.55rem, 2.2vw, 2rem);
   }
 }
 

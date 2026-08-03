@@ -1,8 +1,20 @@
 import { Link } from 'react-router-dom';
 import { shortWeekdayLabel, type DateKey } from '../../domain/calendar/week';
+import {
+  dayWorkoutsSummary,
+  getSessionsForDate,
+} from '../../domain/physical/workoutTracker';
 import { normalizePhysicalDay } from '../../domain/weeklyPlan/physicalWorkouts';
 import { weekPlanPath } from '../../domain/weeklyPlan/setupStatus';
 import type { WeeklyPlan } from '../../domain/weeklyPlan/types';
+
+function workoutLabel(day: NonNullable<WeeklyPlan['physical']['days'][number]>): string {
+  const blocks = normalizePhysicalDay(day).scheduledWorkouts;
+  if (blocks.length > 0) {
+    return blocks.map((b) => b.workoutName || 'Workout').join(' · ');
+  }
+  return day.workoutName.trim() || 'Workout';
+}
 
 export function buildSundayPhysicalSummary(
   plan: WeeklyPlan | null,
@@ -12,16 +24,20 @@ export function buildSundayPhysicalSummary(
   todayDetail: string | null;
   isRestDay: boolean;
   trainingDays: number;
+  completedDays: number;
   nextWorkout: string | null;
+  mondayWorkout: string | null;
   planReady: boolean;
 } {
   if (!plan) {
     return {
       todayStatus: 'No training plan yet',
-      todayDetail: 'Finish the training section in This week’s setup.',
+      todayDetail: 'Open the training plan to schedule this week.',
       isRestDay: false,
       trainingDays: 0,
+      completedDays: 0,
       nextWorkout: null,
+      mondayWorkout: null,
       planReady: false,
     };
   }
@@ -29,9 +45,21 @@ export function buildSundayPhysicalSummary(
   const days = [...plan.physical.days].sort((a, b) => a.date.localeCompare(b.date));
   const today = days.find((d) => d.date === todayKey);
   const todayBlocks = today ? normalizePhysicalDay(today).scheduledWorkouts : [];
-  const trainingDays = days.filter(
+  const trainingDayList = days.filter(
     (d) => normalizePhysicalDay(d).scheduledWorkouts.length > 0,
-  ).length;
+  );
+  const trainingDays = trainingDayList.length;
+  const completedDays = trainingDayList.filter((d) => {
+    const sessions = getSessionsForDate(d.date);
+    return sessions.length > 0 && dayWorkoutsSummary(sessions).allDone;
+  }).length;
+
+  const monday = days.find((d) => d.dayNumber === 2);
+  const mondayBlocks = monday ? normalizePhysicalDay(monday).scheduledWorkouts : [];
+  const mondayWorkout =
+    monday && mondayBlocks.length > 0
+      ? `${shortWeekdayLabel(2)} · ${workoutLabel(monday)}`
+      : null;
 
   const isRestDay =
     !today ||
@@ -43,34 +71,27 @@ export function buildSundayPhysicalSummary(
 
   if (isRestDay) {
     todayStatus = 'Rest day';
-    todayDetail =
-      today?.type === 'recovery'
-        ? today.workoutName.trim() || 'Recovery'
-        : 'No required workout today.';
+    todayDetail = mondayWorkout
+      ? `Next up: ${mondayWorkout}`
+      : 'No required workout today.';
   } else if (today?.type === 'recovery') {
     todayStatus = 'Recovery';
-    todayDetail = today.workoutName.trim() || todayBlocks.map((b) => b.workoutName).join(' · ') || null;
+    todayDetail = today.workoutName.trim() || workoutLabel(today);
   } else {
-    todayStatus =
-      todayBlocks.map((b) => b.workoutName || 'Workout').filter(Boolean).join(' · ') ||
-      today?.workoutName.trim() ||
-      'Workout';
+    todayStatus = workoutLabel(today!);
     todayDetail = null;
   }
 
   const nextDay = isRestDay
     ? days.find(
         (d) => d.date > todayKey && normalizePhysicalDay(d).scheduledWorkouts.length > 0,
-      ) ??
-      days.find((d) => normalizePhysicalDay(d).scheduledWorkouts.length > 0)
+      ) ?? trainingDayList[0]
     : days.find(
         (d) => d.date > todayKey && normalizePhysicalDay(d).scheduledWorkouts.length > 0,
       );
 
   const nextWorkout = nextDay
-    ? `${shortWeekdayLabel(nextDay.dayNumber)} · ${normalizePhysicalDay(nextDay)
-        .scheduledWorkouts.map((b) => b.workoutName || 'Workout')
-        .join(' · ')}`
+    ? `${shortWeekdayLabel(nextDay.dayNumber)} · ${workoutLabel(nextDay)}`
     : null;
 
   return {
@@ -78,7 +99,9 @@ export function buildSundayPhysicalSummary(
     todayDetail,
     isRestDay,
     trainingDays,
-    nextWorkout,
+    completedDays,
+    nextWorkout: nextWorkout || mondayWorkout,
+    mondayWorkout,
     planReady: trainingDays > 0 || plan.physical.approved,
   };
 }
@@ -117,6 +140,10 @@ export function SundayPhysicalTrainingCard({
           </dd>
         </div>
         <div className="sunday-physical__row">
+          <dt>Next</dt>
+          <dd>{summary.nextWorkout || 'Schedule workouts in the training plan.'}</dd>
+        </div>
+        <div className="sunday-physical__row">
           <dt>This week</dt>
           <dd>
             {summary.trainingDays > 0
@@ -125,12 +152,16 @@ export function SundayPhysicalTrainingCard({
           </dd>
         </div>
         <div className="sunday-physical__row">
-          <dt>Next</dt>
-          <dd>{summary.nextWorkout || 'Schedule workouts in the training plan.'}</dd>
+          <dt>Progress</dt>
+          <dd>
+            {summary.trainingDays > 0
+              ? `${summary.completedDays} of ${summary.trainingDays} training days complete`
+              : 'No progress yet'}
+          </dd>
         </div>
       </dl>
       <Link className="path-btn path-btn--primary sunday-physical__action" to={href}>
-        {summary.planReady ? 'Review training plan' : 'Open training plan'}
+        {summary.planReady ? 'Open training plan' : 'Plan training'}
       </Link>
     </section>
   );
