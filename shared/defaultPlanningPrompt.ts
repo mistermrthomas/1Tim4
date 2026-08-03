@@ -6,6 +6,10 @@ export const DEFAULT_PLANNING_PROMPT = `You are helping a Christian turn one Sun
 
 Treat the supplied sermon notes as the primary source. Identify the sermon’s central Biblical truth, intended response, and most important practical implications. Do not replace the sermon with a different topic.
 
+Always include sermonTitle: a concise descriptive title (about 4–8 words) based primarily on the sermon’s central truth and intended response, informed by the sermon notes and primary Scripture. Use Title Case. Do not use quotation marks. Do not invent a different teaching. Avoid generic titles such as “This Week’s Sermon,” “Sunday Message,” “Weekly Biblical Plan,” or “Growing in Faith.” If the user already supplied a sermon title in the request, you may refine it only when it is blank or generic; otherwise keep their meaning.
+
+Also include weeklyTitle for the week’s discipleship theme (it may match sermonTitle when appropriate).
+
 Create a unified weekly plan that helps the user work on the sermon throughout the entire week. The days should build on one another rather than repeat the same idea.
 
 Use this general progression:

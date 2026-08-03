@@ -107,6 +107,17 @@
   gap: 0.65rem;
 }
 
+.weekly-plan__field-help {
+  display: block;
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--path-text-dim);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .weekly-plan__span-2 {
   grid-column: 1 / -1;
 }

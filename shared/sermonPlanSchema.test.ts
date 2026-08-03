@@ -3,6 +3,7 @@ import { coerceSermonPlanCandidate, safeParseSermonPlan } from './sermonPlanSche
 
 function samplePlan() {
   return {
+    sermonTitle: 'Practicing Mercy When Interrupted',
     weeklyTitle: 'Living the sermon',
     centralTruth: 'Based on your notes, the call is to practice mercy when interrupted.',
     primaryScripture: 'Matthew 5:7',
@@ -55,6 +56,23 @@ describe('sermonPlanSchema', () => {
     plan.saturday.reflectionQuestions = ['What stayed with me this week?'];
     const coerced = coerceSermonPlanCandidate(plan) as typeof plan;
     expect(coerced.saturday.reflectionQuestions.length).toBeGreaterThanOrEqual(3);
+    expect(safeParseSermonPlan(plan).success).toBe(true);
+  });
+
+  it('fills sermonTitle from weeklyTitle when missing', () => {
+    const plan = samplePlan() as Record<string, unknown>;
+    delete plan.sermonTitle;
+    const coerced = coerceSermonPlanCandidate(plan) as { sermonTitle: string };
+    expect(coerced.sermonTitle).toBeTruthy();
+    expect(safeParseSermonPlan(plan).success).toBe(true);
+  });
+
+  it('replaces generic sermonTitle with a fallback from central truth', () => {
+    const plan = samplePlan();
+    plan.sermonTitle = 'This Week’s Sermon';
+    const coerced = coerceSermonPlanCandidate(plan) as typeof plan;
+    expect(coerced.sermonTitle.toLowerCase()).not.toContain('this week');
+    expect(coerced.sermonTitle.length).toBeGreaterThan(4);
     expect(safeParseSermonPlan(plan).success).toBe(true);
   });
 });

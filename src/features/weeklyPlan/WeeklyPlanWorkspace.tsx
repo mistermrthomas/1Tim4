@@ -308,13 +308,17 @@ export function WeeklyPlanWorkspace() {
           ) : null}
           <div className="weekly-plan__grid">
             <label className="path-field">
-              <span>Sermon title</span>
+              <span>Sermon title — optional</span>
               <input
                 value={plan.church.sermonTitle}
                 onChange={(e) =>
                   patch((p) => ({ ...p, church: { ...p.church, sermonTitle: e.target.value } }))
                 }
+                placeholder="Leave blank for AI"
               />
+              <span className="weekly-plan__field-help">
+                Leave blank and AI will create one from your notes.
+              </span>
             </label>
             <label className="path-field">
               <span>Sermon date</span>

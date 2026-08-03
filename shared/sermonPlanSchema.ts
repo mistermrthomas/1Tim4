@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  isUsableSermonTitle,
+  normalizeSermonTitle,
+  stripSermonTitleQuotes,
+} from './sermonTitle';
 
 const WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as const;
 
@@ -63,11 +68,31 @@ export function coerceSermonPlanCandidate(raw: unknown): unknown {
     plan.watchFor = ['hurrying past the sermon’s concrete call'];
   }
 
+  let sermonTitle = stripSermonTitleQuotes(String(plan.sermonTitle ?? ''));
+  let weeklyTitle = stripSermonTitleQuotes(String(plan.weeklyTitle ?? ''));
+  if (!sermonTitle && weeklyTitle) sermonTitle = weeklyTitle;
+  if (!weeklyTitle && sermonTitle) weeklyTitle = sermonTitle;
+
+  const fallbackSource = {
+    centralTruth: String(plan.centralTruth ?? ''),
+    weeklyTheme: weeklyTitle,
+    weeklyTitle,
+    actOfObedience: String(plan.actOfObedience ?? ''),
+    weeklyPractice: String(plan.weeklyPractice ?? ''),
+  };
+  sermonTitle = normalizeSermonTitle(sermonTitle, fallbackSource);
+  if (!isUsableSermonTitle(weeklyTitle)) {
+    weeklyTitle = sermonTitle;
+  }
+  plan.sermonTitle = sermonTitle;
+  plan.weeklyTitle = weeklyTitle;
+
   return plan;
 }
 
 export const sermonPlanSchema = z
   .object({
+    sermonTitle: nonEmpty(4, 120),
     weeklyTitle: nonEmpty(4, 120),
     centralTruth: nonEmpty(20, 480),
     primaryScripture: nonEmpty(3, 80),
@@ -81,6 +106,13 @@ export const sermonPlanSchema = z
     saturday: sermonPlanSaturdaySchema,
   })
   .superRefine((plan, ctx) => {
+    if (!isUsableSermonTitle(plan.sermonTitle)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['sermonTitle'],
+        message: 'sermonTitle must be a specific, non-generic title',
+      });
+    }
     const seen = new Set<string>();
     for (let i = 0; i < plan.days.length; i += 1) {
       const day = plan.days[i]!;
@@ -110,6 +142,7 @@ export const sermonPlanJsonSchema = {
   type: 'object',
   additionalProperties: false,
   required: [
+    'sermonTitle',
     'weeklyTitle',
     'centralTruth',
     'primaryScripture',
@@ -123,6 +156,7 @@ export const sermonPlanJsonSchema = {
     'saturday',
   ],
   properties: {
+    sermonTitle: { type: 'string' },
     weeklyTitle: { type: 'string' },
     centralTruth: { type: 'string' },
     primaryScripture: { type: 'string' },

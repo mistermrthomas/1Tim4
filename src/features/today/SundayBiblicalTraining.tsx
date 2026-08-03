@@ -1,4 +1,8 @@
 import { Link } from 'react-router-dom';
+import {
+  fallbackSermonTitle,
+  toTitleCase,
+} from '../../../shared/sermonTitle';
 import { shortWeekdayLabel, type DateKey } from '../../domain/calendar/week';
 import { weekPlanPath, type SetupItemView } from '../../domain/weeklyPlan/setupStatus';
 import type { WeeklyPlan } from '../../domain/weeklyPlan/types';
@@ -6,6 +10,38 @@ import type { WeeklyPlan } from '../../domain/weeklyPlan/types';
 function field(value: string | undefined | null, fallback: string): string {
   const trimmed = value?.trim();
   return trimmed ? trimmed : fallback;
+}
+
+function resolveSermonDisplayTitle(plan: WeeklyPlan | null): string {
+  if (!plan) return 'Add sermon notes to begin';
+
+  const stored = plan.church.sermonTitle.trim();
+  if (stored) return toTitleCase(stored);
+
+  const theme = plan.biblical.weeklyTheme.trim();
+  if (theme) return toTitleCase(theme);
+
+  const aiTitle = plan.biblical.aiProposal?.sermonTitle?.trim();
+  if (aiTitle) return toTitleCase(aiTitle);
+
+  const planGenerated = Boolean(
+    plan.biblical.aiProposal ||
+      plan.biblical.approved ||
+      plan.biblical.centralPrinciple.trim() ||
+      plan.biblical.weeklyPractice.trim() ||
+      plan.biblical.days.some((d) => d.dayNumber >= 2 && d.practice.trim().length > 12),
+  );
+
+  if (planGenerated) {
+    return fallbackSermonTitle({
+      centralTruth: plan.church.centralTruth || plan.biblical.centralPrinciple,
+      weeklyTheme: plan.biblical.weeklyTheme,
+      actOfObedience: plan.church.actOfObedience || plan.biblical.actOfObedience,
+      weeklyPractice: plan.biblical.weeklyPractice,
+    });
+  }
+
+  return 'Add sermon notes to begin';
 }
 
 export function SundayBiblicalTraining({
@@ -28,7 +64,7 @@ export function SundayBiblicalTraining({
       .slice()
       .sort((a, b) => a.dayNumber - b.dayNumber) ?? [];
 
-  const sermonTitle = field(church?.sermonTitle, 'Add this week’s sermon title');
+  const sermonTitle = resolveSermonDisplayTitle(plan);
   const scripture = field(
     biblical?.coreScripture || church?.primaryScripture,
     'Add the primary scripture',

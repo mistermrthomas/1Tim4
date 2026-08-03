@@ -90,10 +90,14 @@ export function applySermonPlanToWeeklyPlan(
 
   const days = Array.from(byDayNumber.values()).sort((a, b) => a.dayNumber - b.dayNumber);
 
+  const existingTitle = plan.church.sermonTitle.trim();
+  const sermonTitle = existingTitle || ai.sermonTitle || ai.weeklyTitle;
+
   return {
     ...plan,
     church: {
       ...plan.church,
+      sermonTitle,
       centralTruth: ai.centralTruth,
       whatToPractice: ai.weeklyPractice,
       actOfObedience: ai.actOfObedience,
@@ -101,7 +105,7 @@ export function applySermonPlanToWeeklyPlan(
     },
     biblical: {
       ...plan.biblical,
-      weeklyTheme: ai.weeklyTitle,
+      weeklyTheme: ai.weeklyTitle || ai.sermonTitle,
       centralPrinciple: ai.centralTruth,
       weeklyPractice: ai.weeklyPractice,
       actOfObedience: ai.actOfObedience,

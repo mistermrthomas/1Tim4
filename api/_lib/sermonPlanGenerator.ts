@@ -59,6 +59,7 @@ function buildUserPayload(input: SermonPlanGenerateInput): string {
   lines.push(
     '',
     'Return exactly one JSON object matching the schema: five weekday days in order monday→friday, plus saturday.',
+    'Include sermonTitle (required): a specific 4–8 word Title Case title from the central truth and intended response. Never use a generic placeholder title.',
     'saturday.reflectionQuestions must include at least 3 distinct questions.',
   );
   return lines.join('\n');
