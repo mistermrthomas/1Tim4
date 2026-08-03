@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   followingSundayStart,
-  nextSundayStart,
   shortWeekdayLabel,
+  startOfWeekSunday,
   weekRangeFor,
 } from '../../domain/calendar/week';
 import { readPhysicalPlan } from '../../domain/physical/planCatalog';
@@ -38,7 +38,7 @@ const PHYSICAL_TYPES: Array<{ value: PhysicalDayType; label: string }> = [
 export function WeeklyPlanWorkspace() {
   const { weekStart: weekStartParam } = useParams();
   const navigate = useNavigate();
-  const weekStart = weekStartParam || nextSundayStart();
+  const weekStart = weekStartParam || startOfWeekSunday();
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -782,12 +782,17 @@ export function WeeklyPlanWorkspace() {
   );
 }
 
-/** Path to plan the upcoming Sunday week (or today when already Sunday). */
+/** Path to this week’s Sunday–Saturday plan (works Mon–Sat, not just Sunday). */
 export function startNextWeekPath(): string {
-  return `/plan/week/${nextSundayStart()}`;
+  return `/plan/week/${startOfWeekSunday()}`;
 }
 
 /** Path to draft the week after the current Sunday boundary. */
 export function startFollowingWeekPath(): string {
   return `/plan/week/${followingSundayStart()}`;
+}
+
+/** @deprecated alias — prefer startNextWeekPath for current week */
+export function startCurrentWeekPath(): string {
+  return startNextWeekPath();
 }

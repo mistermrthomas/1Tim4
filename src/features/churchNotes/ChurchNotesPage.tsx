@@ -8,7 +8,7 @@ import {
   type SetStateAction,
 } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { toLocalDateKey } from '../../domain/calendar/week';
+import { startOfWeekSunday, toLocalDateKey } from '../../domain/calendar/week';
 import {
   CHURCH_NOTES_FIXTURE_META,
   CHURCH_NOTES_FIXTURE_RAW,
@@ -27,8 +27,9 @@ import {
 } from '../../domain/churchNotes/store';
 import type { SermonAnalysis, SermonNote } from '../../domain/churchNotes/types';
 import { newId } from '../../domain/physical/store';
+import { activateAndSyncWeeklyPlan } from '../../domain/weeklyPlan/activate';
 import { applyBiblicalDefaultsFromChurch } from '../../domain/weeklyPlan/factory';
-import { ensureWeeklyPlan, saveWeeklyPlan } from '../../domain/weeklyPlan/store';
+import { ensureWeeklyPlan } from '../../domain/weeklyPlan/store';
 import { useAuth } from '../../context/AuthContext';
 import {
   emptyStructuredAnalysis,
@@ -316,13 +317,10 @@ export function ChurchNotesPage() {
       const approvedNote = await saveSermonNote({ ...note, status: 'approved' });
       setNote(approvedNote);
 
-      // Layer onto weekly plan biblical track without replacing reading plan
-      const sunday = (() => {
-        const d = new Date(`${start}T12:00:00`);
-        d.setDate(d.getDate() - d.getDay());
-        return toLocalDateKey(d);
-      })();
+      // Layer onto this Sunday–Saturday weekly plan and activate it for Today
+      const sunday = startOfWeekSunday(new Date(`${start}T12:00:00`));
       const weekly = await ensureWeeklyPlan(sunday);
+      const formationByDate = new Map(formation.dailyPlan.map((d) => [d.date, d]));
       const layered = applyBiblicalDefaultsFromChurch({
         ...weekly,
         church: {
@@ -348,8 +346,8 @@ export function ChurchNotesPage() {
           weeklyPractice: edited.practicalResponse[0] || weekly.biblical.weeklyPractice,
           coreScripture: edited.memoryVerse.reference || weekly.biblical.coreScripture,
           supportingScriptures: edited.scripturePassages.map((p) => p.reference),
-          days: weekly.biblical.days.map((day, i) => {
-            const formDay = formation.dailyPlan[i];
+          days: weekly.biblical.days.map((day) => {
+            const formDay = formationByDate.get(day.date);
             return {
               ...day,
               focus: formDay?.theme || edited.weeklyTheme || day.focus,
@@ -366,7 +364,7 @@ export function ChurchNotesPage() {
           approved: true,
         },
       });
-      await saveWeeklyPlan(layered);
+      await activateAndSyncWeeklyPlan(layered);
 
       setStep('plan');
     } catch (e) {
@@ -606,8 +604,9 @@ export function ChurchNotesPage() {
         <section className="church-notes__section path-surface">
           <h2 className="church-notes__h2">3. Weekly formation plan</h2>
           <p className="church-notes__notice">
-            Your seven-day formation layer is active. It does not replace your Bible-reading plan —
-            Today will show reading (if any) alongside this week’s theme and one framing question.
+            Your seven-day formation layer is active for Today. It does not replace your
+            Bible-reading plan — Today will show reading (if any) alongside this week’s theme and one
+            framing question.
           </p>
           <p className="path-body">{edited.weeklyTheme}</p>
           <p className="church-notes__note">

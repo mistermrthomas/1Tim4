@@ -52,7 +52,7 @@ export function JourneyPage() {
           Train today
         </Link>
         <Link className="path-btn path-btn--ghost" to="/plan/week">
-          Weekly plan
+          This week’s plan
         </Link>
         <Link className="path-btn path-btn--ghost" to="/plan">
           Manage plans

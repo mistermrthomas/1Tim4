@@ -32,4 +32,22 @@ describe('weekly plan store', () => {
     const prior = await getWeeklyPlan(a.id);
     expect(prior?.status).toBe('archived');
   });
+
+  it('finds this week’s draft on Monday when nothing is activated yet', async () => {
+    const { getPlanCoveringDate } = await import('./store');
+    const draft = await ensureWeeklyPlan('2026-08-02');
+    expect(draft.status).toBe('draft');
+    const monday = await getPlanCoveringDate('2026-08-03');
+    expect(monday?.id).toBe(draft.id);
+    expect(monday?.weekStartDate).toBe('2026-08-02');
+  });
+
+  it('prefers the active plan that covers the date', async () => {
+    const { getPlanCoveringDate } = await import('./store');
+    const draft = await ensureWeeklyPlan('2026-08-02');
+    await activateWeeklyPlan(draft.id);
+    const monday = await getPlanCoveringDate('2026-08-03');
+    expect(monday?.status).toBe('active');
+    expect(monday?.id).toBe(draft.id);
+  });
 });

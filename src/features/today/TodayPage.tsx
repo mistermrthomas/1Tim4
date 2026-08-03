@@ -12,12 +12,13 @@ import { todayDateKey } from '../../domain/physical/store';
 import { buildDailyBrief, resolveActivePlan } from '../../domain/training/activePlan';
 import { getActiveFormationPlanForDate } from '../../domain/churchNotes/store';
 import type { WeeklyFormationPlan } from '../../domain/churchNotes/types';
-import { getActivePlanForDate, saveWeeklyPlan } from '../../domain/weeklyPlan/store';
+import { activateAndSyncWeeklyPlan } from '../../domain/weeklyPlan/activate';
+import { getPlanCoveringDate, saveWeeklyPlan } from '../../domain/weeklyPlan/store';
 import type { WeeklyPlan, WorkDailyAssignment } from '../../domain/weeklyPlan/types';
 import { loadSeasonPack } from '../../content/bundled/loadSeasonPack';
 import type { InstalledSeasonPack } from '../../content/types';
 import { Button } from '../../ui/Button';
-import { startNextWeekPath } from '../weeklyPlan/WeeklyPlanWorkspace';
+import { startCurrentWeekPath } from '../weeklyPlan/WeeklyPlanWorkspace';
 import { PhysicalTrainingPanel } from './PhysicalTrainingPanel';
 import { pickPreviewDay, resolvePreviewDay } from './resolvePreviewDay';
 import './TodayPage.css';
@@ -115,7 +116,7 @@ export function TodayPage() {
 
   useEffect(() => {
     let cancelled = false;
-    getActivePlanForDate(dateKey)
+    getPlanCoveringDate(dateKey)
       .then((plan) => {
         if (!cancelled) setWeeklyPlan(plan);
       })
@@ -335,12 +336,55 @@ export function TodayPage() {
                 <span aria-hidden> · </span>
                 <Link to="/plan">Manage plan</Link>
                 <span aria-hidden> · </span>
-                <Link to={startNextWeekPath()}>Weekly plan</Link>
+                <Link to={startCurrentWeekPath()}>This week’s plan</Link>
                 <span aria-hidden> · </span>
                 <Link to="/church-notes">Church notes</Link>
               </p>
             </header>
           </div>
+
+          {weeklyPlan && weeklyPlan.status === 'draft' ? (
+            <section className="today-week-banner path-surface" aria-label="Draft weekly plan">
+              <p className="today-panel__label">Draft weekly plan ready</p>
+              <p className="path-body">
+                You built a plan for {weeklyPlan.weekStartDate} → {weeklyPlan.weekEndDate}, but it
+                isn’t active yet — so Today can’t load it.
+              </p>
+              <div className="today-week-banner__actions">
+                <Button
+                  onClick={() => {
+                    void (async () => {
+                      const activated = await activateAndSyncWeeklyPlan(weeklyPlan);
+                      setWeeklyPlan(activated);
+                    })();
+                  }}
+                >
+                  Activate this week
+                </Button>
+                <Link className="path-btn path-btn--ghost" to={`/plan/week/${weeklyPlan.weekStartDate}`}>
+                  Review plan
+                </Link>
+              </div>
+            </section>
+          ) : null}
+
+          {!weeklyPlan && !formationPlan && !sundayKickoff ? (
+            <section className="today-week-banner path-surface" aria-label="No weekly plan">
+              <p className="today-panel__label">No weekly plan for this week</p>
+              <p className="path-body">
+                Open this week’s plan (Sunday–Saturday) to continue where you left off, or capture
+                new church notes.
+              </p>
+              <div className="today-week-banner__actions">
+                <Link className="path-btn path-btn--primary" to={startCurrentWeekPath()}>
+                  Open this week’s plan
+                </Link>
+                <Link className="path-btn path-btn--ghost" to="/church-notes">
+                  Church notes
+                </Link>
+              </div>
+            </section>
+          ) : null}
 
           {formationPlan ? (
             <section className="today-week-banner path-surface" aria-label="Sermon formation">
@@ -383,7 +427,7 @@ export function TodayPage() {
                 <Link className="path-btn path-btn--primary" to="/church-notes">
                   Capture church notes
                 </Link>
-                <Link className="path-btn path-btn--ghost" to={startNextWeekPath()}>
+                <Link className="path-btn path-btn--ghost" to={startCurrentWeekPath()}>
                   Build this week’s plan
                 </Link>
                 <Link className="path-btn path-btn--ghost" to={`/plan/week/${followingSundayStart()}`}>

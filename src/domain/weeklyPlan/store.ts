@@ -5,7 +5,7 @@
 
 import { createIndexedDbAdapter } from '../../data/storage/indexedDbAdapter';
 import type { StorageAdapter } from '../../data/storage/StorageAdapter';
-import type { DateKey } from '../calendar/week';
+import { startOfWeekSunday, type DateKey } from '../calendar/week';
 import { buildDraftWeeklyPlan } from './factory';
 import type { WeeklyPlan, WeeklyPlanIndex } from './types';
 
@@ -76,6 +76,19 @@ export async function getActivePlanForDate(dateKey: DateKey): Promise<WeeklyPlan
   if (!active) return null;
   if (dateKey < active.weekStartDate || dateKey > active.weekEndDate) return null;
   return active;
+}
+
+/**
+ * Plan that covers `dateKey`: prefer the active plan when it covers the date,
+ * otherwise the draft/archived plan stored for that Sunday–Saturday week.
+ */
+export async function getPlanCoveringDate(dateKey: DateKey): Promise<WeeklyPlan | null> {
+  const active = await getActivePlanForDate(dateKey);
+  if (active) return active;
+
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const weekStart = startOfWeekSunday(new Date(y!, m! - 1, d!, 12, 0, 0, 0));
+  return getWeeklyPlanByWeekStart(weekStart);
 }
 
 export async function saveWeeklyPlan(plan: WeeklyPlan): Promise<WeeklyPlan> {
