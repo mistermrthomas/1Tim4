@@ -95,7 +95,7 @@ export function SettingsPage() {
 
   const resetSermon = async () => {
     if (isPromptModified({ ...sermon, planningPrompt: draftSermonPrompt })) {
-      if (!window.confirm('Reset the biblical planning prompt to the Path default?')) return;
+      if (!window.confirm('Reset the Biblical planning prompt to the Path default?')) return;
     }
     const next = await resetAiPlanningPrompt();
     setSermon(next);
@@ -139,14 +139,14 @@ export function SettingsPage() {
         <p className="path-eyebrow">Preferences</p>
         <h1 className="path-display settings-page__title">Settings</h1>
         <p className="path-body">
-          Configure biblical and training AI coaching separately. API keys stay on the server only.
+          Configure Biblical and training AI coaching separately. API keys stay on the server only.
         </p>
       </header>
 
       <section className="settings-page__section path-surface">
-        <h2 className="settings-page__h2">AI biblical planning</h2>
+        <h2 className="settings-page__h2">AI Biblical planning</h2>
         <p className="settings-page__help">
-          This prompt controls how Path turns sermon notes into a weekly biblical plan. Sermon notes
+          This prompt controls how Path turns sermon notes into a weekly Biblical plan. Sermon notes
           and weekly information are added automatically when a plan is generated.
         </p>
 

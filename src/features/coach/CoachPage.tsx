@@ -34,7 +34,7 @@ export function CoachPage() {
       </header>
 
       <p className="coach-preview__card path-surface">
-        Review biblical content against Scripture and your own judgment before activating any weekly
+        Review Biblical content against Scripture and your own judgment before activating any weekly
         plan.
       </p>
 

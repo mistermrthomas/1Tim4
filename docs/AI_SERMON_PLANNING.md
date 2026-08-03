@@ -1,6 +1,6 @@
 # AI sermon-to-week planning
 
-Path turns **Sunday sermon notes** into an editable Monday–Friday biblical plan via a **server-only** OpenAI call. Manual planning still works without a key.
+Path turns **Sunday sermon notes** into an editable Monday–Friday Biblical plan via a **server-only** OpenAI call. Manual planning still works without a key.
 
 ## Enable
 
@@ -25,7 +25,7 @@ Never put the key in client code, IndexedDB, Settings UI, or a `VITE_` variable.
 
 | Route | Purpose |
 |-------|---------|
-| `POST /api/ai/sermon-plan` | Generate / regenerate structured biblical week |
+| `POST /api/ai/sermon-plan` | Generate / regenerate structured Biblical week |
 | `POST /api/ai/connection-test` | Minimal connection probe from Settings |
 
 ## Product flow

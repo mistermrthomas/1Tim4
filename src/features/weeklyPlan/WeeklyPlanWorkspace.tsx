@@ -26,7 +26,7 @@ import './WeeklyPlanWorkspace.css';
 
 const STEPS = [
   'Sermon',
-  'Weekly biblical focus',
+  'Weekly Biblical focus',
   'Faith plan',
   'Training plan',
   'Work plan',
@@ -178,7 +178,7 @@ export function WeeklyPlanWorkspace() {
     setLastAiPlan(pendingAiPlan);
     setPendingAiPlan(null);
     setAdjustment('');
-    setMessage('Updated biblical plan from regeneration.');
+    setMessage('Updated Biblical plan from regeneration.');
     setStep(2);
   };
 
@@ -429,7 +429,7 @@ export function WeeklyPlanWorkspace() {
 
       {step === 1 && (
         <section className="weekly-plan__section path-surface">
-          <h2 className="weekly-plan__h2">2. Weekly biblical focus</h2>
+          <h2 className="weekly-plan__h2">2. Weekly Biblical focus</h2>
           <div className="weekly-plan__grid">
             <label className="path-field weekly-plan__span-2">
               <span>What was the central truth?</span>
@@ -515,7 +515,7 @@ export function WeeklyPlanWorkspace() {
           ) : null}
           <div className="weekly-plan__grid">
             <label className="path-field weekly-plan__span-2">
-              <span>Weekly biblical theme</span>
+              <span>Weekly Biblical theme</span>
               <input
                 value={plan.biblical.weeklyTheme}
                 onChange={(e) =>
@@ -667,7 +667,7 @@ export function WeeklyPlanWorkspace() {
               <Button
                 variant="ghost"
                 onClick={() => {
-                  if (!window.confirm('Discard the generated biblical plan fields?')) return;
+                  if (!window.confirm('Discard the generated Biblical plan fields?')) return;
                   patch((p) => ({
                     ...p,
                     biblical: {

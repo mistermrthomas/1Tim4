@@ -203,7 +203,7 @@ export function applyBiblicalDefaultsFromChurch(plan: WeeklyPlan): WeeklyPlan {
     plan.biblical.weeklyTheme ||
     plan.church.centralTruth.trim() ||
     plan.church.sermonTitle.trim() ||
-    'Weekly biblical focus';
+    'Weekly Biblical focus';
 
   return {
     ...plan,
@@ -229,7 +229,7 @@ export function applyBiblicalDefaultsFromChurch(plan: WeeklyPlan): WeeklyPlan {
         focus: day.focus,
       })),
       sourceNotes:
-        'Draft from sermon notes and weekly biblical focus. Review against Scripture before activating.',
+        'Draft from sermon notes and weekly Biblical focus. Review against Scripture before activating.',
     },
     updatedAt: new Date().toISOString(),
   };

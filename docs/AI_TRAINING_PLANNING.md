@@ -16,7 +16,7 @@ Training is **not** an extension of the sermon. Prompts are configured separatel
 
 ## Enable
 
-Same server key as biblical AI:
+Same server key as Biblical AI:
 
 | Setup | Env var |
 |-------|---------|

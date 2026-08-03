@@ -336,7 +336,7 @@ export function TodayActiveWeek({
                   </span>
                 ) : null}
               </div>
-              <p className="today-hero__focus-label">Today’s biblical focus</p>
+              <p className="today-hero__focus-label">Today’s Biblical focus</p>
               <p className="today-hero__focus">{focus}</p>
               <p className="today-hero__meta">
                 {formatWeekRange(weeklyPlan.weekStartDate, weeklyPlan.weekEndDate)}

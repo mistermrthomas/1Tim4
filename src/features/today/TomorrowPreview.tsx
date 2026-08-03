@@ -170,7 +170,7 @@ export function TomorrowPreview({
           </div>
           <div className="tomorrow-preview__row">
             <dt>Focus</dt>
-            <dd>{model.focus || 'Complete the biblical plan to preview tomorrow’s focus.'}</dd>
+            <dd>{model.focus || 'Complete the Biblical plan to preview tomorrow’s focus.'}</dd>
           </div>
           <div className="tomorrow-preview__row">
             <dt>Practice</dt>

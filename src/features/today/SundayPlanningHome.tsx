@@ -110,7 +110,7 @@ export function SundayPlanningHome() {
         <p className="path-eyebrow">Plan the week</p>
         <h1 className="path-display sunday-home__title">{formatSundayHeader(todayKey)}</h1>
         <p className="sunday-home__lede">
-          Turn today’s sermon into a week of deliberate biblical training.
+          Turn today’s sermon into a week of deliberate Biblical training.
         </p>
         {planningClosed ? (
           <span className="today-complete-badge">✓ Planning complete</span>
@@ -260,7 +260,7 @@ export function SundayPlanningHome() {
             <summary className="sunday-health__summary">Today’s health tracking</summary>
             <div className="sunday-health__body">
               <p className="sunday-health__note">
-                Optional on Sunday — biblical planning stays primary.
+                Optional on Sunday — Biblical planning stays primary.
               </p>
               <Link className="path-btn path-btn--ghost sunday-home__secondary" to="/workouts">
                 Workouts library

@@ -80,7 +80,7 @@ export function CompleteTodayCard({
   const titles = {
     weekday: {
       ready: 'Ready to complete',
-      readyBody: 'You have recorded today’s biblical practice, training, and work outcomes.',
+      readyBody: 'You have recorded today’s Biblical practice, training, and work outcomes.',
       action: 'Complete today',
       done: 'Day complete',
       doneBody: 'Today’s commitments have been recorded.',

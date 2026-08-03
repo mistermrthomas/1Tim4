@@ -313,7 +313,7 @@ export function deriveWeeklySetup(plan: WeeklyPlan | null): WeeklySetupState {
           id: 'review',
           title: 'Review & Activate',
           status: 'needs_review',
-          summary: 'Your biblical, training, and work plans are ready.',
+          summary: 'Your Biblical, training, and work plans are ready.',
           primaryAction: 'Review and Activate',
           step: 5,
         }

@@ -35,7 +35,7 @@ export function SundayBiblicalTraining({
   );
   const centralTruth = field(
     church?.centralTruth || biblical?.centralPrinciple,
-    'Capture the central biblical truth from the sermon',
+    'Capture the central Biblical truth from the sermon',
   );
   const response = field(
     church?.actOfObedience || biblical?.actOfObedience || biblical?.weeklyPractice,
@@ -43,7 +43,7 @@ export function SundayBiblicalTraining({
   );
   const weeklyFocus = field(
     biblical?.weeklyTheme || church?.whatToPractice,
-    'Set this week’s biblical focus',
+    'Set this week’s Biblical focus',
   );
 
   const reviewHref = weekPlanPath(weekStart, 2);
@@ -52,9 +52,9 @@ export function SundayBiblicalTraining({
 
   return (
     <>
-      <section className="sunday-biblical path-surface sunday-home__sermon" aria-label="Sermon and biblical plan">
+      <section className="sunday-biblical path-surface sunday-home__sermon" aria-label="Sermon and Biblical plan">
         <div className="sunday-biblical__head">
-          <p className="today-panel__label">Sermon &amp; biblical plan</p>
+          <p className="today-panel__label">Sermon &amp; Biblical plan</p>
           <span className={`sunday-biblical__badge sunday-biblical__badge--${biblicalSetup.status}`}>
             {biblicalSetup.status === 'complete'
               ? 'Complete'
@@ -85,8 +85,8 @@ export function SundayBiblicalTraining({
         ) : null}
       </section>
 
-      <section className="sunday-biblical path-surface sunday-home__focus" aria-label="This week’s biblical focus">
-        <p className="today-panel__label">This week’s biblical focus</p>
+      <section className="sunday-biblical path-surface sunday-home__focus" aria-label="This week’s Biblical focus">
+        <p className="today-panel__label">This week’s Biblical focus</p>
         <p className="sunday-biblical__focus-text">{weeklyFocus}</p>
         {biblical?.weeklyPractice.trim() ? (
           <p className="sunday-biblical__practice">
@@ -107,7 +107,7 @@ export function SundayBiblicalTraining({
             <dd>
               {field(
                 monday?.scripture || biblical?.coreScripture || church?.primaryScripture,
-                'Complete the biblical plan to preview Monday’s reading.',
+                'Complete the Biblical plan to preview Monday’s reading.',
               )}
             </dd>
           </div>
@@ -157,7 +157,7 @@ export function SundayBiblicalTraining({
         ) : (
           <p className="sunday-biblical__hint">
             The Monday–Saturday discipleship plan will appear here after you generate or draft the
-            biblical week.
+            Biblical week.
           </p>
         )}
       </section>
@@ -169,11 +169,11 @@ export function SundayBiblicalTraining({
           </Link>
         ) : (
           <Link className="path-btn path-btn--primary" to={reviewHref}>
-            Review biblical plan
+            Review Biblical plan
           </Link>
         )}
         <Link className="path-btn path-btn--ghost sunday-home__secondary" to={editHref}>
-          Edit biblical plan
+          Edit Biblical plan
         </Link>
       </div>
     </>
