@@ -262,9 +262,9 @@ export function SundayPlanningHome() {
               <p className="sunday-health__note">
                 Optional on Sunday — Biblical planning stays primary.
               </p>
-              <Link className="path-btn path-btn--ghost sunday-home__secondary" to="/workouts">
-                Workouts library
-              </Link>
+            <Link className="path-btn path-btn--ghost sunday-home__secondary" to="/workouts">
+              Strength log
+            </Link>
             </div>
           </details>
         </aside>

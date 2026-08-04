@@ -237,11 +237,11 @@ export function applyBiblicalDefaultsFromChurch(plan: WeeklyPlan): WeeklyPlan {
 
 export function suggestPhysicalSchedule(plan: WeeklyPlan, desiredCount = 4): WeeklyPlan {
   const catalog = readPhysicalPlan();
+  // Prefer primary split templates even when exercise rows were retired (strength log owns lifts).
   const strength = catalog.templates.filter(
     (t) =>
-      t.exercises.length > 0 &&
       (t.classification ?? 'primary') === 'primary' &&
-      !/recovery|conditioning|finisher/i.test(t.name),
+      !/recovery|conditioning|finisher|legs not active|retired template/i.test(t.name),
   );
   const recovery = catalog.templates.find((t) => /recovery/i.test(t.name));
   const pick = (i: number) => strength[i % Math.max(strength.length, 1)];

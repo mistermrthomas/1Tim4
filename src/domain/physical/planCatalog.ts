@@ -587,75 +587,41 @@ function seedExercises(): CatalogExercise[] {
   ];
 }
 
-function item(
-  exerciseId: string,
-  catalog: CatalogExercise[],
-  overrides: Partial<CatalogTemplateExercise> = {},
-): CatalogTemplateExercise {
-  const base = catalog.find((e) => e.id === exerciseId)!;
-  return {
-    exerciseId,
-    sets: base.defaultSets,
-    reps: base.defaultReps,
-    load: base.defaultLoad,
-    loadUnit: base.defaultLoadUnit,
-    note: base.notes,
-    cautionNote: base.cautionNote,
-    order: 0,
-    ...overrides,
-  };
-}
-
 /**
- * Named templates available for weekly planning.
- * Chest and Triceps is pre-filled from known Bowflex work — never auto-scheduled.
+ * Legacy weekly-plan templates — deactivated.
+ * Active strength tracking lives in `path-strength-log-v1` (/workouts).
  */
-function seedTemplates(exercises: CatalogExercise[]): CatalogTemplate[] {
-  const chestItems = [
-    'bowflex_chest_press',
-    'bowflex_decline_chest_press',
-    'bowflex_chest_fly',
-    'bowflex_triceps_pushdown',
-    'bowflex_oh_rope_triceps',
-  ].map((id, order) => item(id, exercises, { order }));
-
-  const coreFinisherItems = [
-    item('bowflex_abdominal_crunch', exercises, { order: 0, sets: 3, reps: '12-15' }),
-    item('bowflex_oblique_twist_left', exercises, { order: 1, sets: 3, reps: '10-15' }),
-    item('bowflex_oblique_twist_right', exercises, { order: 2, sets: 3, reps: '10-15' }),
-  ];
-
+function seedTemplates(_exercises: CatalogExercise[]): CatalogTemplate[] {
   return [
     {
       id: 'tmpl_chest_triceps',
-      name: 'Chest and Triceps',
+      name: 'Retired — use Strength Log Workout 1',
       classification: 'primary',
-      exercises: chestItems,
+      exercises: [],
     },
     {
       id: 'tmpl_back_biceps',
-      name: 'Back and Biceps',
+      name: 'Retired — use Strength Log Workout 2',
       classification: 'primary',
       exercises: [],
     },
     {
       id: 'tmpl_lower_body',
-      name: 'Lower Body',
+      name: 'Retired — legs not active yet',
       classification: 'primary',
       exercises: [],
     },
     {
       id: 'tmpl_full_body',
-      name: 'Full Body',
+      name: 'Retired template',
       classification: 'primary',
       exercises: [],
     },
     {
       id: 'tmpl_core_finisher',
-      name: 'Core Finisher',
+      name: 'Retired — core is in Workout 1',
       classification: 'finisher',
-      estimatedDuration: '6–10 minutes',
-      exercises: coreFinisherItems,
+      exercises: [],
     },
     {
       id: 'tmpl_recovery',
@@ -738,48 +704,22 @@ function mergeTemplates(
   stored: CatalogTemplate[] | undefined,
   defaults: CatalogTemplate[],
 ): CatalogTemplate[] {
+  // Strength log owns active programming — always prefer retired empty seed templates.
   if (!stored?.length) return defaults;
-  const byId = new Map(defaults.map((t) => [t.id, t]));
-  for (const t of stored) {
-    const def = byId.get(t.id);
-    // Keep user-edited templates; if they still only hold the old bodyweight_squat demo, replace.
-    if (
-      def &&
-      t.exercises.length === 1 &&
-      (t.exercises[0]?.exerciseId === 'bodyweight_squat' ||
-        t.exercises[0]?.exerciseId === 'bw_squat') &&
-      (t.id === 'tmpl_full_body' || t.id === 'tmpl_lower_body')
-    ) {
-      byId.set(t.id, def);
-      continue;
-    }
-    // Seed Core Finisher when missing or empty; keep user edits if they customized it.
-    if (t.id === 'tmpl_core_finisher' && def && (!t.exercises || t.exercises.length === 0)) {
-      byId.set(t.id, def);
-      continue;
-    }
-    byId.set(t.id, {
-      ...def,
-      ...t,
-      classification: t.classification ?? def?.classification ?? 'primary',
-      estimatedDuration: t.estimatedDuration ?? def?.estimatedDuration,
-      exercises: t.exercises ?? def?.exercises ?? [],
-    });
-  }
-  // Ensure Recovery template exists (renamed from Conditioning)
-  if (!byId.has('tmpl_recovery') && byId.has('tmpl_conditioning')) {
-    const old = byId.get('tmpl_conditioning')!;
-    byId.set('tmpl_recovery', {
-      ...old,
-      id: 'tmpl_recovery',
-      name: 'Recovery',
-      classification: 'recovery',
-    });
-    byId.delete('tmpl_conditioning');
-  }
-  // Ensure seeded templates always exist (e.g. Core Finisher for existing catalogs).
+  const byId = new Map(defaults.map((t) => [t.id, { ...t, exercises: [] as CatalogTemplate['exercises'] }]));
   for (const def of defaults) {
-    if (!byId.has(def.id)) byId.set(def.id, def);
+    byId.set(def.id, { ...def, exercises: [] });
+  }
+  // Preserve any unknown custom template ids without recommended exercises.
+  for (const t of stored) {
+    if (!byId.has(t.id)) {
+      byId.set(t.id, {
+        ...t,
+        name: t.name.startsWith('Retired') ? t.name : `Retired — ${t.name}`,
+        exercises: [],
+        classification: t.classification ?? 'primary',
+      });
+    }
   }
   const order = [
     'tmpl_chest_triceps',
@@ -796,6 +736,7 @@ function mergeTemplates(
     if (t) {
       ordered.push({
         ...t,
+        exercises: [],
         classification: t.classification ?? 'primary',
       });
       seen.add(id);
@@ -805,6 +746,7 @@ function mergeTemplates(
     if (!seen.has(t.id)) {
       ordered.push({
         ...t,
+        exercises: [],
         classification: t.classification ?? 'primary',
       });
     }

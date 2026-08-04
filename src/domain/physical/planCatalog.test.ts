@@ -47,7 +47,7 @@ describe('physical plan catalog seed', () => {
     expect(plan.exercises.some((e) => /lateral/i.test(e.name))).toBe(false);
   });
 
-  it('includes Core Finisher and core exercises without duplicates', () => {
+  it('keeps core exercise library rows but retires programmed templates', () => {
     const plan = buildDefaultPhysicalPlan();
     const crunch = plan.exercises.filter((e) => /ab crunch|abdominal crunch/i.test(e.name));
     expect(crunch).toHaveLength(1);
@@ -56,8 +56,8 @@ describe('physical plan catalog seed', () => {
     expect(plan.exercises.some((e) => e.name === 'Oblique Twist — Right')).toBe(true);
     const finisher = plan.templates.find((t) => t.id === 'tmpl_core_finisher');
     expect(finisher?.classification).toBe('finisher');
-    expect(finisher?.estimatedDuration).toBe('6–10 minutes');
-    expect(finisher?.exercises).toHaveLength(3);
+    expect(finisher?.exercises).toHaveLength(0);
+    expect(finisher?.name).toMatch(/Retired/i);
   });
 
   it('does not assign a workout on Today from catalog alone', () => {
