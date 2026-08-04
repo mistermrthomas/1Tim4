@@ -155,6 +155,40 @@ export function upsertStrengthLogEntry(
   });
 }
 
+export function deleteStrengthLogEntry(entryId: string): StrengthState {
+  return updateStrengthState((state) => ({
+    ...state,
+    entries: state.entries.filter((entry) => entry.id !== entryId),
+  }));
+}
+
+/** Unique session dates for a workout’s exercises, oldest → newest. */
+export function sessionDatesForWorkout(
+  state: StrengthState,
+  workoutId: string,
+  limit = 8,
+): string[] {
+  const exerciseIds = new Set(exercisesForWorkout(state, workoutId).map((e) => e.id));
+  const dates = new Set<string>();
+  for (const entry of state.entries) {
+    if (exerciseIds.has(entry.exerciseId)) dates.add(entry.date);
+  }
+  return Array.from(dates)
+    .sort((a, b) => a.localeCompare(b))
+    .slice(-limit);
+}
+
+export function entryForExerciseDate(
+  state: StrengthState,
+  exerciseId: string,
+  date: string,
+): StrengthLogEntry | null {
+  const matches = state.entries
+    .filter((e) => e.exerciseId === exerciseId && e.date === date)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return matches[0] ?? null;
+}
+
 export function updateExerciseTechniqueNote(exerciseId: string, techniqueNote: string): StrengthState {
   return updateStrengthState((state) => ({
     ...state,

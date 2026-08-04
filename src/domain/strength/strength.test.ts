@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { recommendNextWeightLb } from './progression';
 import { WORKOUT_1_ID, WORKOUT_2_ID } from './seed';
 import {
+  deleteStrengthLogEntry,
   exercisesForWorkout,
   latestEntry,
   readStrengthState,
+  sessionDatesForWorkout,
   STRENGTH_STORE_KEY,
   upsertStrengthLogEntry,
 } from './store';
@@ -73,5 +75,15 @@ describe('strength log', () => {
     const entries = state.entries.filter((e) => e.exerciseId === 'ex_flat_chest_press');
     expect(entries.length).toBeGreaterThanOrEqual(2);
     expect(latestEntry(state, 'ex_flat_chest_press')?.weightLb).toBe(160);
+  });
+
+  it('lists workout session dates oldest to newest and can delete an entry', () => {
+    const state = readStrengthState();
+    expect(sessionDatesForWorkout(state, WORKOUT_1_ID)).toEqual(['2026-08-03']);
+    const entry = latestEntry(state, 'ex_flat_chest_press');
+    expect(entry).toBeTruthy();
+    const next = deleteStrengthLogEntry(entry!.id);
+    expect(latestEntry(next, 'ex_flat_chest_press')).toBeNull();
+    expect(latestEntry(next, 'ex_incline_chest_press')?.weightLb).toBe(155);
   });
 });

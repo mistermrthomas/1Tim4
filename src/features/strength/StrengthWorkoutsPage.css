@@ -6,6 +6,29 @@
   max-width: 820px;
 }
 
+.strength-page--wide {
+  max-width: 1100px;
+}
+
+.strength-progress__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 0.55rem;
+}
+
+.strength-progress__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--path-text-dim);
+}
+
+.strength-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
 .strength-page__header {
   display: flex;
   flex-direction: column;
@@ -196,6 +219,8 @@
 
 .strength-table-wrap {
   overflow-x: auto;
+  margin: 0 -0.15rem;
+  padding: 0 0.15rem;
 }
 
 .strength-table {
@@ -222,6 +247,119 @@
 
 .strength-table td {
   color: var(--path-text);
+}
+
+.strength-table--progress {
+  min-width: 36rem;
+}
+
+.strength-table--progress th,
+.strength-table--progress td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 0.35rem 0.3rem;
+  white-space: nowrap;
+}
+
+.strength-table--progress .strength-table__sticky {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--path-surface);
+  min-width: 7.5rem;
+  max-width: 10rem;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+.strength-table__exercise {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--path-text);
+}
+
+.strength-table__tag {
+  display: block;
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.strength-table__next {
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.strength-table__empty {
+  color: var(--path-text-dim);
+}
+
+.strength-table__row--edit {
+  cursor: pointer;
+}
+
+.strength-table__row--edit:hover td {
+  background: color-mix(in srgb, var(--path-gold) 8%, transparent);
+}
+
+.strength-cell {
+  appearance: none;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--path-gold) 8%, transparent);
+  color: inherit;
+  border-radius: 5px;
+  min-width: 3.4rem;
+  min-height: 2.2rem;
+  padding: 0.25rem 0.35rem;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.1;
+}
+
+.strength-cell:hover {
+  border-color: color-mix(in srgb, var(--path-gold) 45%, transparent);
+}
+
+.strength-cell--empty {
+  background: transparent;
+  border: 1px dashed color-mix(in srgb, currentColor 22%, transparent);
+  color: var(--path-text-dim);
+}
+
+.strength-cell--log {
+  background: transparent;
+  border: 1px solid var(--path-border-strong);
+  color: var(--path-gold);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  min-width: 2.8rem;
+}
+
+.strength-cell__weight {
+  font-weight: 650;
+  font-size: 0.88rem;
+}
+
+.strength-cell__diff {
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--path-text-dim);
+}
+
+.strength-cell__add {
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .strength-log {
