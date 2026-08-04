@@ -352,7 +352,7 @@ export function TodayActiveWeek({
           </div>
 
           {sunday ? (
-            <section className="today-week-banner path-surface">
+            <section className="today-week-banner path-surface today-grid__banner">
               <p className="today-panel__label">Sunday · Weekly kickoff</p>
               <p className="path-body">
                 {weeklyPlan.church.sermonTitle
@@ -368,7 +368,7 @@ export function TodayActiveWeek({
           ) : null}
 
           {sabbath ? (
-            <section className="today-week-banner today-week-banner--sabbath path-surface">
+            <section className="today-week-banner today-week-banner--sabbath path-surface today-grid__banner">
               <p className="today-panel__label">Sabbath · Saturday reflection</p>
               <p className="path-body">
                 Rest from structured training. Be present with family and friends. Review the week
@@ -446,7 +446,7 @@ export function TodayActiveWeek({
                 ))}
               </div>
 
-              <section className="today-practice">
+              <section className="today-practice today-grid__lead">
                 <p className="today-panel__label">Today’s practice</p>
                 <p className="today-practice__challenge">{practice || 'Set a practice in the weekly plan.'}</p>
                 <div className="today-practice__actions">
@@ -486,7 +486,7 @@ export function TodayActiveWeek({
                 ) : null}
               </section>
 
-              <div className="today-panel path-surface">
+              <div className="today-panel path-surface today-grid__session">
                 {session === 'morning' ? (
                   <>
                     <section className="today-panel__section">
@@ -572,7 +572,7 @@ export function TodayActiveWeek({
               </div>
 
               {weeklyWork.length > 0 ? (
-                <section className="today-work path-surface">
+                <section className="today-work path-surface today-grid__work">
                   <p className="today-panel__label">Work</p>
                   <ul className="today-work__list">
                     {weeklyWork.map((action) => {
@@ -611,38 +611,40 @@ export function TodayActiveWeek({
                 </section>
               ) : null}
 
-              <CompleteTodayCard
-                variant="weekday"
-                eligible={weekdayEval.eligible}
-                missing={weekdayEval.missing}
-                completed={dayClosed}
-                record={dayCompletion}
-                summary={dayClosed ? dayCompletion.summary : weekdayEval.summary}
-                closureQuality={
-                  dayClosed ? dayCompletion.closureQuality : weekdayEval.closureQuality
-                }
-                completing={completingDay}
-                onComplete={handleCompleteWeekday}
-                onReview={() => setSession('evening')}
-                onReopen={dayClosed ? handleReopenDay : undefined}
-              />
+              <div className="today-grid__complete">
+                <CompleteTodayCard
+                  variant="weekday"
+                  eligible={weekdayEval.eligible}
+                  missing={weekdayEval.missing}
+                  completed={dayClosed}
+                  record={dayCompletion}
+                  summary={dayClosed ? dayCompletion.summary : weekdayEval.summary}
+                  closureQuality={
+                    dayClosed ? dayCompletion.closureQuality : weekdayEval.closureQuality
+                  }
+                  completing={completingDay}
+                  onComplete={handleCompleteWeekday}
+                  onReview={() => setSession('evening')}
+                  onReopen={dayClosed ? handleReopenDay : undefined}
+                />
 
-              {dayClosed ? (
-                <>
-                  <p className="complete-today__next-note">
-                    Tomorrow is ready. Prepare what you need, then close Path for the night.
-                  </p>
-                  <TomorrowPreview
-                    plan={weeklyPlan}
-                    targetDate={addDays(dateKey, 1)}
-                    showPrepare
-                  />
-                </>
-              ) : null}
+                {dayClosed ? (
+                  <>
+                    <p className="complete-today__next-note">
+                      Tomorrow is ready. Prepare what you need, then close Path for the night.
+                    </p>
+                    <TomorrowPreview
+                      plan={weeklyPlan}
+                      targetDate={addDays(dateKey, 1)}
+                      showPrepare
+                    />
+                  </>
+                ) : null}
+              </div>
             </>
           ) : (
             <>
-              <section className="today-panel path-surface">
+              <section className="today-panel path-surface today-grid__session">
                 <p className="today-panel__label">Saturday reflection</p>
                 <div className="weekly-plan__grid" style={{ display: 'grid', gap: '0.75rem' }}>
                   {(
@@ -689,32 +691,34 @@ export function TodayActiveWeek({
                 </div>
               </section>
 
-              <CompleteTodayCard
-                variant="weekly_reflection"
-                eligible={saturdayEval.eligible || weeklyPlan.status === 'completed'}
-                missing={saturdayEval.missing}
-                completed={dayClosed || weeklyPlan.status === 'completed'}
-                record={dayCompletion}
-                summary={dayCompletion.summary}
-                closureQuality={dayCompletion.closureQuality}
-                completing={completingWeek}
-                onComplete={() => void markWeekComplete()}
-                onReopen={
-                  dayClosed
-                    ? () => {
-                        handleReopenDay();
-                      }
-                    : undefined
-                }
-              />
-
-              {(dayClosed || weeklyPlan.status === 'completed') && (
-                <TomorrowPreview
-                  plan={weeklyPlan}
-                  targetDate={followingSundayStart()}
-                  showPrepare={false}
+              <div className="today-grid__complete">
+                <CompleteTodayCard
+                  variant="weekly_reflection"
+                  eligible={saturdayEval.eligible || weeklyPlan.status === 'completed'}
+                  missing={saturdayEval.missing}
+                  completed={dayClosed || weeklyPlan.status === 'completed'}
+                  record={dayCompletion}
+                  summary={dayCompletion.summary}
+                  closureQuality={dayCompletion.closureQuality}
+                  completing={completingWeek}
+                  onComplete={() => void markWeekComplete()}
+                  onReopen={
+                    dayClosed
+                      ? () => {
+                          handleReopenDay();
+                        }
+                      : undefined
+                  }
                 />
-              )}
+
+                {(dayClosed || weeklyPlan.status === 'completed') && (
+                  <TomorrowPreview
+                    plan={weeklyPlan}
+                    targetDate={followingSundayStart()}
+                    showPrepare={false}
+                  />
+                )}
+              </div>
             </>
           )}
         </div>

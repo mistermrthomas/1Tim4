@@ -200,7 +200,7 @@
   width: 100%;
 }
 
-/* Mobile/tablet: flatten main so physical can sit after assignment */
+/* Mobile/tablet: flatten so Biblical content stacks before physical */
 .today-grid__main {
   display: contents;
 }
@@ -213,11 +213,12 @@
   min-width: 0;
 }
 
-.today-brief--biblical {
+.today-grid__banner,
+.today-plan-summary {
   order: 2;
 }
 
-.today-grid__physical {
+.today-brief--biblical {
   order: 3;
 }
 
@@ -231,6 +232,19 @@
 
 .today-grid__session {
   order: 6;
+}
+
+.today-grid__work,
+.today-grid__complete {
+  order: 7;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.today-grid__physical {
+  order: 8;
 }
 
 .today-column {
@@ -703,6 +717,53 @@
   color: var(--path-text-dim);
 }
 
+/* Physical panel progress checklist */
+.today-session-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0.15rem 0.15rem 0.1rem;
+}
+
+.today-session-progress__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.today-session-progress__meta {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--path-gold);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.today-session-progress__list {
+  margin: 0.25rem 0 0;
+  padding: 0 0.25rem 0 1.1rem;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.today-session-progress__list li {
+  margin: 0;
+  padding: 0;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: var(--path-text-muted);
+}
+
+.today-session-progress__list li.is-done {
+  color: var(--path-text);
+}
+
 /* Compact session progress */
 .today-progress {
   display: flex;
@@ -994,10 +1055,14 @@
   }
 
   .today-grid__header,
+  .today-grid__banner,
+  .today-plan-summary,
   .today-brief--biblical,
   .today-grid__modes,
   .today-grid__lead,
-  .today-grid__session {
+  .today-grid__session,
+  .today-grid__work,
+  .today-grid__complete {
     order: unset;
   }
 }
@@ -1442,6 +1507,7 @@
   display: contents;
 }
 
+/* Phone: all Biblical blocks before physical / work rail */
 .sunday-home__activated {
   order: 1;
 }
@@ -1458,34 +1524,34 @@
   order: 4;
 }
 
-.sunday-home__physical {
+.sunday-home__weekdays {
   order: 5;
+}
+
+.sunday-home__actions {
+  order: 6;
+}
+
+.sunday-home__activate-card {
+  order: 7;
+}
+
+.sunday-home__physical {
+  order: 8;
   min-width: 0;
 }
 
 .sunday-home__work {
-  order: 6;
+  order: 9;
   min-width: 0;
 }
 
-.sunday-home__weekdays {
-  order: 7;
-}
-
-.sunday-home__actions {
-  order: 7;
-}
-
 .sunday-home__health {
-  order: 8;
-}
-
-.sunday-home__activate-card {
-  order: 9;
+  order: 10;
 }
 
 .sunday-home__complete {
-  order: 10;
+  order: 11;
   min-width: 0;
 }
 
