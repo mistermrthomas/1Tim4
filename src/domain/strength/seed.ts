@@ -1,13 +1,7 @@
 import { newId } from '../physical/store';
-import type {
-  StrengthExercise,
-  StrengthLogEntry,
-  StrengthState,
-  StrengthWorkout,
-  StrengthWorkoutNote,
-} from './types';
+import { EQUIPMENT_MAX_LB, type StrengthExercise, type StrengthLogEntry, type StrengthState, type StrengthWorkout, type StrengthWorkoutNote } from './types';
 
-export const STRENGTH_SEED_VERSION = 1;
+export const STRENGTH_SEED_VERSION = 2;
 
 export const WORKOUT_1_ID = 'strength_workout_1';
 export const WORKOUT_2_ID = 'strength_workout_2';
@@ -30,13 +24,22 @@ const WORKOUTS: StrengthWorkout[] = [
 ];
 
 function ex(
-  partial: Omit<StrengthExercise, 'weightIncrementLb' | 'weightSuffix' | 'techniqueNote'> &
-    Partial<Pick<StrengthExercise, 'weightIncrementLb' | 'weightSuffix' | 'techniqueNote'>>,
+  partial: Omit<
+    StrengthExercise,
+    'weightIncrementLb' | 'weightSuffix' | 'techniqueNote' | 'maxWeightLb'
+  > &
+    Partial<
+      Pick<StrengthExercise, 'weightIncrementLb' | 'weightSuffix' | 'techniqueNote' | 'maxWeightLb'>
+    >,
 ): StrengthExercise {
+  const equipment = partial.equipment;
+  const defaultMax =
+    /dumbbell/i.test(equipment) ? EQUIPMENT_MAX_LB.dumbbells : EQUIPMENT_MAX_LB.bowflex;
   return {
     weightIncrementLb: 5,
     weightSuffix: '',
     techniqueNote: '',
+    maxWeightLb: defaultMax,
     ...partial,
   };
 }
@@ -139,7 +142,7 @@ const EXERCISES: StrengthExercise[] = [
   }),
   ex({
     id: 'ex_bowflex_shrug',
-    name: 'Bowflex Shrug',
+    name: 'Shrug',
     muscleGroup: 'Traps',
     equipment: 'Bowflex',
     active: true,
@@ -149,7 +152,7 @@ const EXERCISES: StrengthExercise[] = [
   }),
   ex({
     id: 'ex_bowflex_preacher_curl',
-    name: 'Bowflex Preacher Curl',
+    name: 'Preacher Curl',
     muscleGroup: 'Biceps',
     equipment: 'Bowflex',
     active: true,
@@ -158,7 +161,7 @@ const EXERCISES: StrengthExercise[] = [
   }),
   ex({
     id: 'ex_dumbbell_twist_curl',
-    name: 'Dumbbell Twist Curl',
+    name: 'Twist Curl',
     muscleGroup: 'Biceps',
     equipment: 'Dumbbells',
     active: true,
@@ -170,7 +173,7 @@ const EXERCISES: StrengthExercise[] = [
   // Historical-only — keep history, not in active Workout 2.
   ex({
     id: 'ex_dumbbell_shrug',
-    name: 'Dumbbell Shrug',
+    name: 'Shrug',
     muscleGroup: 'Traps',
     equipment: 'Dumbbells',
     active: false,
@@ -216,7 +219,7 @@ function baselineEntries(): StrengthLogEntry[] {
       155,
       ['12', '12', '12'],
       'easy',
-      'Slow tempo. Bowflex maximum.',
+      'Slow tempo. At Bowflex maximum (155 lb).',
     ),
     entry(
       'ex_incline_chest_press',
@@ -225,7 +228,7 @@ function baselineEntries(): StrengthLogEntry[] {
       155,
       ['12', '12', '12'],
       'easy',
-      'Slow tempo. Monitor shoulder comfort.',
+      'Slow tempo. Monitor shoulder comfort. At Bowflex maximum (155 lb).',
     ),
     entry(
       'ex_decline_chest_press',
@@ -234,7 +237,7 @@ function baselineEntries(): StrengthLogEntry[] {
       155,
       ['12', '12', '12'],
       'easy',
-      'Slow tempo. Bowflex maximum.',
+      'Slow tempo. At Bowflex maximum (155 lb).',
     ),
     entry(
       'ex_tricep_pushdown',
@@ -283,7 +286,7 @@ function baselineEntries(): StrengthLogEntry[] {
       25,
       ['15', '15', '15'],
       'moderate',
-      'First time performing. Became harder near the end. Historical only — replaced by Bowflex Shrug.',
+      'First time performing. Became harder near the end. Historical only — replaced by Shrug on Bowflex.',
     ),
     entry(
       'ex_dumbbell_twist_curl',
@@ -292,7 +295,7 @@ function baselineEntries(): StrengthLogEntry[] {
       25,
       ['15', '12', '8'],
       'hard',
-      'Performed last after back and trap exercises.',
+      'Performed last after back and trap exercises. At dumbbell maximum (25 lb).',
     ),
   ];
 }

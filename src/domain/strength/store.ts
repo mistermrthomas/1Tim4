@@ -32,6 +32,7 @@ function mergeCatalog(state: StrengthState): StrengthState {
       order: exercise.order,
       weightIncrementLb: exercise.weightIncrementLb,
       weightSuffix: exercise.weightSuffix,
+      maxWeightLb: exercise.maxWeightLb,
       // Keep user-edited technique notes if they customized beyond seed empty/default.
       techniqueNote: existing.techniqueNote.trim()
         ? existing.techniqueNote
@@ -162,20 +163,46 @@ export function deleteStrengthLogEntry(entryId: string): StrengthState {
   }));
 }
 
+/** Unique session dates for the given exercises, oldest → newest. */
+export function sessionDatesForExercises(
+  state: StrengthState,
+  exerciseIds: Iterable<string>,
+  limit = 8,
+): string[] {
+  const ids = new Set(exerciseIds);
+  const dates = new Set<string>();
+  for (const entry of state.entries) {
+    if (ids.has(entry.exerciseId)) dates.add(entry.date);
+  }
+  return Array.from(dates)
+    .sort((a, b) => a.localeCompare(b))
+    .slice(-limit);
+}
+
 /** Unique session dates for a workout’s exercises, oldest → newest. */
 export function sessionDatesForWorkout(
   state: StrengthState,
   workoutId: string,
   limit = 8,
 ): string[] {
-  const exerciseIds = new Set(exercisesForWorkout(state, workoutId).map((e) => e.id));
-  const dates = new Set<string>();
-  for (const entry of state.entries) {
-    if (exerciseIds.has(entry.exerciseId)) dates.add(entry.date);
-  }
-  return Array.from(dates)
-    .sort((a, b) => a.localeCompare(b))
-    .slice(-limit);
+  return sessionDatesForExercises(
+    state,
+    exercisesForWorkout(state, workoutId).map((e) => e.id),
+    limit,
+  );
+}
+
+export function activeExercises(state: StrengthState): StrengthExercise[] {
+  return state.exercises
+    .filter((e) => e.active)
+    .sort((a, b) => {
+      const workoutA =
+        state.workouts.find((w) => w.id === a.workoutId)?.order ?? Number.MAX_SAFE_INTEGER;
+      const workoutB =
+        state.workouts.find((w) => w.id === b.workoutId)?.order ?? Number.MAX_SAFE_INTEGER;
+      if (workoutA !== workoutB) return workoutA - workoutB;
+      return a.order - b.order;
+    });
 }
 
 export function entryForExerciseDate(

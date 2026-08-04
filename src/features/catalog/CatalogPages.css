@@ -67,3 +67,31 @@
   gap: 0.5rem;
   align-items: end;
 }
+
+.catalog-exercise-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  min-width: 44rem;
+}
+
+.catalog-exercise-table th,
+.catalog-exercise-table td {
+  text-align: left;
+  padding: 0.45rem 0.4rem;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  vertical-align: top;
+}
+
+.catalog-exercise-table th {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--path-text-dim);
+}
+
+.catalog-exercise-table a {
+  color: var(--path-gold);
+  text-decoration: none;
+  font-size: 0.8rem;
+}

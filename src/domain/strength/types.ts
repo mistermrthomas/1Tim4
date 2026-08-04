@@ -20,6 +20,8 @@ export interface StrengthExercise {
   techniqueNote: string;
   /** Typical equipment step for progression recommendations. */
   weightIncrementLb: number;
+  /** Hard ceiling for this equipment setup (e.g. Bowflex 155, dumbbells 25). */
+  maxWeightLb: number | null;
   /** e.g. "per dumbbell" — appended in UI when set. */
   weightSuffix: string;
 }
@@ -81,3 +83,9 @@ export const DIFFICULTY_OPTIONS: Array<{
     definition: 'Target could not be completed or form failed.',
   },
 ];
+
+/** Shared equipment ceilings for this training setup. */
+export const EQUIPMENT_MAX_LB = {
+  bowflex: 155,
+  dumbbells: 25,
+} as const;

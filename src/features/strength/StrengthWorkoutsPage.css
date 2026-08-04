@@ -135,6 +135,29 @@
   font-weight: 650;
 }
 
+.strength-exercise__equip {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--path-text-dim);
+}
+
+.strength-table__equip {
+  font-size: 0.72rem;
+  color: var(--path-text-dim);
+  letter-spacing: 0.04em;
+}
+
+.strength-table__next--max,
+.strength-cell--max .strength-cell__diff {
+  color: var(--path-gold);
+}
+
+.strength-cell--max {
+  border-color: color-mix(in srgb, var(--path-gold) 35%, transparent);
+}
+
 .strength-exercise__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

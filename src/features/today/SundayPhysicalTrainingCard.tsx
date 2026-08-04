@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { DateKey } from '../../domain/calendar/week';
-import { formatWeight, recommendedFromLast } from '../../domain/strength/progression';
+import { formatRecommendedNext } from '../../domain/strength/progression';
 import {
   activeWorkouts,
   exercisesForWorkout,
@@ -23,7 +23,6 @@ export function SundayPhysicalTrainingCard({
   const w2 = workouts[1];
   const sample = w1 ? exercisesForWorkout(state, w1.id)[0] : null;
   const last = sample ? latestEntry(state, sample.id) : null;
-  const next = sample && last ? recommendedFromLast(sample, last) : null;
 
   return (
     <section className="sunday-physical path-surface" aria-label="Physical training">
@@ -60,11 +59,9 @@ export function SundayPhysicalTrainingCard({
         <div className="sunday-physical__row">
           <dt>Example next</dt>
           <dd>
-            {sample && next != null
-              ? `${sample.name}: ${formatWeight(next, sample.weightSuffix)}`
-              : sample && last
-                ? `${sample.name}: ${formatWeight(last.weightLb, sample.weightSuffix)}`
-                : 'Log lifts to build recommendations'}
+            {sample && last
+              ? `${sample.name}: ${formatRecommendedNext(sample, last)}`
+              : 'Log lifts to build recommendations'}
           </dd>
         </div>
       </dl>

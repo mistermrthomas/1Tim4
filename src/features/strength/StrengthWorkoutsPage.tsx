@@ -3,12 +3,15 @@ import { useSearchParams } from 'react-router-dom';
 import { addDays } from '../../domain/calendar/week';
 import { todayDateKey } from '../../domain/physical/store';
 import {
+  formatRecommendedNext,
   formatReps,
   formatWeight,
+  isAtEquipmentMax,
   personalBestWeight,
   recommendedFromLast,
 } from '../../domain/strength/progression';
 import {
+  activeExercises,
   activeWorkouts,
   deleteStrengthLogEntry,
   entriesForExercise,
@@ -17,7 +20,7 @@ import {
   getExercise,
   latestEntry,
   readStrengthState,
-  sessionDatesForWorkout,
+  sessionDatesForExercises,
   updateExerciseTechniqueNote,
   upsertStrengthLogEntry,
 } from '../../domain/strength/store';
@@ -80,11 +83,11 @@ function ExerciseRow({
   onLog: () => void;
   onHistory: () => void;
 }) {
-  const recommended = recommendedFromLast(exercise, last);
   return (
     <article className="strength-exercise path-surface">
       <div className="strength-exercise__top">
         <h2 className="strength-exercise__name">{exercise.name}</h2>
+        <p className="strength-exercise__equip">{exercise.equipment}</p>
       </div>
       <dl className="strength-exercise__grid">
         <div className="strength-exercise__stat">
@@ -105,11 +108,7 @@ function ExerciseRow({
         </div>
         <div className="strength-exercise__stat">
           <dt>Next weight</dt>
-          <dd className="dd--rec">
-            {recommended != null
-              ? formatWeight(recommended, exercise.weightSuffix)
-              : 'Set first weight'}
-          </dd>
+          <dd className="dd--rec">{formatRecommendedNext(exercise, last)}</dd>
         </div>
       </dl>
       <div className="strength-exercise__actions">
@@ -160,7 +159,7 @@ function LogForm({
   const clampLogDate = (value: string) => (allowedDates.has(value) ? value : todayKey);
   const [date, setDate] = useState(
     clampLogDate(entry?.date ?? preferredDate ?? todayKey),
-  )
+  );
   const [weight, setWeight] = useState(
     String(entry?.weightLb ?? recommended ?? last?.weightLb ?? ''),
   );
@@ -177,6 +176,15 @@ function LogForm({
     const weightLb = Number(weight);
     if (!Number.isFinite(weightLb) || weightLb < 0) {
       window.alert('Enter a valid weight.');
+      return;
+    }
+    if (
+      exercise.maxWeightLb != null &&
+      weightLb > exercise.maxWeightLb &&
+      !window.confirm(
+        `${formatWeight(weightLb, exercise.weightSuffix)} is above the ${exercise.equipment} max of ${formatWeight(exercise.maxWeightLb, exercise.weightSuffix)}. Save anyway?`,
+      )
+    ) {
       return;
     }
     const cleanedReps = reps.map((r) => r.trim()).filter(Boolean);
@@ -211,8 +219,14 @@ function LogForm({
       <h2 className="strength-log__title">Log · {exercise.name}</h2>
       {recommended != null && !entry ? (
         <p className="strength-empty">
-          Recommended next weight:{' '}
-          <strong>{formatWeight(recommended, exercise.weightSuffix)}</strong> — override anytime.
+          Recommended next weight: <strong>{formatRecommendedNext(exercise, last)}</strong> —
+          override anytime.
+        </p>
+      ) : null}
+      {exercise.maxWeightLb != null ? (
+        <p className="strength-empty">
+          Equipment limit: {formatWeight(exercise.maxWeightLb, exercise.weightSuffix)} on{' '}
+          {exercise.equipment}.
         </p>
       ) : null}
       <div className="strength-log__grid">
@@ -231,6 +245,7 @@ function LogForm({
           <input
             type="number"
             min={0}
+            max={exercise.maxWeightLb ?? undefined}
             step={exercise.weightIncrementLb}
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
@@ -327,39 +342,47 @@ function LogForm({
 
 function ProgressionTable({
   state,
-  workoutId,
   exercises,
+  label = 'Progression',
+  hint = 'Tap a cell to edit. Empty cells for yesterday/today add a new log.',
+  showWorkout = false,
   onOpenCell,
   onLogToday,
 }: {
   state: StrengthState;
-  workoutId: string;
   exercises: StrengthExercise[];
+  label?: string;
+  hint?: string;
+  showWorkout?: boolean;
   onOpenCell: (exerciseId: string, date: string, entryId?: string) => void;
   onLogToday: (exerciseId: string) => void;
 }) {
   const todayKey = todayDateKey();
   const yesterdayKey = addDays(todayKey, -1);
-  const dates = sessionDatesForWorkout(state, workoutId, 8);
+  const dates = sessionDatesForExercises(
+    state,
+    exercises.map((e) => e.id),
+    8,
+  );
   const dateColumns =
     dates.includes(todayKey) || dates.length === 0 ? dates : [...dates, todayKey];
 
   return (
     <section className="path-surface strength-summary">
       <div className="strength-progress__head">
-        <p className="today-panel__label">Progression</p>
-        <p className="strength-progress__hint">
-          Tap a cell to edit. Empty cells for yesterday/today add a new log.
-        </p>
+        <p className="today-panel__label">{label}</p>
+        <p className="strength-progress__hint">{hint}</p>
       </div>
       {exercises.length === 0 ? (
-        <p className="strength-empty">No exercises in this workout.</p>
+        <p className="strength-empty">No exercises yet.</p>
       ) : (
         <div className="strength-table-wrap">
           <table className="strength-table strength-table--progress">
             <thead>
               <tr>
                 <th className="strength-table__sticky">Exercise</th>
+                <th>Equip</th>
+                {showWorkout ? <th>Workout</th> : null}
                 {dateColumns.map((date) => (
                   <th key={date} title={date}>
                     {formatColumnDate(date)}
@@ -377,12 +400,19 @@ function ProgressionTable({
             <tbody>
               {exercises.map((exercise) => {
                 const last = latestEntry(state, exercise.id);
-                const recommended = recommendedFromLast(exercise, last);
+                const workout = state.workouts.find((w) => w.id === exercise.workoutId);
+                const atMax = last ? isAtEquipmentMax(exercise, last.weightLb) : false;
                 return (
                   <tr key={exercise.id}>
                     <th scope="row" className="strength-table__sticky strength-table__exercise">
                       {exercise.name}
                     </th>
+                    <td className="strength-table__equip">{exercise.equipment}</td>
+                    {showWorkout ? (
+                      <td className="strength-table__equip">
+                        {workout ? `W${workout.order}` : '—'}
+                      </td>
+                    ) : null}
                     {dateColumns.map((date) => {
                       const entry = entryForExerciseDate(state, exercise.id, date);
                       const canAdd = date === todayKey || date === yesterdayKey;
@@ -397,10 +427,18 @@ function ProgressionTable({
                         <td key={date}>
                           <button
                             type="button"
-                            className={`strength-cell${entry ? '' : ' strength-cell--empty'}`}
+                            className={`strength-cell${entry ? '' : ' strength-cell--empty'}${
+                              entry && isAtEquipmentMax(exercise, entry.weightLb)
+                                ? ' strength-cell--max'
+                                : ''
+                            }`}
                             title={
                               entry
-                                ? `${formatWeight(entry.weightLb, exercise.weightSuffix)} · ${formatReps(entry.reps)} · ${difficultyLabel(entry.difficulty)}${entry.notes ? ` · ${entry.notes}` : ''}`
+                                ? `${formatWeight(entry.weightLb, exercise.weightSuffix)} · ${formatReps(entry.reps)} · ${difficultyLabel(entry.difficulty)}${
+                                    isAtEquipmentMax(exercise, entry.weightLb)
+                                      ? ' · equipment max'
+                                      : ''
+                                  }${entry.notes ? ` · ${entry.notes}` : ''}`
                                 : `Log ${formatColumnDate(date)}`
                             }
                             onClick={() => onOpenCell(exercise.id, date, entry?.id)}
@@ -412,6 +450,7 @@ function ProgressionTable({
                                 </span>
                                 <span className="strength-cell__diff">
                                   {difficultyShort(entry.difficulty)}
+                                  {isAtEquipmentMax(exercise, entry.weightLb) ? ' · max' : ''}
                                 </span>
                               </>
                             ) : (
@@ -421,10 +460,10 @@ function ProgressionTable({
                         </td>
                       );
                     })}
-                    <td className="dd--rec strength-table__next">
-                      {recommended != null
-                        ? formatWeight(recommended, exercise.weightSuffix)
-                        : '—'}
+                    <td
+                      className={`dd--rec strength-table__next${atMax ? ' strength-table__next--max' : ''}`}
+                    >
+                      {formatRecommendedNext(exercise, last)}
                     </td>
                     <td>
                       <button
@@ -567,7 +606,6 @@ export function StrengthWorkoutsPage() {
     }
     const history = entriesForExercise(state, exercise.id);
     const last = history[0] ?? null;
-    const recommended = recommendedFromLast(exercise, last);
     const best = personalBestWeight(history);
     const note = techniqueDraft ?? exercise.techniqueNote;
 
@@ -600,12 +638,17 @@ export function StrengthWorkoutsPage() {
               <dd>{last?.date ?? '—'}</dd>
             </div>
             <div className="strength-exercise__stat">
-              <dt>Recommended next</dt>
-              <dd className="dd--rec">
-                {recommended != null
-                  ? formatWeight(recommended, exercise.weightSuffix)
-                  : '—'}
+              <dt>Equipment</dt>
+              <dd>
+                {exercise.equipment}
+                {exercise.maxWeightLb != null
+                  ? ` · max ${formatWeight(exercise.maxWeightLb, exercise.weightSuffix)}`
+                  : ''}
               </dd>
+            </div>
+            <div className="strength-exercise__stat">
+              <dt>Recommended next</dt>
+              <dd className="dd--rec">{formatRecommendedNext(exercise, last)}</dd>
             </div>
             <div className="strength-exercise__stat">
               <dt>Personal best</dt>
@@ -726,7 +769,6 @@ export function StrengthWorkoutsPage() {
 
         <ProgressionTable
           state={state}
-          workoutId={view.workoutId}
           exercises={exercises}
           onOpenCell={(exerciseId, date, entryId) =>
             setView({
@@ -774,13 +816,16 @@ export function StrengthWorkoutsPage() {
     );
   }
 
+  const allActive = activeExercises(state);
+
   return (
-    <div className="strength-page path-fade-in">
+    <div className="strength-page strength-page--wide path-fade-in">
       <header className="strength-page__header">
         <p className="path-eyebrow">Strength log</p>
         <h1 className="path-display strength-page__title">Workouts</h1>
         <p className="strength-page__lede">
-          Pick today’s split. See last weights, log fast, and keep progressive overload simple.
+          Pick a split to train, or use the all-exercises table below. Recommendations stop at your
+          equipment max (Bowflex 155 lb · dumbbells 25 lb).
         </p>
       </header>
       <div className="strength-pick">
@@ -800,6 +845,33 @@ export function StrengthWorkoutsPage() {
           );
         })}
       </div>
+
+      <ProgressionTable
+        state={state}
+        exercises={allActive}
+        label="All exercises"
+        hint="Every active lift in one table. Tap a cell to edit. W1 / W2 marks the workout split."
+        showWorkout
+        onOpenCell={(exerciseId, date, entryId) => {
+          const exercise = getExercise(state, exerciseId);
+          setView({
+            kind: 'log',
+            exerciseId,
+            workoutId: exercise?.workoutId ?? null,
+            entryId,
+            preferredDate: entryId ? undefined : date,
+          });
+        }}
+        onLogToday={(exerciseId) => {
+          const exercise = getExercise(state, exerciseId);
+          setView({
+            kind: 'log',
+            exerciseId,
+            workoutId: exercise?.workoutId ?? null,
+            preferredDate: todayDateKey(),
+          });
+        }}
+      />
     </div>
   );
 }

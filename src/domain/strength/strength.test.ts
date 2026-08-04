@@ -42,20 +42,32 @@ describe('strength log', () => {
       'Lat Pulldown',
       'Seated Row',
       'Rear Delt Fly',
-      'Bowflex Shrug',
-      'Bowflex Preacher Curl',
-      'Dumbbell Twist Curl',
+      'Shrug',
+      'Preacher Curl',
+      'Twist Curl',
     ]);
+    expect(exercisesForWorkout(state, WORKOUT_2_ID).find((e) => e.name === 'Shrug')?.equipment).toBe(
+      'Bowflex',
+    );
+    expect(
+      exercisesForWorkout(state, WORKOUT_2_ID).find((e) => e.name === 'Twist Curl')?.maxWeightLb,
+    ).toBe(25);
+    expect(
+      exercisesForWorkout(state, WORKOUT_1_ID).find((e) => e.name === 'Flat Chest Press')
+        ?.maxWeightLb,
+    ).toBe(155);
     expect(state.exercises.find((e) => e.id === 'ex_dumbbell_shrug')?.active).toBe(false);
     expect(latestEntry(state, 'ex_flat_chest_press')?.weightLb).toBe(155);
     expect(latestEntry(state, 'ex_bowflex_shrug')).toBeNull();
   });
 
-  it('recommends progression from difficulty', () => {
+  it('recommends progression from difficulty and respects equipment max', () => {
     expect(recommendNextWeightLb(110, 'easy', 5)).toBe(115);
     expect(recommendNextWeightLb(110, 'moderate', 5)).toBe(110);
     expect(recommendNextWeightLb(110, 'hard', 5)).toBe(110);
     expect(recommendNextWeightLb(110, 'max', 5)).toBe(105);
+    expect(recommendNextWeightLb(155, 'easy', 5, 155)).toBe(155);
+    expect(recommendNextWeightLb(25, 'easy', 5, 25)).toBe(25);
   });
 
   it('appends new log entries without losing history', () => {
