@@ -7,7 +7,12 @@
   max-width: var(--max-width);
   display: flex;
   justify-content: space-around;
-  padding: 8px 4px 18px;
+  /* Extra inward inset so curved / rounded screen edges do not clip items */
+  padding:
+    8px
+    calc(18px + env(safe-area-inset-right, 0px))
+    calc(22px + env(safe-area-inset-bottom, 0px))
+    calc(18px + env(safe-area-inset-left, 0px));
   background: var(--paper-deep);
   border-top: 1px solid var(--earth);
   z-index: 100;
