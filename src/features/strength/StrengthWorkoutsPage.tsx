@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { addDays } from '../../domain/calendar/week';
 import { todayDateKey } from '../../domain/physical/store';
 import {
   formatReps,
@@ -108,7 +109,15 @@ function LogForm({
 }) {
   const last = latestEntry(state, exercise.id);
   const recommended = recommendedFromLast(exercise, last);
-  const [date, setDate] = useState(entry?.date ?? todayDateKey());
+  const todayKey = todayDateKey();
+  const yesterdayKey = addDays(todayKey, -1);
+  /** New logs: yesterday or today. Editing keeps the entry’s original date if older. */
+  const allowedDates = new Set(
+    [todayKey, yesterdayKey, entry?.date].filter((value): value is string => Boolean(value)),
+  );
+  const minDate = entry?.date && entry.date < yesterdayKey ? entry.date : yesterdayKey;
+  const clampLogDate = (value: string) => (allowedDates.has(value) ? value : todayKey);
+  const [date, setDate] = useState(clampLogDate(entry?.date ?? todayKey));
   const [weight, setWeight] = useState(
     String(entry?.weightLb ?? recommended ?? last?.weightLb ?? ''),
   );
@@ -132,12 +141,18 @@ function LogForm({
       window.alert('Enter at least one set of reps.');
       return;
     }
+    const logDate = clampLogDate(date);
+    if (logDate !== date) {
+      window.alert('New strength logs can only be dated yesterday or today.');
+      setDate(logDate);
+      return;
+    }
     const painScore = Math.max(0, Math.min(10, Number(pain) || 0));
     const next = upsertStrengthLogEntry({
       id: entry?.id,
       exerciseId: exercise.id,
       workoutId,
-      date,
+      date: logDate,
       weightLb,
       setCount: cleanedReps.length,
       reps: cleanedReps,
@@ -159,8 +174,14 @@ function LogForm({
       ) : null}
       <div className="strength-log__grid">
         <label className="path-field">
-          <span>Date</span>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <span>{entry ? 'Date' : 'Date (yesterday or today)'}</span>
+          <input
+            type="date"
+            min={minDate}
+            max={todayKey}
+            value={date}
+            onChange={(e) => setDate(clampLogDate(e.target.value))}
+          />
         </label>
         <label className="path-field">
           <span>Weight (lb{exercise.weightSuffix ? ` ${exercise.weightSuffix}` : ''})</span>
