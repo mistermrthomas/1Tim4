@@ -20,6 +20,7 @@ import { Button } from '../../ui/Button';
 import { CompleteTodayCard } from './CompleteTodayCard';
 import { SundayBiblicalTraining } from './SundayBiblicalTraining';
 import { SundayPhysicalTrainingCard } from './SundayPhysicalTrainingCard';
+import { SundaySermonEditor } from './SundaySermonEditor';
 import { SundayWorkPlanCard } from './SundayWorkPlanCard';
 
 function formatSundayHeader(dateKey: string): string {
@@ -137,6 +138,10 @@ export function SundayPlanningHome() {
                 </Link>
               </div>
             </section>
+          ) : null}
+
+          {plan ? (
+            <SundaySermonEditor plan={plan} onPlanChange={setPlan} />
           ) : null}
 
           <SundayBiblicalTraining

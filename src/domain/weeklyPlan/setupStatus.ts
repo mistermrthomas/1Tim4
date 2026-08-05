@@ -110,7 +110,7 @@ export function deriveBiblicalStatus(plan: WeeklyPlan): SetupItemView {
       summary: theme,
       primaryAction: 'Review',
       secondaryAction: 'Edit',
-      step: 2,
+      step: 0,
     };
   }
 
@@ -122,7 +122,7 @@ export function deriveBiblicalStatus(plan: WeeklyPlan): SetupItemView {
       summary: 'Biblical plan drafted. Review and approve before activating.',
       primaryAction: 'Review Plan',
       secondaryAction: 'Edit',
-      step: 2,
+      step: 0,
     };
   }
 
@@ -135,7 +135,7 @@ export function deriveBiblicalStatus(plan: WeeklyPlan): SetupItemView {
         ? 'Sermon notes saved. Biblical plan has not been approved.'
         : 'Sermon started. Add notes and generate the Monday–Friday plan.',
       primaryAction: 'Continue',
-      step: notesOk ? 2 : 0,
+      step: 0,
     };
   }
 
@@ -163,7 +163,7 @@ export function deriveTrainingStatus(plan: WeeklyPlan): SetupItemView {
       summary: completeTrainingSummary(plan),
       primaryAction: 'Review',
       secondaryAction: 'Edit',
-      step: 3,
+      step: 1,
     };
   }
 
@@ -174,7 +174,7 @@ export function deriveTrainingStatus(plan: WeeklyPlan): SetupItemView {
       status: 'needs_review',
       summary: 'Training preferences saved. Generated plan needs review.',
       primaryAction: 'Review Plan',
-      step: 3,
+      step: 1,
     };
   }
 
@@ -187,7 +187,7 @@ export function deriveTrainingStatus(plan: WeeklyPlan): SetupItemView {
         ? 'Training preferences saved. Finish and approve the plan.'
         : 'Training days started. Approve when ready.',
       primaryAction: 'Continue',
-      step: 3,
+      step: 1,
     };
   }
 
@@ -197,7 +197,7 @@ export function deriveTrainingStatus(plan: WeeklyPlan): SetupItemView {
     status: 'not_started',
     summary: 'Set your goal, availability, and constraints for the week.',
     primaryAction: 'Plan Training',
-    step: 3,
+    step: 1,
   };
 }
 
@@ -213,7 +213,7 @@ export function deriveWorkStatus(plan: WeeklyPlan): SetupItemView {
       summary: `${count} weekly outcome${count === 1 ? '' : 's'}`,
       primaryAction: 'Review',
       secondaryAction: 'Edit',
-      step: 4,
+      step: 2,
     };
   }
 
@@ -224,7 +224,7 @@ export function deriveWorkStatus(plan: WeeklyPlan): SetupItemView {
       status: 'in_progress',
       summary: `${count} outcome${count === 1 ? '' : 's'} drafted. Approve when ready.`,
       primaryAction: 'Continue',
-      step: 4,
+      step: 2,
     };
   }
 
@@ -234,7 +234,7 @@ export function deriveWorkStatus(plan: WeeklyPlan): SetupItemView {
     status: 'not_started',
     summary: 'Choose three meaningful outcomes for the week.',
     primaryAction: 'Plan Work',
-    step: 4,
+    step: 2,
   };
 }
 
@@ -256,7 +256,7 @@ export function deriveWeeklySetup(plan: WeeklyPlan | null): WeeklySetupState {
           status: 'not_started',
           summary: 'Set your goal, availability, and constraints for the week.',
           primaryAction: 'Plan Training',
-          step: 3,
+          step: 1,
         },
         {
           id: 'work',
@@ -264,7 +264,7 @@ export function deriveWeeklySetup(plan: WeeklyPlan | null): WeeklySetupState {
           status: 'not_started',
           summary: 'Choose three meaningful outcomes for the week.',
           primaryAction: 'Plan Work',
-          step: 4,
+          step: 2,
         },
         {
           id: 'review',
@@ -272,7 +272,7 @@ export function deriveWeeklySetup(plan: WeeklyPlan | null): WeeklySetupState {
           status: 'not_started',
           summary: 'Complete the sections above before activating the week.',
           primaryAction: 'Review and Activate',
-          step: 5,
+          step: 3,
         },
       ],
       biblicalComplete: false,
@@ -306,7 +306,7 @@ export function deriveWeeklySetup(plan: WeeklyPlan | null): WeeklySetupState {
         status: 'complete',
         summary: 'Week activated. Monday is ready.',
         primaryAction: 'Open Week',
-        step: 5,
+        step: 3,
       }
     : allTracksComplete
       ? {
@@ -315,7 +315,7 @@ export function deriveWeeklySetup(plan: WeeklyPlan | null): WeeklySetupState {
           status: 'needs_review',
           summary: 'Your Biblical, training, and work plans are ready.',
           primaryAction: 'Review and Activate',
-          step: 5,
+          step: 3,
         }
       : {
           id: 'review',
@@ -323,7 +323,7 @@ export function deriveWeeklySetup(plan: WeeklyPlan | null): WeeklySetupState {
           status: 'not_started',
           summary: 'Complete the sections above before activating the week.',
           primaryAction: 'Review and Activate',
-          step: 5,
+          step: 3,
         };
 
   return {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import type { SermonPlan } from '../../../shared/sermonPlanSchema';
 import { applySermonPlanToWeeklyPlan } from '../../domain/aiPlanning/applySermonPlan';
@@ -24,14 +24,17 @@ import { Button } from '../../ui/Button';
 import { TrainingPlanStep } from './TrainingPlanStep';
 import './WeeklyPlanWorkspace.css';
 
-const STEPS = [
-  'Sermon',
-  'Weekly Biblical focus',
-  'Faith plan',
-  'Training plan',
-  'Work plan',
-  'Review & activate',
-] as const;
+/** Four screens max — Biblical is one scrollable screen (notes + focus + plan). */
+const STEPS = ['Biblical plan', 'Training', 'Work', 'Activate'] as const;
+
+/** Map legacy ?step=0..5 deep links onto the collapsed steps. */
+function mapLegacyStep(raw: number): number {
+  if (!Number.isFinite(raw)) return 0;
+  if (raw <= 2) return 0;
+  if (raw === 3) return 1;
+  if (raw === 4) return 2;
+  return 3;
+}
 
 const LOADING_MESSAGES = [
   'Building your week from the sermon notes…',
@@ -57,19 +60,15 @@ export function WeeklyPlanWorkspace() {
   const ref = weekId || weekStartParam || nextSundayStart();
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const stepFromQuery = Number(searchParams.get('step'));
-  const [step, setStep] = useState(
-    Number.isFinite(stepFromQuery) && stepFromQuery >= 0 && stepFromQuery <= 5
-      ? stepFromQuery
-      : 0,
-  );
+  const [step, setStep] = useState(mapLegacyStep(stepFromQuery));
 
   useEffect(() => {
     const raw = searchParams.get('step');
     if (raw == null) return;
-    const next = Number(raw);
-    if (Number.isFinite(next) && next >= 0 && next <= 5) setStep(next);
+    setStep(mapLegacyStep(Number(raw)));
   }, [searchParams]);
   const [saving, setSaving] = useState(false);
+  const [autosaveLabel, setAutosaveLabel] = useState('Edits autosave');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -79,6 +78,9 @@ export function WeeklyPlanWorkspace() {
   const [lastAiPlan, setLastAiPlan] = useState<SermonPlan | null>(null);
   const [pendingAiPlan, setPendingAiPlan] = useState<SermonPlan | null>(null);
   const [templates, setTemplates] = useState(() => readPhysicalPlan().templates);
+  const planRef = useRef<WeeklyPlan | null>(null);
+  const autosaveTimer = useRef<number | null>(null);
+
   useEffect(() => {
     // Re-read after catalog seed migrations (e.g. Core Finisher) land in localStorage.
     setTemplates(readPhysicalPlan().templates);
@@ -88,6 +90,7 @@ export function WeeklyPlanWorkspace() {
     try {
       const next = await ensureWeeklyPlanByRef(ref);
       setPlan(next);
+      planRef.current = next;
       setLastAiPlan(next.biblical.aiProposal ?? null);
       setError(null);
     } catch (e) {
@@ -100,6 +103,10 @@ export function WeeklyPlanWorkspace() {
   }, [load]);
 
   useEffect(() => {
+    planRef.current = plan;
+  }, [plan]);
+
+  useEffect(() => {
     if (!generating) return;
     let i = 0;
     const id = window.setInterval(() => {
@@ -109,9 +116,41 @@ export function WeeklyPlanWorkspace() {
     return () => window.clearInterval(id);
   }, [generating]);
 
+  useEffect(() => {
+    return () => {
+      if (autosaveTimer.current) window.clearTimeout(autosaveTimer.current);
+      const current = planRef.current;
+      if (current) void saveWeeklyPlan(current).catch(() => undefined);
+    };
+  }, []);
+
+  const flushAutosave = useCallback(async () => {
+    const current = planRef.current;
+    if (!current) return;
+    setAutosaveLabel('Saving…');
+    try {
+      const saved = await saveWeeklyPlan(current);
+      planRef.current = saved;
+      setPlan(saved);
+      setAutosaveLabel('Saved');
+    } catch {
+      setAutosaveLabel('Save failed');
+    }
+  }, []);
+
   const patch = (updater: (prev: WeeklyPlan) => WeeklyPlan) => {
-    setPlan((prev) => (prev ? updater(prev) : prev));
+    setPlan((prev) => {
+      if (!prev) return prev;
+      const next = updater(prev);
+      planRef.current = next;
+      return next;
+    });
     setMessage(null);
+    setAutosaveLabel('Saving…');
+    if (autosaveTimer.current) window.clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = window.setTimeout(() => {
+      void flushAutosave();
+    }, 450);
   };
 
   const generateBiblicalPlan = async (opts?: { regenerate?: boolean }) => {
@@ -125,34 +164,47 @@ export function WeeklyPlanWorkspace() {
     setMessage(null);
     setLoadingMsg(LOADING_MESSAGES[0]!);
     try {
+      // Always persist notes before AI — failed generate must not lose them.
+      if (autosaveTimer.current) {
+        window.clearTimeout(autosaveTimer.current);
+        autosaveTimer.current = null;
+      }
+      const persisted = await saveWeeklyPlan(planRef.current ?? plan);
+      setPlan(persisted);
+      planRef.current = persisted;
+      setAutosaveLabel('Saved');
+
       const settings = await readAiPlanningSettings();
       const result = await requestSermonPlan({
-        sermonTitle: plan.church.sermonTitle,
-        sermonDate: plan.church.sermonDate,
-        sermonNotes: plan.church.sermonNotes,
-        primaryScripture: plan.church.primaryScripture || undefined,
-        sermonSpeaker: plan.church.speaker || undefined,
-        churchName: plan.church.churchName || undefined,
-        sermonUrl: plan.church.sermonUrl || undefined,
-        additionalContext: plan.church.additionalContext || undefined,
+        sermonTitle: persisted.church.sermonTitle,
+        sermonDate: persisted.church.sermonDate,
+        sermonNotes: persisted.church.sermonNotes,
+        primaryScripture: persisted.church.primaryScripture || undefined,
+        sermonSpeaker: persisted.church.speaker || undefined,
+        churchName: persisted.church.churchName || undefined,
+        sermonUrl: persisted.church.sermonUrl || undefined,
+        additionalContext: persisted.church.additionalContext || undefined,
         planningPrompt: settings.planningPrompt,
         model: settings.model,
         adjustmentInstruction: opts?.regenerate ? adjustment : undefined,
-        currentPlan: opts?.regenerate ? lastAiPlan ?? plan.biblical.aiProposal ?? undefined : undefined,
+        currentPlan: opts?.regenerate
+          ? lastAiPlan ?? persisted.biblical.aiProposal ?? undefined
+          : undefined,
       });
       if (opts?.regenerate) {
         setPendingAiPlan(result.plan);
         setMessage('Regenerated plan ready — accept to replace the current draft.');
       } else {
-        const next = applySermonPlanToWeeklyPlan(plan, result.plan, {
+        const next = applySermonPlanToWeeklyPlan(persisted, result.plan, {
           modelUsed: result.modelUsed,
           promptVersion: settings.promptVersion,
         });
         const saved = await saveWeeklyPlan(next);
         setPlan(saved);
+        planRef.current = saved;
         setLastAiPlan(result.plan);
-        setStep(2);
-        setMessage('Biblical plan generated — review and edit before activating.');
+        setStep(0);
+        setMessage('Biblical plan generated — review on this screen, then activate when ready.');
       }
     } catch (e) {
       if (e instanceof SermonPlanClientError) {
@@ -179,7 +231,7 @@ export function WeeklyPlanWorkspace() {
     setPendingAiPlan(null);
     setAdjustment('');
     setMessage('Updated Biblical plan from regeneration.');
-    setStep(2);
+    setStep(0);
   };
 
   const saveDraft = async () => {
@@ -235,14 +287,12 @@ export function WeeklyPlanWorkspace() {
         <Button variant="ghost" onClick={() => void saveDraft()} disabled={saving}>
           Save draft
         </Button>
+        <span className="weekly-plan__status">{autosaveLabel}</span>
         <Link className="path-btn path-btn--ghost" to="/today">
           Today
         </Link>
-        <Link className="path-btn path-btn--ghost" to="/journey">
-          Journey
-        </Link>
-        <Link className="path-btn path-btn--ghost" to="/workouts">
-          Workouts
+        <Link className="path-btn path-btn--ghost" to="/training">
+          Training
         </Link>
         <Link className="path-btn path-btn--ghost" to="/settings">
           Settings
@@ -300,8 +350,14 @@ export function WeeklyPlanWorkspace() {
                 >
                   Add Sermon Link
                 </Button>
-                <Button variant="ghost" onClick={() => setStep(2)}>
-                  Build Week Manually
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    const el = document.getElementById('central-truth-field');
+                    el?.focus();
+                  }}
+                >
+                  Build week manually
                 </Button>
               </div>
             </div>
@@ -411,33 +467,26 @@ export function WeeklyPlanWorkspace() {
             >
               Generate This Week’s Biblical Plan
             </Button>
-            <Button variant="ghost" onClick={() => setStep(1)} disabled={generating}>
-              Continue manually
-            </Button>
             <Button variant="ghost" onClick={() => void saveDraft()} disabled={saving || generating}>
-              Save draft
+              Save now
             </Button>
           </div>
           {aiError ? (
             <div className="weekly-plan__toolbar">
               <Button variant="ghost" onClick={() => void generateBiblicalPlan()} disabled={generating}>
-                Try Again
-              </Button>
-              <Button variant="ghost" onClick={() => setStep(2)}>
-                Continue Manually
+                Try again
               </Button>
             </div>
           ) : null}
-        </section>
-      )}
 
-      {step === 1 && (
-        <section className="weekly-plan__section path-surface">
-          <h2 className="weekly-plan__h2">2. Weekly Biblical focus</h2>
+          <h2 className="weekly-plan__h2" style={{ marginTop: '1.25rem' }}>
+            Weekly Biblical focus
+          </h2>
           <div className="weekly-plan__grid">
             <label className="path-field weekly-plan__span-2">
               <span>What was the central truth?</span>
               <textarea
+                id="central-truth-field"
                 rows={3}
                 value={plan.church.centralTruth}
                 onChange={(e) =>
@@ -484,21 +533,15 @@ export function WeeklyPlanWorkspace() {
             <Button
               onClick={() => {
                 patch((p) => applyBiblicalDefaultsFromChurch(p));
-                setStep(2);
               }}
             >
-              Build faith plan draft
-            </Button>
-            <Button variant="ghost" onClick={() => setStep(0)}>
-              Back
+              Build faith plan draft from focus
             </Button>
           </div>
-        </section>
-      )}
 
-      {step === 2 && (
-        <section className="weekly-plan__section path-surface">
-          <h2 className="weekly-plan__h2">3. Faith plan</h2>
+          <h2 className="weekly-plan__h2" style={{ marginTop: '1.25rem' }}>
+            Faith plan
+          </h2>
           <p className="weekly-plan__note">
             Review all content against Scripture and your own judgment before activating. Based on
             your notes — edit freely. This is not divine revelation.
@@ -815,26 +858,23 @@ export function WeeklyPlanWorkspace() {
             >
               Approve faith track
             </Button>
-            <Button onClick={() => setStep(3)}>Continue</Button>
-            <Button variant="ghost" onClick={() => setStep(1)}>
-              Back
-            </Button>
+            <Button onClick={() => setStep(1)}>Continue to training</Button>
           </div>
         </section>
       )}
 
-      {step === 3 && plan && (
+      {step === 1 && plan && (
         <TrainingPlanStep
           plan={plan}
           patch={patch}
-          onContinue={() => setStep(4)}
-          onBack={() => setStep(2)}
+          onContinue={() => setStep(2)}
+          onBack={() => setStep(0)}
         />
       )}
 
-      {step === 4 && (
+      {step === 2 && (
         <section className="weekly-plan__section path-surface">
-          <h2 className="weekly-plan__h2">5. Work plan</h2>
+          <h2 className="weekly-plan__h2">Work plan</h2>
           <p className="weekly-plan__note">Three meaningful outcomes. Assign focus across Monday–Friday.</p>
           <div className="weekly-plan__grid">
             {plan.work.weeklyOutcomes.map((outcome, index) => (
@@ -921,15 +961,15 @@ export function WeeklyPlanWorkspace() {
             >
               Approve work track
             </Button>
-            <Button onClick={() => setStep(5)}>Continue to review</Button>
-            <Button variant="ghost" onClick={() => setStep(3)}>
+            <Button onClick={() => setStep(3)}>Continue to activate</Button>
+            <Button variant="ghost" onClick={() => setStep(1)}>
               Back
             </Button>
           </div>
         </section>
       )}
 
-      {step === 5 && (
+      {step === 3 && (
         <section className="weekly-plan__section path-surface">
           <h2 className="weekly-plan__h2">6. Review & activate</h2>
           <div className="weekly-plan__review">
@@ -941,7 +981,7 @@ export function WeeklyPlanWorkspace() {
               <p className="path-body">{plan.biblical.coreScripture}</p>
               <p className="path-body">{plan.biblical.weeklyPractice}</p>
               <p className="path-body">Act of obedience: {plan.biblical.actOfObedience || '—'}</p>
-              <Button variant="ghost" onClick={() => setStep(2)}>
+              <Button variant="ghost" onClick={() => setStep(0)}>
                 Edit faith plan
               </Button>
             </div>
@@ -967,7 +1007,7 @@ export function WeeklyPlanWorkspace() {
                   );
                 })}
               </ul>
-              <Button variant="ghost" onClick={() => setStep(3)}>
+              <Button variant="ghost" onClick={() => setStep(1)}>
                 Edit training plan
               </Button>
             </div>
@@ -980,7 +1020,7 @@ export function WeeklyPlanWorkspace() {
                     <li key={o.id}>{o.title}</li>
                   ))}
               </ul>
-              <Button variant="ghost" onClick={() => setStep(4)}>
+              <Button variant="ghost" onClick={() => setStep(2)}>
                 Edit work plan
               </Button>
             </div>

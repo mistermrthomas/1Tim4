@@ -82,9 +82,8 @@ export function SundayBiblicalTraining({
     'Set this week’s Biblical focus',
   );
 
-  const reviewHref = weekPlanPath(weekStart, 2);
-  const editHref = weekPlanPath(weekStart, biblicalSetup.status === 'not_started' ? 0 : 2);
-  const primaryHref = weekPlanPath(weekStart, biblicalSetup.step);
+  const reviewHref = weekPlanPath(weekStart, 0);
+  const editHref = weekPlanPath(weekStart, 0);
 
   return (
     <>
@@ -199,17 +198,21 @@ export function SundayBiblicalTraining({
       </section>
 
       <div className="sunday-biblical__actions sunday-home__actions">
-        {biblicalSetup.status !== 'complete' ? (
-          <Link className="path-btn path-btn--primary" to={primaryHref}>
-            {biblicalSetup.primaryAction}
-          </Link>
+        {biblicalSetup.status === 'not_started' || biblicalSetup.status === 'in_progress' ? (
+          <button
+            type="button"
+            className="path-btn path-btn--primary"
+            onClick={() => document.getElementById('sunday-sermon-notes')?.focus()}
+          >
+            Edit sermon notes above
+          </button>
         ) : (
           <Link className="path-btn path-btn--primary" to={reviewHref}>
             Review Biblical plan
           </Link>
         )}
         <Link className="path-btn path-btn--ghost sunday-home__secondary" to={editHref}>
-          Edit Biblical plan
+          Full plan editor
         </Link>
       </div>
     </>

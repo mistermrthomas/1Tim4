@@ -19,6 +19,15 @@ import {
 } from '../../domain/physical/stepsTracker';
 import { todayDateKey } from '../../domain/physical/store';
 import type { StepsDayEntry } from '../../domain/physical/types';
+import { travelRecommendation } from '../../domain/physicalLife/travel';
+import {
+  bootstrapRotationFromLogs,
+  completeNextSlot,
+  daysSince,
+  formatDaysSince,
+  getLastSlot,
+  getNextSlot,
+} from '../../domain/strength/rotation';
 import { activeWorkouts, readStrengthState } from '../../domain/strength/store';
 
 /** How far back daily targets (steps / protein / water) can be edited. */
@@ -188,7 +197,12 @@ export function PhysicalTrainingPanel({
   const [showStepsSet, setShowStepsSet] = useState(false);
   const [stepsDraft, setStepsDraft] = useState('');
   const [targets, setTargets] = useState(() => readPhysicalPlan().targets);
-  const strengthWorkouts = activeWorkouts(readStrengthState());
+  const strengthState = readStrengthState();
+  const [rotation, setRotation] = useState(() => bootstrapRotationFromLogs(strengthState));
+  const strengthWorkouts = activeWorkouts(strengthState);
+  const nextSlot = getNextSlot(rotation);
+  const lastSlot = getLastSlot(rotation);
+  const travel = travelRecommendation(todayKey);
   const viewingToday = dateKey === todayKey;
   const dayLabel = healthDayLabel(dateKey, todayKey);
 
@@ -266,13 +280,13 @@ export function PhysicalTrainingPanel({
     >
       <div className="today-panel today-panel--physical">
         <header className="today-column__header today-panel__header">
-          <h2 className="path-display today-column__title">Physical training</h2>
+          <h2 className="path-display today-column__title">Do this today</h2>
           <p className="today-column__intro">
             {isSaturdaySabbath()
-              ? 'Sabbath — strength work is optional. Steps, protein, and water stay available.'
-              : unscheduled
-                ? 'Open the strength log for today’s split. Health targets stay here.'
-                : 'Strength log for lifts. Health targets below.'}
+              ? 'Sabbath — rest is the plan. Optional walk or mobility only.'
+              : travel.trip
+                ? `${travel.trip.name}: ${travel.label}`
+                : 'One next physical action. Everything else can wait.'}
           </p>
         </header>
 
@@ -280,42 +294,143 @@ export function PhysicalTrainingPanel({
 
         {viewingToday ? (
           <section className="today-panel__section today-workout">
-            <p className="today-panel__label">Strength log</p>
+            <p className="today-panel__label">Next action</p>
+            <p
+              className="path-display"
+              style={{ margin: '0.15rem 0 0.35rem', fontSize: '1.35rem', lineHeight: 1.2 }}
+            >
+              {travel.trip ? travel.label : nextSlot.label}
+            </p>
+            <p className="path-body" style={{ margin: 0, opacity: 0.75, fontSize: '0.88rem' }}>
+              {lastSlot
+                ? `Last: ${lastSlot.shortLabel} · ${formatDaysSince(daysSince(rotation.lastCompletedDate))}`
+                : 'No rotation entry yet — start with Workout A.'}
+            </p>
             <div
               className="today-workout__cards"
-              style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem' }}
             >
-              {strengthWorkouts.map((workout) => (
-                <Link
-                  key={workout.id}
-                  className="path-btn path-btn--primary"
-                  to={`/workouts?w=${workout.id}`}
-                  style={{ textDecoration: 'none', textAlign: 'center' }}
-                >
-                {workout.shortLabel}
-                </Link>
-              ))}
+              {travel.trip ? (
+                <>
+                  {travel.kind === 'hotel_strength' && nextSlot.workoutId ? (
+                    <Link
+                      className="path-btn path-btn--primary"
+                      to={`/workouts?w=${nextSlot.workoutId}`}
+                      style={{ textDecoration: 'none', textAlign: 'center' }}
+                    >
+                      Begin hotel strength ({nextSlot.shortLabel})
+                    </Link>
+                  ) : null}
+                  {travel.kind === 'walk' || travel.kind === 'travel' ? (
+                    <Link
+                      className="path-btn path-btn--primary"
+                      to="/training?area=physical&section=walking"
+                      style={{ textDecoration: 'none', textAlign: 'center' }}
+                    >
+                      Log a walk
+                    </Link>
+                  ) : null}
+                  {travel.kind === 'mobility' || travel.kind === 'rest' ? (
+                    <Link
+                      className="path-btn path-btn--primary"
+                      to="/training?area=physical&section=mobility"
+                      style={{ textDecoration: 'none', textAlign: 'center' }}
+                    >
+                      {travel.kind === 'rest' ? 'Optional mobility' : 'Complete mobility'}
+                    </Link>
+                  ) : null}
+                  <Link
+                    className="path-btn path-btn--ghost"
+                    to="/training?area=physical&section=travel"
+                    style={{ textDecoration: 'none', textAlign: 'center' }}
+                  >
+                    Travel options
+                  </Link>
+                </>
+              ) : nextSlot.kind === 'recovery' ? (
+                <>
+                  <Link
+                    className="path-btn path-btn--primary"
+                    to="/training?area=physical&section=walking"
+                    style={{ textDecoration: 'none', textAlign: 'center' }}
+                  >
+                    Take a walk
+                  </Link>
+                  <Link
+                    className="path-btn path-btn--ghost"
+                    to="/training?area=physical&section=mobility"
+                    style={{ textDecoration: 'none', textAlign: 'center' }}
+                  >
+                    Or do mobility
+                  </Link>
+                  <button
+                    type="button"
+                    className="path-btn path-btn--ghost"
+                    onClick={() => setRotation(completeNextSlot('Recovery / walk day'))}
+                  >
+                    Mark recovery done
+                  </button>
+                </>
+              ) : nextSlot.workoutId ? (
+                <>
+                  <Link
+                    className="path-btn path-btn--primary"
+                    to={`/workouts?w=${nextSlot.workoutId}`}
+                    style={{ textDecoration: 'none', textAlign: 'center' }}
+                  >
+                    Begin {nextSlot.shortLabel}
+                  </Link>
+                  <button
+                    type="button"
+                    className="path-btn path-btn--ghost"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Mark ${nextSlot.shortLabel} complete in the rotation after you finish?`,
+                        )
+                      ) {
+                        setRotation(completeNextSlot());
+                      }
+                    }}
+                  >
+                    Mark rotation complete
+                  </button>
+                </>
+              ) : null}
               <Link
                 className="path-btn path-btn--ghost"
-                to="/training?area=physical&section=strength"
+                to="/training?area=physical"
                 style={{ textDecoration: 'none', textAlign: 'center' }}
               >
-                Strength rotation
-              </Link>
-              <Link
-                className="path-btn path-btn--ghost"
-                to="/workouts"
-                style={{ textDecoration: 'none', textAlign: 'center' }}
-              >
-                Strength log
+                All physical training
               </Link>
             </div>
-            <p
-              className="path-body"
-              style={{ marginTop: '0.65rem', opacity: 0.75, fontSize: '0.88rem' }}
-            >
-              Log lifts for yesterday or today. Use Training for mobility, walking, body, and travel.
-            </p>
+            {!travel.trip && !isSaturdaySabbath() && !unscheduled ? (
+              <details style={{ marginTop: '0.75rem' }}>
+                <summary style={{ cursor: 'pointer', fontSize: '0.82rem', opacity: 0.75 }}>
+                  Other workouts
+                </summary>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.4rem',
+                    marginTop: '0.45rem',
+                  }}
+                >
+                  {strengthWorkouts.map((workout) => (
+                    <Link
+                      key={workout.id}
+                      className="path-btn path-btn--ghost"
+                      to={`/workouts?w=${workout.id}`}
+                      style={{ textDecoration: 'none', textAlign: 'center' }}
+                    >
+                      {workout.shortLabel}
+                    </Link>
+                  ))}
+                </div>
+              </details>
+            ) : null}
           </section>
         ) : (
           <section className="today-panel__section today-workout">
