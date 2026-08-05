@@ -329,6 +329,12 @@
     text-decoration: underline;
   }
 
+  .formation-shell__sync-pending {
+    margin: 0.15rem 0 0;
+    color: var(--path-text-dim);
+    opacity: 0.9;
+  }
+
   .formation-shell__manage.active {
     color: var(--path-text);
   }

@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { APP_NAME, PathMark, TAGLINE } from '../../brand';
+import { useAuth } from '../../context/AuthContext';
+import {
+  hasPendingWeeklyPlanSync,
+} from '../../services/cloudWeeklyPlanSync';
 import { PATH_MEDIA } from '../../ui/media';
 import { readStoredTheme, storeTheme, type PathTheme } from '../../ui/theme';
 import './FormationShell.css';
@@ -12,11 +16,24 @@ const TABS = [
 ] as const;
 
 export function FormationShell() {
+  const { lastCloudSyncAt, cloudSyncStatus, user } = useAuth();
   const [theme, setTheme] = useState<PathTheme>(() => readStoredTheme());
+  const [pendingWeekly, setPendingWeekly] = useState(() => hasPendingWeeklyPlanSync());
 
   useEffect(() => {
     storeTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    const refresh = () => setPendingWeekly(hasPendingWeeklyPlanSync());
+    refresh();
+    window.addEventListener('path-weekly-plan-pending', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('path-weekly-plan-pending', refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, [lastCloudSyncAt]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -90,6 +107,12 @@ export function FormationShell() {
             <NavLink to="/settings" className="formation-shell__manage">
               Settings
             </NavLink>
+            {user && pendingWeekly ? (
+              <p className="path-label formation-shell__sync-pending">Unsynced sermon changes</p>
+            ) : null}
+            {user && cloudSyncStatus === 'syncing' ? (
+              <p className="path-label formation-shell__sync-pending">Syncing…</p>
+            ) : null}
 
             <button
               type="button"
@@ -129,7 +152,7 @@ export function FormationShell() {
               <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </button>
           </div>
-          <Outlet />
+          <Outlet key={lastCloudSyncAt ?? 'local'} />
         </div>
       </main>
 

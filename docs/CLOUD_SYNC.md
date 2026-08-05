@@ -19,13 +19,16 @@ Find URL and anon key in Supabase → **Project Settings → API**.
 
 ---
 
-## Step 1 — Create the database table
+## Step 1 — Create the database tables
 
-In Supabase → **SQL Editor**, run the migration file:
+In Supabase → **SQL Editor**, run these migration files (in order):
 
-`supabase/migrations/20260531000000_path_profile_trails.sql`
+1. `supabase/migrations/20260531000000_path_profile_trails.sql` — trail / journal sync
+2. `supabase/migrations/20260805120000_path_weekly_plans.sql` — **sermon notes + weekly biblical plans**
 
-This creates `path_profile_trails` with row-level security so each user only sees their own data.
+Both use row-level security so each user only sees their own data.
+
+**Required for cross-device sermon sync:** if `path_weekly_plans` is missing, Device B will not receive Sunday sermon notes or generated weeks.
 
 ---
 
@@ -113,12 +116,17 @@ npm run dev
 | Action | Behavior |
 |--------|----------|
 | Use app without signing in | Data stays **local only** (same as before) |
-| Sign in with Apple or Google | Cloud copy is **merged** with this device (newer wins per profile) |
-| Journal, assessment, prayers | **Auto-upload** ~1.5s after each change |
-| Sign out of cloud | Local data remains; cloud copy stays on server |
-| Optional export file | Still available in Guide as extra safety |
+| Sign in with Apple or Google | Cloud copy is **merged** with this device |
+| Journal, assessment, prayers | Auto-upload after each change (`path_profile_trails`) |
+| Sermon notes + weekly biblical plan | Auto-upload after meaningful saves (`path_weekly_plans`) |
+| Empty local draft vs cloud content | Cloud wins (empty drafts never overwrite server content) |
+| Both sides have content | Newer `updated_at` wins; pending local edits are kept briefly |
+| Offline edits | Marked pending (“Unsynced sermon changes”); flush on reconnect |
+| Sign out of cloud | Local cache remains; cloud copy stays on server |
 
-Each **local profile name** syncs as a separate row keyed by profile id.
+Each **local profile name** syncs as a separate row keyed by `(user_id, profile_id)`.
+
+IndexedDB / localStorage are an **offline cache**, not a second permanent account.
 
 ---
 
@@ -130,6 +138,7 @@ Each **local profile name** syncs as a separate row keyed by profile id.
 | Redirect loop / blank callback | Add exact `/auth/callback` URL in Supabase redirect list |
 | Apple fails, Google works | Finish Apple Service ID domains + return URL |
 | Data not on new phone | Sign in with **same** Apple/Google account; tap **Sync now** in Guide |
+| Sermon missing on Device B | Confirm `path_weekly_plans` migration ran; sign in same account; open Today again after sync |
 | RLS error | Re-run SQL migration; confirm policies exist |
 
 ---

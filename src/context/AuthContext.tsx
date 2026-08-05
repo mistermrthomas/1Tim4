@@ -10,6 +10,10 @@ import {
 import type { Session, User } from '@supabase/supabase-js';
 import { isCloudSyncConfigured, supabase } from '../lib/supabase';
 import { syncUserTrailsOnLogin } from '../services/cloudTrailSync';
+import {
+  flushCloudWeeklyPlanPushes,
+  syncWeeklyPlansOnLogin,
+} from '../services/cloudWeeklyPlanSync';
 import { getActiveProfileId, listProfiles } from '../storage/profiles';
 
 export type CloudSyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'unconfigured';
@@ -59,12 +63,33 @@ export function AuthProvider({
           listProfiles(),
           activeId,
         );
+
+        let weeklyReloaded = false;
+        let weeklyWarning: string | null = null;
+        try {
+          const weekly = await syncWeeklyPlansOnLogin(userId, activeId ?? 'default');
+          weeklyReloaded = weekly.reloaded;
+        } catch (weeklyErr) {
+          const msg = weeklyErr instanceof Error ? weeklyErr.message : 'Weekly plan sync failed';
+          // Table missing until migration is applied — do not fail the whole sign-in sync.
+          weeklyWarning =
+            /relation .*path_weekly_plans.* does not exist|Could not find the table/i.test(msg)
+              ? 'Trail synced. Run the path_weekly_plans migration to sync sermons across devices.'
+              : `Trail synced. Sermon sync issue: ${msg}`;
+        }
+
         const at = new Date().toISOString();
         setLastCloudSyncAt(at);
-        setCloudSyncStatus('synced');
-        setCloudSyncMessage('Trail synced with your account.');
-        if (activeProfileReloaded) onActiveProfileShouldReload?.();
-        return activeProfileReloaded;
+        setCloudSyncStatus(weeklyWarning ? 'error' : 'synced');
+        setCloudSyncMessage(
+          weeklyWarning ??
+            (weeklyReloaded
+              ? 'Trail and weekly training synced with your account.'
+              : 'Synced with your account.'),
+        );
+        // Remount formation routes after login sync so Today/Sermon reload from cache.
+        onActiveProfileShouldReload?.();
+        return activeProfileReloaded || weeklyReloaded;
       } catch (err) {
         setCloudSyncStatus('error');
         setCloudSyncMessage(err instanceof Error ? err.message : 'Could not sync with cloud.');
@@ -73,6 +98,19 @@ export function AuthProvider({
     },
     [onActiveProfileShouldReload],
   );
+
+  useEffect(() => {
+    const onHide = () => flushCloudWeeklyPlanPushes();
+    const onOnline = () => {
+      if (user) void runCloudMerge(user.id);
+    };
+    window.addEventListener('pagehide', onHide);
+    window.addEventListener('online', onOnline);
+    return () => {
+      window.removeEventListener('pagehide', onHide);
+      window.removeEventListener('online', onOnline);
+    };
+  }, [user, runCloudMerge]);
 
   useEffect(() => {
     if (!supabase) return;

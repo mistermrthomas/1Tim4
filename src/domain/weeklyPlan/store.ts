@@ -1,6 +1,6 @@
 /**
- * Weekly plan persistence — IndexedDB (formation_local_v1 / entities).
- * Standalone weeks — no season parent.
+ * Weekly plan persistence — IndexedDB cache (formation_local_v1 / entities).
+ * When signed in, Supabase `path_weekly_plans` is the authoritative source of truth.
  */
 
 import { createIndexedDbAdapter } from '../../data/storage/indexedDbAdapter';
@@ -8,6 +8,13 @@ import type { StorageAdapter } from '../../data/storage/StorageAdapter';
 import type { DateKey } from '../calendar/week';
 import { buildDraftWeeklyPlan } from './factory';
 import { normalizeWeeklyPlan, type WeeklyPlan, type WeeklyPlanIndex } from './types';
+
+/** Lazy notify to avoid circular import with cloudWeeklyPlanSync. */
+function notifyCloud(plan: WeeklyPlan): void {
+  void import('../../services/cloudWeeklyPlanSync')
+    .then((m) => m.notifyWeeklyPlanSaved(plan))
+    .catch(() => undefined);
+}
 
 const INDEX_KEY = 'weeklyPlan:index';
 const planKey = (id: string) => `weeklyPlan:plan:${id}`;
@@ -79,23 +86,54 @@ export async function getActivePlanForDate(dateKey: DateKey): Promise<WeeklyPlan
   return active;
 }
 
-export async function saveWeeklyPlan(plan: WeeklyPlan): Promise<WeeklyPlan> {
-  const next = normalizeWeeklyPlan({ ...plan, updatedAt: new Date().toISOString() });
-  const adapter = await getAdapter();
+async function persistLocal(
+  plan: WeeklyPlan,
+  indexPatch?: (index: WeeklyPlanIndex) => void,
+): Promise<{ plan: WeeklyPlan; index: WeeklyPlanIndex }> {
+  const next = normalizeWeeklyPlan(plan);
   const index = await readIndex();
   index.byWeekStart[next.weekStartDate] = next.id;
+  indexPatch?.(index);
 
+  const adapter = await getAdapter();
   if (!adapter) {
     mem().plans.set(next.id, structuredClone(next));
     mem().index = structuredClone(index);
-    return next;
+    return { plan: next, index };
   }
 
   await adapter.tx(['entities'], 'rw', async (tx) => {
     await tx.put('entities', planKey(next.id), next);
     await tx.put('entities', INDEX_KEY, index);
   });
+  return { plan: next, index };
+}
+
+export async function saveWeeklyPlan(plan: WeeklyPlan): Promise<WeeklyPlan> {
+  const { plan: next } = await persistLocal({
+    ...plan,
+    updatedAt: new Date().toISOString(),
+  });
+  notifyCloud(next);
   return next;
+}
+
+/** Apply a cloud plan into the local cache without scheduling another cloud push. */
+export async function replaceWeeklyPlanFromCloud(plan: WeeklyPlan): Promise<WeeklyPlan> {
+  const { plan: next } = await persistLocal(normalizeWeeklyPlan(plan));
+  return next;
+}
+
+export async function setActiveWeeklyPlanId(planId: string | null): Promise<void> {
+  const index = await readIndex();
+  if (index.activePlanId === planId) return;
+  index.activePlanId = planId;
+  const adapter = await getAdapter();
+  if (!adapter) {
+    mem().index = structuredClone(index);
+    return;
+  }
+  await adapter.put('entities', INDEX_KEY, index);
 }
 
 export async function ensureWeeklyPlan(weekStart: DateKey): Promise<WeeklyPlan> {
@@ -137,21 +175,27 @@ export async function activateWeeklyPlan(planId: string): Promise<WeeklyPlan> {
     work: { ...plan.work, approved: true },
   };
 
-  index.activePlanId = activated.id;
-  index.byWeekStart[activated.weekStartDate] = activated.id;
+  const activatedSaved = normalizeWeeklyPlan({
+    ...activated,
+    updatedAt: new Date().toISOString(),
+  });
+  index.activePlanId = activatedSaved.id;
+  index.byWeekStart[activatedSaved.weekStartDate] = activatedSaved.id;
 
   const adapter = await getAdapter();
   if (!adapter) {
-    mem().plans.set(activated.id, structuredClone(activated));
+    mem().plans.set(activatedSaved.id, structuredClone(activatedSaved));
     mem().index = structuredClone(index);
-    return activated;
+    notifyCloud(activatedSaved);
+    return activatedSaved;
   }
 
   await adapter.tx(['entities'], 'rw', async (tx) => {
-    await tx.put('entities', planKey(activated.id), activated);
+    await tx.put('entities', planKey(activatedSaved.id), activatedSaved);
     await tx.put('entities', INDEX_KEY, index);
   });
-  return activated;
+  notifyCloud(activatedSaved);
+  return activatedSaved;
 }
 
 /** Mark week completed after Saturday reflection. Clears active pointer if this was active. */
@@ -170,23 +214,29 @@ export async function completeWeeklyPlan(planId: string): Promise<WeeklyPlan> {
   };
 
   const index = await readIndex();
+  const completedSaved = normalizeWeeklyPlan({
+    ...completed,
+    updatedAt: new Date().toISOString(),
+  });
   if (index.activePlanId === planId) {
     index.activePlanId = null;
   }
-  index.byWeekStart[completed.weekStartDate] = completed.id;
+  index.byWeekStart[completedSaved.weekStartDate] = completedSaved.id;
 
   const adapter = await getAdapter();
   if (!adapter) {
-    mem().plans.set(completed.id, structuredClone(completed));
+    mem().plans.set(completedSaved.id, structuredClone(completedSaved));
     mem().index = structuredClone(index);
-    return completed;
+    notifyCloud(completedSaved);
+    return completedSaved;
   }
 
   await adapter.tx(['entities'], 'rw', async (tx) => {
-    await tx.put('entities', planKey(completed.id), completed);
+    await tx.put('entities', planKey(completedSaved.id), completedSaved);
     await tx.put('entities', INDEX_KEY, index);
   });
-  return completed;
+  notifyCloud(completedSaved);
+  return completedSaved;
 }
 
 export function __resetWeeklyPlanMemoryForTests(): void {
