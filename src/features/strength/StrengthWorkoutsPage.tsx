@@ -824,7 +824,7 @@ export function StrengthWorkoutsPage() {
         <p className="path-eyebrow">Strength log</p>
         <h1 className="path-display strength-page__title">Workouts</h1>
         <p className="strength-page__lede">
-          Pick a split to train, or use the all-exercises table below. Recommendations stop at your
+          Workouts A, B, and C. Use Training for the A→B→Recovery→C rotation. Recommendations stop at
           equipment max (Bowflex 155 lb · dumbbells 25 lb).
         </p>
       </header>

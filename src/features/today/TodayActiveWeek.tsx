@@ -344,9 +344,11 @@ export function TodayActiveWeek({
                 {toLocalDateKey()}
               </p>
               <p className="today-hero__plan-link">
-                <Link to="/journey">View This Week</Link>
+                <Link to="/training">Training</Link>
                 <span aria-hidden> · </span>
-                <Link to={planPath}>Edit Weekly Plan</Link>
+                <Link to="/progress">Progress</Link>
+                <span aria-hidden> · </span>
+                <Link to={planPath}>Weekly plan</Link>
               </p>
             </header>
           </div>

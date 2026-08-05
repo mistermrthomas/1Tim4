@@ -292,25 +292,29 @@ export function PhysicalTrainingPanel({
                   to={`/workouts?w=${workout.id}`}
                   style={{ textDecoration: 'none', textAlign: 'center' }}
                 >
-                  {workout.order === 1 ? 'Workout 1 — Chest / Triceps / Core' : null}
-                  {workout.order === 2 ? 'Workout 2 — Back / Biceps / Traps' : null}
-                  {workout.order > 2 ? workout.shortLabel : null}
+                {workout.shortLabel}
                 </Link>
               ))}
+              <Link
+                className="path-btn path-btn--ghost"
+                to="/training?area=physical&section=strength"
+                style={{ textDecoration: 'none', textAlign: 'center' }}
+              >
+                Strength rotation
+              </Link>
               <Link
                 className="path-btn path-btn--ghost"
                 to="/workouts"
                 style={{ textDecoration: 'none', textAlign: 'center' }}
               >
-                Open strength log
+                Strength log
               </Link>
             </div>
             <p
               className="path-body"
               style={{ marginTop: '0.65rem', opacity: 0.75, fontSize: '0.88rem' }}
             >
-              Log lifts for yesterday or today. Use the day controls below for past steps, protein,
-              and water.
+              Log lifts for yesterday or today. Use Training for mobility, walking, body, and travel.
             </p>
           </section>
         ) : (

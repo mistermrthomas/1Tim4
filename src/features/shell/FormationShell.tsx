@@ -6,10 +6,9 @@ import { readStoredTheme, storeTheme, type PathTheme } from '../../ui/theme';
 import './FormationShell.css';
 
 const TABS = [
-  { to: '/today', label: 'Today', job: 'Train today' },
-  { to: '/journey', label: 'Journey', job: 'This week & history' },
-  { to: '/growth', label: 'Growth', job: 'Weekly reflections' },
-  { to: '/coach', label: 'Coach', job: 'Guidance & adjustments' },
+  { to: '/today', label: 'Today', job: 'What should I do?' },
+  { to: '/training', label: 'Training', job: 'What am I training?' },
+  { to: '/progress', label: 'Progress', job: 'Am I improving?' },
 ] as const;
 
 export function FormationShell() {
@@ -85,11 +84,11 @@ export function FormationShell() {
             <NavLink to="/plan/week" className="formation-shell__manage">
               Weekly plan
             </NavLink>
+            <NavLink to="/training/physical/strength" className="formation-shell__manage">
+              Strength log
+            </NavLink>
             <NavLink to="/settings" className="formation-shell__manage">
               Settings
-            </NavLink>
-            <NavLink to="/workouts" className="formation-shell__manage">
-              Workouts
             </NavLink>
 
             <button

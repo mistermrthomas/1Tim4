@@ -34,9 +34,9 @@ describe('strength log', () => {
     localStorage.removeItem(STRENGTH_STORE_KEY);
   });
 
-  it('seeds two active workouts and baseline history', () => {
+  it('seeds three active workouts and baseline history', () => {
     const state = readStrengthState();
-    expect(state.workouts.filter((w) => w.active)).toHaveLength(2);
+    expect(state.workouts.filter((w) => w.active)).toHaveLength(3);
     expect(exercisesForWorkout(state, WORKOUT_1_ID)).toHaveLength(7);
     expect(exercisesForWorkout(state, WORKOUT_2_ID).map((e) => e.name)).toEqual([
       'Lat Pulldown',
@@ -45,6 +45,14 @@ describe('strength log', () => {
       'Shrug',
       'Preacher Curl',
       'Twist Curl',
+    ]);
+    expect(exercisesForWorkout(state, 'strength_workout_3').map((e) => e.name)).toEqual([
+      'Squat',
+      'Leg Extension',
+      'Leg Curl',
+      'Romanian Deadlift',
+      'Standing Calf Raise',
+      'Step-Up',
     ]);
     expect(exercisesForWorkout(state, WORKOUT_2_ID).find((e) => e.name === 'Shrug')?.equipment).toBe(
       'Bowflex',

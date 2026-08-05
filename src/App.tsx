@@ -22,8 +22,9 @@ import { Phase0HarnessPage } from './pages/Phase0HarnessPage';
 import { FormationShell } from './features/shell/FormationShell';
 import { TodayPage } from './features/today/TodayPage';
 import { JourneyPage } from './features/journey/JourneyPage';
-import { GrowthPage } from './features/growth/GrowthPage';
 import { CoachPage } from './features/coach/CoachPage';
+import { ProgressPage } from './features/progress/ProgressPage';
+import { TrainingPage } from './features/training/TrainingPage';
 import { ExercisesPage } from './features/catalog/ExercisesPage';
 import { WorkoutsPage } from './features/catalog/WorkoutsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
@@ -103,14 +104,20 @@ export default function App() {
             <Route path="/" element={<Navigate to="/today" replace />} />
             <Route element={<FormationShell />}>
               <Route path="/today" element={<TodayPage />} />
+              <Route path="/training" element={<TrainingPage />} />
+              <Route path="/progress" element={<ProgressPage />} />
               <Route path="/journey" element={<JourneyPage />} />
-              <Route path="/growth" element={<GrowthPage />} />
+              <Route path="/growth" element={<Navigate to="/progress" replace />} />
               <Route path="/coach" element={<CoachPage />} />
               <Route path="/plan" element={<Navigate to="/plan/week" replace />} />
               <Route path="/plan/week" element={<WeeklyPlanWorkspace />} />
               <Route path="/plan/week/:weekId" element={<WeeklyPlanWorkspace />} />
               <Route path="/exercises" element={<ExercisesPage />} />
               <Route path="/workouts" element={<WorkoutsPage />} />
+              <Route
+                path="/training/physical/strength"
+                element={<Navigate to="/training?area=physical&section=strength" replace />}
+              />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/seasons" element={<Navigate to="/journey" replace />} />
               <Route path="/season/:id" element={<Navigate to="/journey" replace />} />

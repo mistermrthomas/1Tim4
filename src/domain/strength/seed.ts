@@ -1,25 +1,33 @@
 import { newId } from '../physical/store';
 import { EQUIPMENT_MAX_LB, type StrengthExercise, type StrengthLogEntry, type StrengthState, type StrengthWorkout, type StrengthWorkoutNote } from './types';
 
-export const STRENGTH_SEED_VERSION = 2;
+export const STRENGTH_SEED_VERSION = 3;
 
 export const WORKOUT_1_ID = 'strength_workout_1';
 export const WORKOUT_2_ID = 'strength_workout_2';
+export const WORKOUT_3_ID = 'strength_workout_3';
 
 const WORKOUTS: StrengthWorkout[] = [
   {
     id: WORKOUT_1_ID,
-    name: 'Workout 1 — Chest, Triceps, Core',
-    shortLabel: 'Chest / Triceps / Core',
+    name: 'Workout A — Chest, Triceps, Core',
+    shortLabel: 'Workout A · Chest / Triceps / Core',
     active: true,
     order: 1,
   },
   {
     id: WORKOUT_2_ID,
-    name: 'Workout 2 — Back, Biceps, Traps',
-    shortLabel: 'Back / Biceps / Traps',
+    name: 'Workout B — Back, Biceps, Traps',
+    shortLabel: 'Workout B · Back / Biceps / Traps',
     active: true,
     order: 2,
+  },
+  {
+    id: WORKOUT_3_ID,
+    name: 'Workout C — Legs',
+    shortLabel: 'Workout C · Legs',
+    active: true,
+    order: 3,
   },
 ];
 
@@ -170,7 +178,7 @@ const EXERCISES: StrengthExercise[] = [
     weightSuffix: 'per dumbbell',
     techniqueNote: 'Use strict form and avoid swinging.',
   }),
-  // Historical-only — keep history, not in active Workout 2.
+  // Historical-only — keep history, not in active Workout B.
   ex({
     id: 'ex_dumbbell_shrug',
     name: 'Shrug',
@@ -180,6 +188,66 @@ const EXERCISES: StrengthExercise[] = [
     workoutId: null,
     order: 99,
     weightSuffix: 'per dumbbell',
+  }),
+  // Workout C — Legs (editable starting template; no baseline weights yet).
+  ex({
+    id: 'ex_squat',
+    name: 'Squat',
+    muscleGroup: 'Legs',
+    equipment: 'Bowflex',
+    active: true,
+    workoutId: WORKOUT_3_ID,
+    order: 1,
+    techniqueNote: 'Editable starting exercise — confirm form and load before progressing.',
+  }),
+  ex({
+    id: 'ex_leg_extension',
+    name: 'Leg Extension',
+    muscleGroup: 'Legs',
+    equipment: 'Bowflex',
+    active: true,
+    workoutId: WORKOUT_3_ID,
+    order: 2,
+  }),
+  ex({
+    id: 'ex_leg_curl',
+    name: 'Leg Curl',
+    muscleGroup: 'Legs',
+    equipment: 'Bowflex',
+    active: true,
+    workoutId: WORKOUT_3_ID,
+    order: 3,
+  }),
+  ex({
+    id: 'ex_romanian_deadlift',
+    name: 'Romanian Deadlift',
+    muscleGroup: 'Legs',
+    equipment: 'Dumbbells',
+    active: true,
+    workoutId: WORKOUT_3_ID,
+    order: 4,
+    weightSuffix: 'per dumbbell',
+    techniqueNote: 'Hinge at the hips. Keep the back flat.',
+  }),
+  ex({
+    id: 'ex_standing_calf_raise',
+    name: 'Standing Calf Raise',
+    muscleGroup: 'Legs',
+    equipment: 'Bowflex',
+    active: true,
+    workoutId: WORKOUT_3_ID,
+    order: 5,
+  }),
+  ex({
+    id: 'ex_step_up',
+    name: 'Step-Up',
+    muscleGroup: 'Legs',
+    equipment: 'Dumbbells',
+    active: true,
+    workoutId: WORKOUT_3_ID,
+    order: 6,
+    weightSuffix: 'per dumbbell',
+    techniqueNote: 'May be replaced with Split Squat later without losing history.',
   }),
 ];
 
