@@ -143,6 +143,20 @@ export function completeNextSlot(note = '', date = todayDateKey()): RotationStat
   return completeRotationSlot(index, date, note);
 }
 
+/** Undo today’s completion so the same slot is next again. */
+export function undoLastRotationIfDate(date = todayDateKey()): RotationState {
+  const state = readRotationState();
+  if (state.lastCompletedDate !== date || state.lastCompletedIndex < 0) return state;
+  const next: RotationState = {
+    version: 1,
+    lastCompletedIndex: state.lastCompletedIndex === 0 ? -1 : state.lastCompletedIndex - 1,
+    lastCompletedDate: null,
+    lastCompletedNote: '',
+  };
+  writeRotationState(next);
+  return next;
+}
+
 /** Infer last workout dates from strength log when rotation state is empty. */
 export function bootstrapRotationFromLogs(strength: StrengthState): RotationState {
   const existing = readRotationState();

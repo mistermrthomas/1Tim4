@@ -91,6 +91,15 @@ export function recentWalks(limit = 10): WalkingEntry[] {
     .slice(0, limit);
 }
 
+export function walkDoneOn(date = todayDateKey()): boolean {
+  return readWalkingState().entries.some((e) => e.date === date);
+}
+
+export function clearWalksOn(date = todayDateKey()): void {
+  const state = readWalkingState();
+  write({ version: 1, entries: state.entries.filter((e) => e.date !== date) });
+}
+
 /** Prefer Health/steps total when present; walking log remains optional. */
 export function stepsForDate(date = todayDateKey()): number {
   return effectiveSteps(getStepsDay(date));

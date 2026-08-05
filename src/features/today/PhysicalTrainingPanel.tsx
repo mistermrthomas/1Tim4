@@ -19,7 +19,17 @@ import {
 } from '../../domain/physical/stepsTracker';
 import { todayDateKey } from '../../domain/physical/store';
 import type { StepsDayEntry } from '../../domain/physical/types';
+import {
+  clearMobilityOn,
+  completeMobility,
+  mobilityDoneOn,
+} from '../../domain/physicalLife/mobility';
 import { travelRecommendation } from '../../domain/physicalLife/travel';
+import {
+  clearWalksOn,
+  upsertWalkingEntry,
+  walkDoneOn,
+} from '../../domain/physicalLife/walking';
 import {
   bootstrapRotationFromLogs,
   completeNextSlot,
@@ -27,8 +37,49 @@ import {
   formatDaysSince,
   getLastSlot,
   getNextSlot,
+  readRotationState,
+  undoLastRotationIfDate,
+  type RotationSlot,
 } from '../../domain/strength/rotation';
-import { activeWorkouts, readStrengthState } from '../../domain/strength/store';
+import {
+  activeWorkouts,
+  readStrengthState,
+  sessionDatesForWorkout,
+} from '../../domain/strength/store';
+
+function TodayActionRow({
+  to,
+  label,
+  done,
+  onToggle,
+  primary = false,
+}: {
+  to: string;
+  label: string;
+  done: boolean;
+  onToggle: () => void;
+  primary?: boolean;
+}) {
+  return (
+    <div className={`today-action-row${done ? ' today-action-row--done' : ''}`}>
+      <Link
+        className={`path-btn ${primary ? 'path-btn--primary' : 'path-btn--ghost'} today-action-row__btn`}
+        to={to}
+      >
+        {label}
+      </Link>
+      <button
+        type="button"
+        className={`today-habit__check${done ? ' today-habit__check--done' : ''}`}
+        aria-pressed={done}
+        aria-label={`Mark ${label} ${done ? 'incomplete' : 'complete'}`}
+        onClick={onToggle}
+      >
+        {done ? '✓' : ''}
+      </button>
+    </div>
+  );
+}
 
 /** How far back daily targets (steps / protein / water) can be edited. */
 const HEALTH_LOOKBACK_DAYS = 14;
@@ -197,11 +248,17 @@ export function PhysicalTrainingPanel({
   const [showStepsSet, setShowStepsSet] = useState(false);
   const [stepsDraft, setStepsDraft] = useState('');
   const [targets, setTargets] = useState(() => readPhysicalPlan().targets);
-  const strengthState = readStrengthState();
+  const [strengthState, setStrengthState] = useState(() => readStrengthState());
   const [rotation, setRotation] = useState(() => bootstrapRotationFromLogs(strengthState));
+  const [walkDone, setWalkDone] = useState(() => walkDoneOn(todayKey));
+  const [mobilityDone, setMobilityDone] = useState(() => mobilityDoneOn(todayKey));
   const strengthWorkouts = activeWorkouts(strengthState);
   const nextSlot = getNextSlot(rotation);
   const lastSlot = getLastSlot(rotation);
+  const completedToday = rotation.lastCompletedDate === todayKey;
+  /** Keep today's slot visible after check-off so the checkbox can show done. */
+  const displaySlot: RotationSlot =
+    completedToday && lastSlot ? lastSlot : nextSlot;
   const travel = travelRecommendation(todayKey);
   const viewingToday = dateKey === todayKey;
   const dayLabel = healthDayLabel(dateKey, todayKey);
@@ -214,11 +271,86 @@ export function PhysicalTrainingPanel({
     setSteps(getStepsDay(dateKey));
     setRecovery(getDayMeta(dateKey).recoveryDone);
     setUnit(getWaterUnit() || plan.targets.waterUnit);
-  }, [dateKey]);
+    setStrengthState(readStrengthState());
+    setRotation(bootstrapRotationFromLogs(readStrengthState()));
+    setWalkDone(walkDoneOn(todayKey));
+    setMobilityDone(mobilityDoneOn(todayKey));
+  }, [dateKey, todayKey]);
 
   useEffect(() => {
     reload();
   }, [reload]);
+
+  useEffect(() => {
+    const onFocus = () => reload();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [reload]);
+
+  const ensureRecoveryComplete = () => {
+    const current = readRotationState();
+    if (current.lastCompletedDate === todayKey) {
+      setRotation(current);
+      return;
+    }
+    if (getNextSlot(current).kind === 'recovery') {
+      setRotation(completeNextSlot('Recovery / walk day'));
+    }
+  };
+
+  const maybeUndoRecovery = () => {
+    if (walkDoneOn(todayKey) || mobilityDoneOn(todayKey)) return;
+    const current = readRotationState();
+    if (current.lastCompletedDate === todayKey && getLastSlot(current)?.kind === 'recovery') {
+      setRotation(undoLastRotationIfDate(todayKey));
+    }
+  };
+
+  const toggleWalk = () => {
+    if (walkDoneOn(todayKey)) {
+      clearWalksOn(todayKey);
+      setWalkDone(false);
+      maybeUndoRecovery();
+    } else {
+      upsertWalkingEntry({ date: todayKey, note: 'Walk' });
+      setWalkDone(true);
+      ensureRecoveryComplete();
+    }
+  };
+
+  const toggleMobility = () => {
+    if (mobilityDoneOn(todayKey)) {
+      clearMobilityOn(todayKey);
+      setMobilityDone(false);
+      maybeUndoRecovery();
+    } else {
+      completeMobility({ date: todayKey });
+      setMobilityDone(true);
+      ensureRecoveryComplete();
+    }
+  };
+
+  const toggleWorkout = (workoutId: string, shortLabel: string) => {
+    const last = getLastSlot(rotation);
+    const markedToday =
+      rotation.lastCompletedDate === todayKey && last?.workoutId === workoutId;
+
+    if (markedToday) {
+      setRotation(undoLastRotationIfDate(todayKey));
+      return;
+    }
+
+    const upcoming = getNextSlot(rotation);
+    if (upcoming.workoutId !== workoutId || rotation.lastCompletedDate === todayKey) return;
+
+    const logged = sessionDatesForWorkout(readStrengthState(), workoutId).includes(todayKey);
+    if (
+      logged ||
+      window.confirm(`Mark ${shortLabel} complete in the rotation?`)
+    ) {
+      setRotation(completeNextSlot());
+    }
+  };
 
   useEffect(() => {
     // Keep "today" current if the panel stays open past midnight.
@@ -299,109 +431,87 @@ export function PhysicalTrainingPanel({
               className="path-display"
               style={{ margin: '0.15rem 0 0.35rem', fontSize: '1.35rem', lineHeight: 1.2 }}
             >
-              {travel.trip ? travel.label : nextSlot.label}
+              {travel.trip ? travel.label : displaySlot.label}
             </p>
-            <p className="path-body" style={{ margin: 0, opacity: 0.75, fontSize: '0.88rem' }}>
-              {lastSlot
-                ? `Last: ${lastSlot.shortLabel} · ${formatDaysSince(daysSince(rotation.lastCompletedDate))}`
-                : 'No rotation entry yet — start with Workout A.'}
-            </p>
-            <div
-              className="today-workout__cards"
-              style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem' }}
-            >
+            {!travel.trip ? (
+              <p className="path-body" style={{ margin: 0, opacity: 0.75, fontSize: '0.88rem' }}>
+                {completedToday && lastSlot
+                  ? 'Done for today.'
+                  : lastSlot
+                    ? `Last: ${lastSlot.shortLabel} · ${formatDaysSince(daysSince(rotation.lastCompletedDate))}`
+                    : 'No rotation entry yet — start with Workout A.'}
+              </p>
+            ) : null}
+            <div className="today-action-list">
               {travel.trip ? (
                 <>
-                  {travel.kind === 'hotel_strength' && nextSlot.workoutId ? (
-                    <Link
-                      className="path-btn path-btn--primary"
-                      to={`/workouts?w=${nextSlot.workoutId}`}
-                      style={{ textDecoration: 'none', textAlign: 'center' }}
-                    >
-                      Begin hotel strength ({nextSlot.shortLabel})
-                    </Link>
+                  {travel.kind === 'hotel_strength' && displaySlot.workoutId ? (
+                    <TodayActionRow
+                      primary
+                      to={`/workouts?w=${displaySlot.workoutId}`}
+                      label={`Begin hotel strength (${displaySlot.shortLabel})`}
+                      done={
+                        completedToday ||
+                        sessionDatesForWorkout(strengthState, displaySlot.workoutId).includes(
+                          todayKey,
+                        )
+                      }
+                      onToggle={() =>
+                        toggleWorkout(displaySlot.workoutId!, displaySlot.shortLabel)
+                      }
+                    />
                   ) : null}
                   {travel.kind === 'walk' || travel.kind === 'travel' ? (
-                    <Link
-                      className="path-btn path-btn--primary"
+                    <TodayActionRow
+                      primary
                       to="/training?area=physical&section=walking"
-                      style={{ textDecoration: 'none', textAlign: 'center' }}
-                    >
-                      Log a walk
-                    </Link>
+                      label="Take a Walk"
+                      done={walkDone}
+                      onToggle={toggleWalk}
+                    />
                   ) : null}
                   {travel.kind === 'mobility' || travel.kind === 'rest' ? (
-                    <Link
-                      className="path-btn path-btn--primary"
+                    <TodayActionRow
+                      primary
                       to="/training?area=physical&section=mobility"
-                      style={{ textDecoration: 'none', textAlign: 'center' }}
-                    >
-                      {travel.kind === 'rest' ? 'Optional mobility' : 'Complete mobility'}
-                    </Link>
+                      label="Do Mobility"
+                      done={mobilityDone}
+                      onToggle={toggleMobility}
+                    />
                   ) : null}
-                  <Link
-                    className="path-btn path-btn--ghost"
-                    to="/training?area=physical&section=travel"
-                    style={{ textDecoration: 'none', textAlign: 'center' }}
-                  >
+                  <Link className="today-action-row__more" to="/training?area=physical&section=travel">
                     Travel options
                   </Link>
                 </>
-              ) : nextSlot.kind === 'recovery' ? (
+              ) : displaySlot.kind === 'recovery' ? (
                 <>
-                  <Link
-                    className="path-btn path-btn--primary"
+                  <TodayActionRow
+                    primary
                     to="/training?area=physical&section=walking"
-                    style={{ textDecoration: 'none', textAlign: 'center' }}
-                  >
-                    Take a walk
-                  </Link>
-                  <Link
-                    className="path-btn path-btn--ghost"
+                    label="Take a Walk"
+                    done={walkDone}
+                    onToggle={toggleWalk}
+                  />
+                  <TodayActionRow
                     to="/training?area=physical&section=mobility"
-                    style={{ textDecoration: 'none', textAlign: 'center' }}
-                  >
-                    Or do mobility
-                  </Link>
-                  <button
-                    type="button"
-                    className="path-btn path-btn--ghost"
-                    onClick={() => setRotation(completeNextSlot('Recovery / walk day'))}
-                  >
-                    Mark recovery done
-                  </button>
+                    label="Do Mobility"
+                    done={mobilityDone}
+                    onToggle={toggleMobility}
+                  />
                 </>
-              ) : nextSlot.workoutId ? (
-                <>
-                  <Link
-                    className="path-btn path-btn--primary"
-                    to={`/workouts?w=${nextSlot.workoutId}`}
-                    style={{ textDecoration: 'none', textAlign: 'center' }}
-                  >
-                    Begin {nextSlot.shortLabel}
-                  </Link>
-                  <button
-                    type="button"
-                    className="path-btn path-btn--ghost"
-                    onClick={() => {
-                      if (
-                        window.confirm(
-                          `Mark ${nextSlot.shortLabel} complete in the rotation after you finish?`,
-                        )
-                      ) {
-                        setRotation(completeNextSlot());
-                      }
-                    }}
-                  >
-                    Mark rotation complete
-                  </button>
-                </>
+              ) : displaySlot.workoutId ? (
+                <TodayActionRow
+                  primary
+                  to={`/workouts?w=${displaySlot.workoutId}`}
+                  label={`Begin ${displaySlot.shortLabel}`}
+                  done={
+                    completedToday ||
+                    sessionDatesForWorkout(strengthState, displaySlot.workoutId).includes(todayKey)
+                  }
+                  onToggle={() => toggleWorkout(displaySlot.workoutId!, displaySlot.shortLabel)}
+                />
               ) : null}
-              <Link
-                className="path-btn path-btn--ghost"
-                to="/training?area=physical"
-                style={{ textDecoration: 'none', textAlign: 'center' }}
-              >
+              <Link className="today-action-row__more" to="/training?area=physical">
                 All physical training
               </Link>
             </div>
@@ -410,24 +520,23 @@ export function PhysicalTrainingPanel({
                 <summary style={{ cursor: 'pointer', fontSize: '0.82rem', opacity: 0.75 }}>
                   Other workouts
                 </summary>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.4rem',
-                    marginTop: '0.45rem',
-                  }}
-                >
-                  {strengthWorkouts.map((workout) => (
-                    <Link
-                      key={workout.id}
-                      className="path-btn path-btn--ghost"
-                      to={`/workouts?w=${workout.id}`}
-                      style={{ textDecoration: 'none', textAlign: 'center' }}
-                    >
-                      {workout.shortLabel}
-                    </Link>
-                  ))}
+                <div className="today-action-list" style={{ marginTop: '0.45rem' }}>
+                  {strengthWorkouts.map((workout) => {
+                    const logged = sessionDatesForWorkout(strengthState, workout.id).includes(
+                      todayKey,
+                    );
+                    const marked =
+                      completedToday && lastSlot?.workoutId === workout.id;
+                    return (
+                      <TodayActionRow
+                        key={workout.id}
+                        to={`/workouts?w=${workout.id}`}
+                        label={workout.shortLabel}
+                        done={logged || marked}
+                        onToggle={() => toggleWorkout(workout.id, workout.shortLabel)}
+                      />
+                    );
+                  })}
                 </div>
               </details>
             ) : null}

@@ -157,6 +157,15 @@ export function completeMobility(input: {
   return entry;
 }
 
+export function mobilityDoneOn(date = todayDateKey()): boolean {
+  return readMobilityState().entries.some((e) => e.date === date);
+}
+
+export function clearMobilityOn(date = todayDateKey()): void {
+  const state = readMobilityState();
+  write({ version: 1, entries: state.entries.filter((e) => e.date !== date) });
+}
+
 export function mobilityCompletionsInLastDays(days = 7, today = todayDateKey()): number {
   const start = addDays(today, -(days - 1));
   return readMobilityState().entries.filter((e) => e.date >= start && e.date <= today).length;

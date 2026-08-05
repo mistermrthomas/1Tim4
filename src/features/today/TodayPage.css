@@ -927,6 +927,49 @@
   gap: 0.85rem;
 }
 
+.today-action-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.today-action-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+.today-action-row__btn {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: 14rem;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.82rem;
+  text-decoration: none;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.today-action-row--done .today-action-row__btn {
+  opacity: 0.72;
+}
+
+.today-action-row__more {
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  color: var(--path-text-dim);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.today-action-row__more:hover {
+  color: var(--path-text);
+}
+
 .today-workout-card {
   padding: 0.75rem 0;
   border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
