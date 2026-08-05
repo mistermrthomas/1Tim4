@@ -28,7 +28,7 @@ import { TrainingPage } from './features/training/TrainingPage';
 import { ExercisesPage } from './features/catalog/ExercisesPage';
 import { WorkoutsPage } from './features/catalog/WorkoutsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
-import { WeeklyPlanWorkspace } from './features/weeklyPlan/WeeklyPlanWorkspace';
+import { SundaySermonPage } from './features/sermon/SundaySermonPage';
 import './styles/global.css';
 import './features/shell/FormationShell.css';
 import './styles/desktop.css';
@@ -109,9 +109,10 @@ export default function App() {
               <Route path="/journey" element={<JourneyPage />} />
               <Route path="/growth" element={<Navigate to="/progress" replace />} />
               <Route path="/coach" element={<CoachPage />} />
-              <Route path="/plan" element={<Navigate to="/plan/week" replace />} />
-              <Route path="/plan/week" element={<WeeklyPlanWorkspace />} />
-              <Route path="/plan/week/:weekId" element={<WeeklyPlanWorkspace />} />
+              <Route path="/sermon" element={<SundaySermonPage />} />
+              <Route path="/plan" element={<Navigate to="/sermon" replace />} />
+              <Route path="/plan/week" element={<Navigate to="/sermon" replace />} />
+              <Route path="/plan/week/:weekId" element={<Navigate to="/sermon" replace />} />
               <Route path="/exercises" element={<ExercisesPage />} />
               <Route path="/workouts" element={<WorkoutsPage />} />
               <Route

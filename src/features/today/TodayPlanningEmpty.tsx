@@ -1,15 +1,10 @@
 import { Link } from 'react-router-dom';
-import {
-  followingSundayStart,
-  isSaturdaySabbath,
-  toLocalDateKey,
-} from '../../domain/calendar/week';
-import { startNextWeekPath } from '../weeklyPlan/WeeklyPlanWorkspace';
+import { isSaturdaySabbath, toLocalDateKey } from '../../domain/calendar/week';
 import { PhysicalTrainingPanel } from './PhysicalTrainingPanel';
 
 /**
- * Today when no weekly plan is active — weekdays / Saturday only.
- * Sunday uses SundayPlanningHome instead.
+ * Today when no biblical week is active — weekdays / Saturday.
+ * Sunday without training uses SundaySermonPrompt instead.
  */
 export function TodayPlanningEmpty() {
   const sabbath = isSaturdaySabbath();
@@ -24,50 +19,30 @@ export function TodayPlanningEmpty() {
               <div className="today-hero__row">
                 <h1 className="path-display today-hero__title">Today</h1>
                 <p className="today-hero__theme">
-                  {sabbath ? 'Sabbath' : 'No active week yet'}
+                  {sabbath ? 'Sabbath' : 'No active training week'}
                 </p>
               </div>
-              <p className="today-hero__focus-label">Status</p>
               <p className="today-hero__focus">
                 {sabbath
-                  ? 'Rest. Begin next week’s plan when Sunday comes.'
-                  : 'Activate a weekly plan to see today’s assignments.'}
+                  ? 'Rest. Enter next Sunday’s sermon notes when the week begins.'
+                  : 'Enter Sunday’s sermon notes to build this week’s biblical training.'}
               </p>
               <p className="today-hero__meta">{toLocalDateKey()}</p>
-              <p className="today-hero__plan-link">
-                <Link to="/journey">Journey</Link>
-                <span aria-hidden> · </span>
-                <Link to={startNextWeekPath()}>Weekly plan</Link>
-              </p>
             </header>
           </div>
 
-          {sabbath ? (
-            <section className="today-week-banner today-week-banner--sabbath path-surface">
-              <p className="today-panel__label">Sabbath</p>
-              <p className="path-body">
-                Rest from structured training. Be present with family and friends.
-              </p>
-              <div className="today-week-banner__actions">
-                <Link className="path-btn path-btn--ghost" to={`/plan/week/${followingSundayStart()}`}>
-                  Plan next week
-                </Link>
-              </div>
-            </section>
-          ) : (
-            <section className="today-week-banner path-surface">
-              <p className="today-panel__label">Weekly planning</p>
-              <p className="path-body">
-                There is no active week yet. On Sunday, Path becomes a focused planning dashboard.
-                You can still open the weekly planner now if needed.
-              </p>
-              <div className="today-week-banner__actions">
-                <Link className="path-btn path-btn--primary" to={startNextWeekPath()}>
-                  Open weekly plan
-                </Link>
-              </div>
-            </section>
-          )}
+          <section className="today-week-banner path-surface">
+            <p className="today-panel__label">Biblical training</p>
+            <p className="path-body">
+              PATH builds the week from one sermon. Physical and work training continue on their own
+              tracks.
+            </p>
+            <div className="today-week-banner__actions">
+              <Link className="path-btn path-btn--primary" to="/sermon">
+                Sunday Sermon
+              </Link>
+            </div>
+          </section>
         </div>
 
         <PhysicalTrainingPanel unscheduled />

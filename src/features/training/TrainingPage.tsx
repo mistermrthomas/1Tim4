@@ -103,16 +103,16 @@ function BiblicalTrainingPanel() {
         <Link className="path-btn path-btn--primary" to="/today">
           Today’s practice
         </Link>
-        <Link className="path-btn path-btn--ghost" to="/plan/week">
-          Weekly biblical plan
+        <Link className="path-btn path-btn--ghost" to="/sermon">
+          Sunday Sermon
         </Link>
         <Link className="path-btn path-btn--ghost" to="/journey">
           Week history
         </Link>
       </div>
       <p className="training-meta">
-        Enter sermon notes, receive a weekly plan, complete today’s reading and practice, then
-        record a short evening reflection. No competing study tracks.
+        Enter Sunday’s sermon notes. PATH builds daily biblical training. Complete today’s
+        Scripture, focus, and practice — then one evening reflection.
       </p>
     </section>
   );

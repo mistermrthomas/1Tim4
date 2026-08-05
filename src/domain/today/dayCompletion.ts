@@ -174,11 +174,11 @@ export function evaluateWeekdayEligibility(
   const missing: string[] = [];
   const unfinished: string[] = [];
 
-  if (!log.morningDone) missing.push('Morning practice');
-  if (!log.middayDone) missing.push('Midday checkpoint');
-  if (!log.eveningDone) missing.push('Evening reflection');
-
   const concrete = concreteFromLog(log);
+  const biblicalTouched = Boolean(
+    log.practiceAccepted || log.practiceDone || log.morningDone || concrete !== 'unset',
+  );
+  if (!biblicalTouched) missing.push('Biblical practice');
   if (concrete === 'unset') missing.push('Concrete action outcome');
   else if (concrete !== 'completed') unfinished.push('Concrete action');
 

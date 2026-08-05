@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { startNextWeekPath } from '../weeklyPlan/WeeklyPlanWorkspace';
 import './CoachPage.css';
 
 const GUIDANCE = [
@@ -53,8 +52,8 @@ export function CoachPage() {
       </section>
 
       <div className="coach-preview__actions">
-        <Link className="path-btn path-btn--primary" to={startNextWeekPath()}>
-          Build This Week’s Plan
+        <Link className="path-btn path-btn--primary" to="/sermon">
+          Sunday Sermon
         </Link>
         <Link className="path-btn path-btn--ghost" to="/today">
           Today

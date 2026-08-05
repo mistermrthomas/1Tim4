@@ -927,6 +927,67 @@
   gap: 0.85rem;
 }
 
+.today-sermon-ready {
+  margin: 0 0 0.85rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--path-gold) 55%, transparent);
+  background: color-mix(in srgb, var(--path-gold) 14%, transparent);
+  color: var(--path-text);
+  font-size: 0.9rem;
+}
+
+.sunday-sermon-prompt {
+  padding: 1.15rem 1.2rem;
+}
+
+.sunday-sermon-prompt__btn {
+  display: inline-flex;
+  text-decoration: none;
+  text-align: center;
+}
+
+.today-biblical-day {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  padding: 1.05rem 1.15rem;
+}
+
+.today-biblical-day__block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.today-biblical-day__scripture {
+  margin: 0;
+  font-family: var(--path-font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  color: var(--path-gold);
+}
+
+.today-biblical-day__text {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.45;
+  color: var(--path-text);
+}
+
+.today-biblical-day__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--path-hairline);
+}
+
+.today-biblical-day__outcome {
+  margin: 0;
+}
+
 .today-action-list {
   display: flex;
   flex-direction: column;

@@ -1,0 +1,141 @@
+.sunday-sermon {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 0.5rem 0 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.sunday-sermon__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sunday-sermon__title {
+  margin: 0;
+  font-size: clamp(1.85rem, 4vw, 2.35rem);
+  line-height: 1.1;
+}
+
+.sunday-sermon__lede {
+  margin: 0;
+  max-width: 32rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--path-text-muted);
+}
+
+.sunday-sermon__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  padding: 1.15rem 1.2rem 1.25rem;
+}
+
+.sunday-sermon__notes-field span {
+  font-family: var(--path-font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--path-gold);
+}
+
+.sunday-sermon__notes {
+  min-height: 16rem;
+  font-size: 1.02rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.sunday-sermon__details {
+  border-top: 1px solid var(--path-hairline);
+  padding-top: 0.55rem;
+}
+
+.sunday-sermon__details summary {
+  cursor: pointer;
+  font-family: var(--path-font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--path-text-dim);
+  list-style: none;
+}
+
+.sunday-sermon__details summary::-webkit-details-marker {
+  display: none;
+}
+
+.sunday-sermon__details summary::before {
+  content: '+ ';
+  color: var(--path-gold);
+}
+
+.sunday-sermon__details[open] summary::before {
+  content: '− ';
+}
+
+.sunday-sermon__details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.sunday-sermon__span-2 {
+  grid-column: 1 / -1;
+}
+
+.sunday-sermon__error {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--path-danger) 45%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--path-danger) 10%, transparent);
+  color: var(--path-text);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.sunday-sermon__build {
+  width: 100%;
+  padding: 1.05rem 1.25rem;
+  font-size: 0.92rem;
+}
+
+.sunday-sermon__retry {
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+.sunday-sermon__save-quiet {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--path-text-dim);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0;
+  align-self: center;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.sunday-sermon__save-quiet:disabled {
+  opacity: 0.45;
+  cursor: default;
+  text-decoration: none;
+}
+
+@media (max-width: 560px) {
+  .sunday-sermon__details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sunday-sermon__span-2 {
+    grid-column: auto;
+  }
+}

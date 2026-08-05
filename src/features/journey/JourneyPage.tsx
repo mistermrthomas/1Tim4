@@ -1,16 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { followingSundayStart, nextSundayStart, startOfWeekSunday } from '../../domain/calendar/week';
+import { startOfWeekSunday } from '../../domain/calendar/week';
 import { listWeeklyPlans } from '../../domain/weeklyPlan/store';
 import type { WeeklyPlan } from '../../domain/weeklyPlan/types';
-import { startNextWeekPath } from '../weeklyPlan/WeeklyPlanWorkspace';
 import './JourneyPage.css';
 
 export function JourneyPage() {
   const [plans, setPlans] = useState<WeeklyPlan[]>([]);
   const [ready, setReady] = useState(false);
   const thisWeekStart = startOfWeekSunday();
-  const nextWeek = followingSundayStart();
 
   useEffect(() => {
     let cancelled = false;
@@ -36,15 +34,6 @@ export function JourneyPage() {
     () => plans.find((p) => p.status === 'active') ?? null,
     [plans],
   );
-  const upcoming = useMemo(
-    () =>
-      plans.find(
-        (p) =>
-          p.status === 'draft' &&
-          (p.weekStartDate === nextWeek || p.weekStartDate === nextSundayStart()),
-      ) ?? plans.find((p) => p.status === 'draft' && p.weekStartDate >= thisWeekStart) ?? null,
-    [plans, nextWeek, thisWeekStart],
-  );
   const past = useMemo(
     () =>
       plans.filter(
@@ -68,22 +57,22 @@ export function JourneyPage() {
   return (
     <div className="journey-preview path-fade-in">
       <header className="journey-preview__hero">
-        <p className="path-eyebrow">Weekly planning</p>
+        <p className="path-eyebrow">Training history</p>
         <h1 className="path-display journey-preview__title">Journey</h1>
         <p className="journey-preview__purpose">
-          This week, next week, past weeks, and the sermons that shaped them.
+          Past weeks and the sermons that shaped your biblical training.
         </p>
       </header>
 
       <div className="journey-preview__actions">
-        <Link className="path-btn path-btn--primary" to={startNextWeekPath()}>
-          {active ? 'Edit This Week' : 'Build This Week’s Plan'}
-        </Link>
-        <Link className="path-btn path-btn--ghost" to={`/plan/week/${nextWeek}`}>
-          Plan Next Week
+        <Link className="path-btn path-btn--primary" to="/sermon">
+          Sunday Sermon
         </Link>
         <Link className="path-btn path-btn--ghost" to="/today">
           Today
+        </Link>
+        <Link className="path-btn path-btn--ghost" to="/progress">
+          Progress
         </Link>
       </div>
 
@@ -99,45 +88,20 @@ export function JourneyPage() {
                 {active.weekStartDate} → {active.weekEndDate}
               </p>
               <p className="path-body">
-                Faith · Training · Work
                 {active.biblical.actOfObedience
-                  ? ` · Obedience: ${active.biblical.actOfObedience}`
-                  : ''}
+                  ? `Act of obedience: ${active.biblical.actOfObedience}`
+                  : active.biblical.centralPrinciple || 'Biblical training in progress'}
               </p>
-              <Link className="path-btn path-btn--ghost" to={`/plan/week/${active.weekStartDate}`}>
-                View This Week
+              <Link className="path-btn path-btn--ghost" to="/today">
+                Open Today
               </Link>
             </>
           ) : (
             <>
               <h2 className="journey-summary__title">No active week</h2>
-              <p className="path-body">Start with this week’s sermon, then activate the plan.</p>
-            </>
-          )}
-        </article>
-      </section>
-
-      <section className="journey-summary" style={{ marginTop: '1rem' }}>
-        <article className="journey-summary__card path-surface">
-          <p className="path-label">Upcoming</p>
-          {upcoming ? (
-            <>
-              <h2 className="journey-summary__title">
-                Draft · {upcoming.weekStartDate} → {upcoming.weekEndDate}
-              </h2>
-              <p className="path-body">
-                {upcoming.church.sermonTitle || 'Sermon not captured yet'}
-              </p>
-              <Link className="path-btn path-btn--ghost" to={`/plan/week/${upcoming.weekStartDate}`}>
-                Continue draft
-              </Link>
-            </>
-          ) : (
-            <>
-              <h2 className="journey-summary__title">No draft yet</h2>
-              <p className="path-body">Plan next week when you’re ready.</p>
-              <Link className="path-btn path-btn--ghost" to={`/plan/week/${nextWeek}`}>
-                Plan Next Week
+              <p className="path-body">Enter Sunday’s sermon notes to build this week’s training.</p>
+              <Link className="path-btn path-btn--ghost" to="/sermon">
+                Sunday Sermon
               </Link>
             </>
           )}
@@ -164,8 +128,8 @@ export function JourneyPage() {
                 {p.saturdayReflection.godShowed ? (
                   <p className="path-body">Reflection: {p.saturdayReflection.godShowed}</p>
                 ) : null}
-                <Link className="path-btn path-btn--ghost" to={`/plan/week/${p.weekStartDate}`}>
-                  Open
+                <Link className="path-btn path-btn--ghost" to="/sermon">
+                  Sunday Sermon
                 </Link>
               </li>
             ))}
@@ -178,7 +142,7 @@ export function JourneyPage() {
           Sermon archive
         </h2>
         {sermons.length === 0 ? (
-          <p className="path-body">Sermons from your weekly plans will collect here.</p>
+          <p className="path-body">Sermons from your biblical training weeks will collect here.</p>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {sermons.map((p) => (

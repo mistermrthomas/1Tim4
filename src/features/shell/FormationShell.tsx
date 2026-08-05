@@ -81,8 +81,8 @@ export function FormationShell() {
           </figure>
 
           <div className="formation-shell__footer">
-            <NavLink to="/plan/week" className="formation-shell__manage">
-              Weekly plan
+            <NavLink to="/sermon" className="formation-shell__manage">
+              Sunday Sermon
             </NavLink>
             <NavLink to="/training/physical/strength" className="formation-shell__manage">
               Strength log
@@ -109,7 +109,7 @@ export function FormationShell() {
               </div>
               <div>
                 <p className="formation-shell__profile-name">Michael</p>
-                <p className="path-label">Weekly planning</p>
+                <p className="path-label">Daily training</p>
               </div>
             </div>
           </div>

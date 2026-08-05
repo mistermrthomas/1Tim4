@@ -64,7 +64,7 @@ export function buildTomorrowPreviewModel(
   if (targetIsSunday || biblical?.dayNumber === 1 || physical?.dayNumber === 1) {
     return {
       title: 'Tomorrow — Sunday',
-      subtitle: 'Weekly planning day',
+      subtitle: 'Sunday sermon day',
       read: null,
       focus: 'Capture the sermon and build next week’s plan.',
       practice: 'Set aside time for Sunday planning.',

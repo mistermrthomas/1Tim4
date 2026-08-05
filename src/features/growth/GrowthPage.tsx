@@ -80,8 +80,8 @@ export function GrowthPage() {
                 {p.saturdayReflection.carryForward ? (
                   <p className="path-body">Carry forward: {p.saturdayReflection.carryForward}</p>
                 ) : null}
-                <Link className="path-btn path-btn--ghost" to={`/plan/week/${p.weekStartDate}`}>
-                  Open week
+                <Link className="path-btn path-btn--ghost" to="/sermon">
+                  Sunday Sermon
                 </Link>
               </li>
             ))}

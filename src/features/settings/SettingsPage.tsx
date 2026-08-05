@@ -251,8 +251,8 @@ export function SettingsPage() {
           <Button variant="ghost" onClick={() => void testConnection()} disabled={testing}>
             {testing ? 'Testing…' : 'Test AI Connection'}
           </Button>
-          <Link className="path-btn path-btn--ghost" to="/plan/week">
-            Weekly plan
+          <Link className="path-btn path-btn--ghost" to="/sermon">
+            Sunday Sermon
           </Link>
         </div>
 

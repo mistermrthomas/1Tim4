@@ -1040,7 +1040,7 @@ export function WeeklyPlanWorkspace() {
 }
 
 export function startNextWeekPath(): string {
-  return `/plan/week/${nextSundayStart()}`;
+  return '/sermon';
 }
 
 export function startFollowingWeekPath(): string {
