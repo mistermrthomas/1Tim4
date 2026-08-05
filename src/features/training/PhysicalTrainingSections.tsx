@@ -240,23 +240,82 @@ function MobilitySection() {
   const [note, setNote] = useState('');
   const [painNote, setPainNote] = useState('');
   const [tick, setTick] = useState(0);
+  const [openMoveId, setOpenMoveId] = useState<string | null>(null);
   const weekCount = useMemo(() => {
     void tick;
     return mobilityCompletionsInLastDays(7);
   }, [tick]);
+  const openMove = MOBILITY_MOVES.find((move) => move.id === openMoveId) ?? null;
 
   return (
     <>
-      <p className="training-meta">About 5–8 minutes. Checklist only — no per-stretch timers.</p>
+      <p className="training-meta">
+        About 5–8 minutes. Tap a stretch for a how-to image when available.
+      </p>
       <ul className="training-checklist">
-        {MOBILITY_MOVES.map((move) => (
-          <li key={move.id}>
-            <span>{move.name}</span>
-            <span className="training-checklist__detail">{move.detail}</span>
-          </li>
-        ))}
+        {MOBILITY_MOVES.map((move) => {
+          const hasGuide = Boolean(move.imageSrc);
+          return (
+            <li key={move.id}>
+              {hasGuide ? (
+                <button
+                  type="button"
+                  className="training-checklist__btn"
+                  onClick={() => setOpenMoveId(move.id)}
+                >
+                  <span>{move.name}</span>
+                  <span className="training-checklist__detail">
+                    {move.detail} · View
+                  </span>
+                </button>
+              ) : (
+                <>
+                  <span>{move.name}</span>
+                  <span className="training-checklist__detail">{move.detail}</span>
+                </>
+              )}
+            </li>
+          );
+        })}
       </ul>
-      <p className="training-meta">Completed {weekCount} time{weekCount === 1 ? '' : 's'} in the last 7 days.</p>
+
+      {openMove ? (
+        <div className="mobility-guide path-surface" role="dialog" aria-label={`${openMove.name} guide`}>
+          <div className="mobility-guide__head">
+            <div>
+              <p className="today-panel__label">How to</p>
+              <h3 className="mobility-guide__title">{openMove.name}</h3>
+              <p className="training-meta">{openMove.detail}</p>
+            </div>
+            <button
+              type="button"
+              className="path-btn path-btn--ghost"
+              onClick={() => setOpenMoveId(null)}
+            >
+              Close
+            </button>
+          </div>
+          {openMove.imageSrc ? (
+            <img
+              className="mobility-guide__image"
+              src={openMove.imageSrc}
+              alt={`${openMove.name} demonstration`}
+              loading="lazy"
+            />
+          ) : null}
+          {openMove.cues?.length ? (
+            <ol className="mobility-guide__cues">
+              {openMove.cues.map((cue) => (
+                <li key={cue}>{cue}</li>
+              ))}
+            </ol>
+          ) : null}
+        </div>
+      ) : null}
+
+      <p className="training-meta">
+        Completed {weekCount} time{weekCount === 1 ? '' : 's'} in the last 7 days.
+      </p>
       <div className="training-form">
         <label className="path-field">
           <span>Optional note</span>

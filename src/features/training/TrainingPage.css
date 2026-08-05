@@ -177,3 +177,61 @@
   flex-wrap: wrap;
   gap: 0.45rem;
 }
+
+.training-checklist__btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.training-checklist__btn:hover .training-checklist__detail {
+  color: var(--path-gold);
+}
+
+.mobility-guide {
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.mobility-guide__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.mobility-guide__title {
+  margin: 0.15rem 0 0;
+  font-size: 1.15rem;
+}
+
+.mobility-guide__image {
+  width: 100%;
+  max-height: 22rem;
+  object-fit: contain;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--path-surface) 80%, #fff);
+  border: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.mobility-guide__cues {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--path-text);
+}

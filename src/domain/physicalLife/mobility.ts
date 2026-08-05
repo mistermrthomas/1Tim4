@@ -3,15 +3,37 @@ import { todayDateKey, newId } from '../physical/store';
 
 export const MOBILITY_STORE_KEY = 'path-mobility-v1';
 
-export const MOBILITY_MOVES = [
-  { id: 'doorway_chest', name: 'Doorway Chest Stretch', detail: '30 seconds per side' },
+export type MobilityMove = {
+  id: string;
+  name: string;
+  detail: string;
+  /** Optional how-to image under /public */
+  imageSrc?: string;
+  /** Short coaching cues shown with the image. */
+  cues?: string[];
+};
+
+export const MOBILITY_MOVES: MobilityMove[] = [
+  {
+    id: 'doorway_chest',
+    name: 'Doorway Chest Stretch',
+    detail: '30 seconds per side',
+    imageSrc: '/assets/mobility/doorway-chest-stretch.png',
+    cues: [
+      'Stand in a doorway and place one forearm on the frame at about shoulder height.',
+      'Keep the elbow bent near 90 degrees.',
+      'Step the same-side foot forward and gently lean through the doorway until you feel a stretch across the chest and front of the shoulder.',
+      'Breathe slowly. Switch sides after about 30 seconds.',
+      'Stay mild — stop if shoulder pain increases.',
+    ],
+  },
   { id: 'overhead_lat', name: 'Overhead Lat Stretch', detail: '30 seconds per side' },
   { id: 'cross_body_shoulder', name: 'Cross-Body Shoulder Stretch', detail: '30 seconds per side' },
   { id: 'open_book', name: 'Open Book Rotation', detail: '8 reps per side' },
   { id: 'hip_flexor', name: 'Half-Kneeling Hip Flexor Stretch', detail: '30 seconds per side' },
   { id: 'hamstring', name: 'Hamstring Stretch', detail: '30 seconds per side' },
   { id: 'wall_calf', name: 'Wall Calf Stretch', detail: '30 seconds per side' },
-] as const;
+];
 
 export type MobilityEntry = {
   id: string;
