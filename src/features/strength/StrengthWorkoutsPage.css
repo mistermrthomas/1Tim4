@@ -318,6 +318,31 @@
   color: var(--path-gold);
 }
 
+.strength-table__row--selected .strength-table__sticky,
+.strength-table__row--selected td {
+  background: color-mix(in srgb, var(--path-gold) 10%, transparent);
+}
+
+.strength-detail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.22);
+}
+
+.strength-detail-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.strength-detail-panel .strength-summary__title {
+  margin-top: 0.2rem;
+}
+
 .strength-table__tag {
   display: block;
   font-size: 0.58rem;

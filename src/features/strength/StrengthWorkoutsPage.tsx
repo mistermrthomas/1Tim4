@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { addDays } from '../../domain/calendar/week';
 import { todayDateKey } from '../../domain/physical/store';
@@ -38,7 +38,6 @@ import './StrengthWorkoutsPage.css';
 type View =
   | { kind: 'home' }
   | { kind: 'workout'; workoutId: string }
-  | { kind: 'exercise'; exerciseId: string; workoutId: string | null }
   | {
       kind: 'log';
       exerciseId: string;
@@ -295,12 +294,140 @@ function LogForm({
   );
 }
 
+function ExerciseDetailPanel({
+  state,
+  exercise,
+  techniqueDraft,
+  onTechniqueDraft,
+  onTechniqueSave,
+  onLog,
+  onEditEntry,
+  onClose,
+}: {
+  state: StrengthState;
+  exercise: StrengthExercise;
+  techniqueDraft: string | null;
+  onTechniqueDraft: (value: string) => void;
+  onTechniqueSave: () => void;
+  onLog: () => void;
+  onEditEntry: (entryId: string) => void;
+  onClose: () => void;
+}) {
+  const history = entriesForExercise(state, exercise.id);
+  const last = history[0] ?? null;
+  const best = personalBestWeight(history);
+  const note = techniqueDraft ?? exercise.techniqueNote;
+
+  return (
+    <div id="exercise-detail" className="strength-detail-panel">
+      <section className="strength-summary path-surface">
+        <div className="strength-detail-panel__head">
+          <p className="path-eyebrow">Exercise detail</p>
+          <button type="button" className="strength-page__back" onClick={onClose}>
+            Close
+          </button>
+        </div>
+        <h2 className="strength-summary__title path-display">{exercise.name}</h2>
+        <dl className="strength-summary__grid">
+          <div className="strength-exercise__stat">
+            <dt>Current working weight</dt>
+            <dd>{last ? formatWeight(last.weightLb, exercise.weightSuffix) : '—'}</dd>
+          </div>
+          <div className="strength-exercise__stat">
+            <dt>Last workout</dt>
+            <dd>{last?.date ?? '—'}</dd>
+          </div>
+          <div className="strength-exercise__stat">
+            <dt>Equipment</dt>
+            <dd>
+              {exercise.equipment}
+              {exercise.maxWeightLb != null
+                ? ` · max ${formatWeight(exercise.maxWeightLb, exercise.weightSuffix)}`
+                : ''}
+            </dd>
+          </div>
+          <div className="strength-exercise__stat">
+            <dt>Recommended next</dt>
+            <dd className="dd--rec">{formatRecommendedNext(exercise, last)}</dd>
+          </div>
+          <div className="strength-exercise__stat">
+            <dt>Personal best</dt>
+            <dd>{best != null ? formatWeight(best, exercise.weightSuffix) : '—'}</dd>
+          </div>
+          <div className="strength-exercise__stat">
+            <dt>Latest difficulty</dt>
+            <dd>{last ? difficultyLabel(last.difficulty) : '—'}</dd>
+          </div>
+          <div className="strength-exercise__stat">
+            <dt>Latest pain</dt>
+            <dd>{last ? String(last.pain) : '—'}</dd>
+          </div>
+        </dl>
+        <label className="path-field">
+          <span>Permanent technique note</span>
+          <textarea
+            value={note}
+            onChange={(e) => onTechniqueDraft(e.target.value)}
+            onBlur={onTechniqueSave}
+            rows={2}
+          />
+        </label>
+        <div className="strength-exercise__actions">
+          <Button onClick={onLog}>Log today’s result</Button>
+        </div>
+      </section>
+
+      <section className="path-surface strength-summary">
+        <p className="today-panel__label">History</p>
+        <p className="strength-progress__hint">Tap a row to edit.</p>
+        {history.length === 0 ? (
+          <p className="strength-empty">No history yet.</p>
+        ) : (
+          <div className="strength-table-wrap">
+            <table className="strength-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Weight</th>
+                  <th>Sets</th>
+                  <th>Reps</th>
+                  <th>Difficulty</th>
+                  <th>Pain</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((row) => (
+                  <tr
+                    key={row.id}
+                    className="strength-table__row--edit"
+                    onClick={() => onEditEntry(row.id)}
+                  >
+                    <td>{row.date}</td>
+                    <td>{formatWeight(row.weightLb, exercise.weightSuffix)}</td>
+                    <td>{row.setCount}</td>
+                    <td>{formatReps(row.reps)}</td>
+                    <td>{difficultyLabel(row.difficulty)}</td>
+                    <td>{row.pain}</td>
+                    <td>{row.notes || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
 function ProgressionTable({
   state,
   exercises,
   label = 'Progression',
   hint = 'Tap a cell to edit. Empty cells for yesterday/today add a new log. Tap an exercise name for history.',
   showWorkout = false,
+  selectedExerciseId = null,
   onOpenCell,
   onLogToday,
   onOpenExercise,
@@ -310,6 +437,7 @@ function ProgressionTable({
   label?: string;
   hint?: string;
   showWorkout?: boolean;
+  selectedExerciseId?: string | null;
   onOpenCell: (exerciseId: string, date: string, entryId?: string) => void;
   onLogToday: (exerciseId: string) => void;
   onOpenExercise?: (exerciseId: string) => void;
@@ -360,7 +488,12 @@ function ProgressionTable({
                 const workout = state.workouts.find((w) => w.id === exercise.workoutId);
                 const atMax = last ? isAtEquipmentMax(exercise, last.weightLb) : false;
                 return (
-                  <tr key={exercise.id}>
+                  <tr
+                    key={exercise.id}
+                    className={
+                      selectedExerciseId === exercise.id ? 'strength-table__row--selected' : undefined
+                    }
+                  >
                     <th scope="row" className="strength-table__sticky strength-table__exercise">
                       {onOpenExercise ? (
                         <button
@@ -456,10 +589,11 @@ export function StrengthWorkoutsPage() {
   const [params, setParams] = useSearchParams();
   const [state, setState] = useState<StrengthState>(() => readStrengthState());
   const [techniqueDraft, setTechniqueDraft] = useState<string | null>(null);
+  const [detailExerciseId, setDetailExerciseId] = useState<string | null>(null);
+  const detailRef = useRef<HTMLDivElement | null>(null);
 
   const view: View = useMemo(() => {
     const log = params.get('log');
-    const exerciseId = params.get('exercise');
     const workoutId = params.get('w');
     const entryId = params.get('entry') || undefined;
     const preferredDate = params.get('date') || undefined;
@@ -472,13 +606,6 @@ export function StrengthWorkoutsPage() {
         preferredDate,
       };
     }
-    if (exerciseId) {
-      return {
-        kind: 'exercise',
-        exerciseId,
-        workoutId: workoutId || getExercise(state, exerciseId)?.workoutId || null,
-      };
-    }
     if (workoutId) return { kind: 'workout', workoutId };
     return { kind: 'home' };
   }, [params, state]);
@@ -486,10 +613,6 @@ export function StrengthWorkoutsPage() {
   const setView = (next: View) => {
     const nextParams = new URLSearchParams();
     if (next.kind === 'workout') nextParams.set('w', next.workoutId);
-    if (next.kind === 'exercise') {
-      nextParams.set('exercise', next.exerciseId);
-      if (next.workoutId) nextParams.set('w', next.workoutId);
-    }
     if (next.kind === 'log') {
       nextParams.set('log', next.exerciseId);
       if (next.workoutId) nextParams.set('w', next.workoutId);
@@ -499,7 +622,23 @@ export function StrengthWorkoutsPage() {
     setParams(nextParams, { replace: false });
   };
 
+  const openExerciseDetail = (exerciseId: string) => {
+    setTechniqueDraft(null);
+    setDetailExerciseId(exerciseId);
+  };
+
+  useEffect(() => {
+    if (!detailExerciseId || !detailRef.current) return;
+    detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [detailExerciseId]);
+
+  // Clear inline detail when leaving a workout context via URL.
+  useEffect(() => {
+    if (view.kind === 'log') setDetailExerciseId(null);
+  }, [view.kind]);
+
   const workouts = activeWorkouts(state);
+  const detailExercise = detailExerciseId ? getExercise(state, detailExerciseId) : null;
 
   if (view.kind === 'log') {
     const exercise = getExercise(state, view.exerciseId);
@@ -562,153 +701,6 @@ export function StrengthWorkoutsPage() {
     );
   }
 
-  if (view.kind === 'exercise') {
-    const exercise = getExercise(state, view.exerciseId);
-    if (!exercise) {
-      return (
-        <div className="strength-page path-fade-in">
-          <p className="strength-empty">Exercise not found.</p>
-        </div>
-      );
-    }
-    const history = entriesForExercise(state, exercise.id);
-    const last = history[0] ?? null;
-    const best = personalBestWeight(history);
-    const note = techniqueDraft ?? exercise.techniqueNote;
-
-    return (
-      <div className="strength-page path-fade-in">
-        <button
-          type="button"
-          className="strength-page__back"
-          onClick={() =>
-            setView(
-              view.workoutId
-                ? { kind: 'workout', workoutId: view.workoutId }
-                : { kind: 'home' },
-            )
-          }
-        >
-          ← Back
-        </button>
-        <section className="strength-summary path-surface">
-          <h1 className="strength-summary__title path-display">{exercise.name}</h1>
-          <dl className="strength-summary__grid">
-            <div className="strength-exercise__stat">
-              <dt>Current working weight</dt>
-              <dd>
-                {last ? formatWeight(last.weightLb, exercise.weightSuffix) : '—'}
-              </dd>
-            </div>
-            <div className="strength-exercise__stat">
-              <dt>Last workout</dt>
-              <dd>{last?.date ?? '—'}</dd>
-            </div>
-            <div className="strength-exercise__stat">
-              <dt>Equipment</dt>
-              <dd>
-                {exercise.equipment}
-                {exercise.maxWeightLb != null
-                  ? ` · max ${formatWeight(exercise.maxWeightLb, exercise.weightSuffix)}`
-                  : ''}
-              </dd>
-            </div>
-            <div className="strength-exercise__stat">
-              <dt>Recommended next</dt>
-              <dd className="dd--rec">{formatRecommendedNext(exercise, last)}</dd>
-            </div>
-            <div className="strength-exercise__stat">
-              <dt>Personal best</dt>
-              <dd>{best != null ? formatWeight(best, exercise.weightSuffix) : '—'}</dd>
-            </div>
-            <div className="strength-exercise__stat">
-              <dt>Latest difficulty</dt>
-              <dd>{last ? difficultyLabel(last.difficulty) : '—'}</dd>
-            </div>
-            <div className="strength-exercise__stat">
-              <dt>Latest pain</dt>
-              <dd>{last ? String(last.pain) : '—'}</dd>
-            </div>
-          </dl>
-          <label className="path-field">
-            <span>Permanent technique note</span>
-            <textarea
-              value={note}
-              onChange={(e) => setTechniqueDraft(e.target.value)}
-              onBlur={() => {
-                if (techniqueDraft == null) return;
-                setState(updateExerciseTechniqueNote(exercise.id, techniqueDraft));
-                setTechniqueDraft(null);
-              }}
-              rows={2}
-            />
-          </label>
-          <div className="strength-exercise__actions">
-            <Button
-              onClick={() =>
-                setView({
-                  kind: 'log',
-                  exerciseId: exercise.id,
-                  workoutId: view.workoutId || exercise.workoutId,
-                })
-              }
-            >
-              Log today’s result
-            </Button>
-          </div>
-        </section>
-
-        <section className="path-surface strength-summary">
-          <p className="today-panel__label">History</p>
-          <p className="strength-progress__hint">Tap a row to edit.</p>
-          {history.length === 0 ? (
-            <p className="strength-empty">No history yet.</p>
-          ) : (
-            <div className="strength-table-wrap">
-              <table className="strength-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Weight</th>
-                    <th>Sets</th>
-                    <th>Reps</th>
-                    <th>Difficulty</th>
-                    <th>Pain</th>
-                    <th>Notes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((row) => (
-                    <tr
-                      key={row.id}
-                      className="strength-table__row--edit"
-                      onClick={() =>
-                        setView({
-                          kind: 'log',
-                          exerciseId: exercise.id,
-                          workoutId: view.workoutId || exercise.workoutId,
-                          entryId: row.id,
-                        })
-                      }
-                    >
-                      <td>{row.date}</td>
-                      <td>{formatWeight(row.weightLb, exercise.weightSuffix)}</td>
-                      <td>{row.setCount}</td>
-                      <td>{formatReps(row.reps)}</td>
-                      <td>{difficultyLabel(row.difficulty)}</td>
-                      <td>{row.pain}</td>
-                      <td>{row.notes || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      </div>
-    );
-  }
-
   if (view.kind === 'workout') {
     const workout = state.workouts.find((w) => w.id === view.workoutId) as
       | StrengthWorkout
@@ -718,7 +710,14 @@ export function StrengthWorkoutsPage() {
 
     return (
       <div className="strength-page strength-page--wide path-fade-in">
-        <button type="button" className="strength-page__back" onClick={() => setView({ kind: 'home' })}>
+        <button
+          type="button"
+          className="strength-page__back"
+          onClick={() => {
+            setDetailExerciseId(null);
+            setView({ kind: 'home' });
+          }}
+        >
           ← All workouts
         </button>
         <header className="strength-page__header">
@@ -728,7 +727,7 @@ export function StrengthWorkoutsPage() {
           </h1>
           <p className="strength-page__lede">
             Use Log for today’s result, or tap a cell to edit. Tap an exercise name for history and
-            details.
+            details below.
           </p>
           {sessionNote ? (
             <p className="strength-page__lede">Latest session note: {sessionNote.notes}</p>
@@ -738,6 +737,7 @@ export function StrengthWorkoutsPage() {
         <ProgressionTable
           state={state}
           exercises={exercises}
+          selectedExerciseId={detailExerciseId}
           onOpenCell={(exerciseId, date, entryId) =>
             setView({
               kind: 'log',
@@ -755,14 +755,43 @@ export function StrengthWorkoutsPage() {
               preferredDate: todayDateKey(),
             })
           }
-          onOpenExercise={(exerciseId) =>
-            setView({
-              kind: 'exercise',
-              exerciseId,
-              workoutId: view.workoutId,
-            })
-          }
+          onOpenExercise={openExerciseDetail}
         />
+
+        {detailExercise ? (
+          <div ref={detailRef}>
+            <ExerciseDetailPanel
+              state={state}
+              exercise={detailExercise}
+              techniqueDraft={techniqueDraft}
+              onTechniqueDraft={setTechniqueDraft}
+              onTechniqueSave={() => {
+                if (techniqueDraft == null) return;
+                setState(updateExerciseTechniqueNote(detailExercise.id, techniqueDraft));
+                setTechniqueDraft(null);
+              }}
+              onLog={() =>
+                setView({
+                  kind: 'log',
+                  exerciseId: detailExercise.id,
+                  workoutId: view.workoutId,
+                })
+              }
+              onEditEntry={(entryId) =>
+                setView({
+                  kind: 'log',
+                  exerciseId: detailExercise.id,
+                  workoutId: view.workoutId,
+                  entryId,
+                })
+              }
+              onClose={() => {
+                setTechniqueDraft(null);
+                setDetailExerciseId(null);
+              }}
+            />
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -787,7 +816,10 @@ export function StrengthWorkoutsPage() {
               key={workout.id}
               type="button"
               className="strength-pick__card"
-              onClick={() => setView({ kind: 'workout', workoutId: workout.id })}
+              onClick={() => {
+                setDetailExerciseId(null);
+                setView({ kind: 'workout', workoutId: workout.id });
+              }}
             >
               <p className="strength-pick__eyebrow">Workout {workout.order}</p>
               <p className="strength-pick__name">{workout.shortLabel}</p>
@@ -801,8 +833,9 @@ export function StrengthWorkoutsPage() {
         state={state}
         exercises={allActive}
         label="All exercises"
-        hint="Every active lift in one table. Tap a cell to edit, or an exercise name for history."
+        hint="Every active lift in one table. Tap a cell to edit, or an exercise name for history below."
         showWorkout
+        selectedExerciseId={detailExerciseId}
         onOpenCell={(exerciseId, date, entryId) => {
           const exercise = getExercise(state, exerciseId);
           setView({
@@ -822,15 +855,43 @@ export function StrengthWorkoutsPage() {
             preferredDate: todayDateKey(),
           });
         }}
-        onOpenExercise={(exerciseId) => {
-          const exercise = getExercise(state, exerciseId);
-          setView({
-            kind: 'exercise',
-            exerciseId,
-            workoutId: exercise?.workoutId ?? null,
-          });
-        }}
+        onOpenExercise={openExerciseDetail}
       />
+
+      {detailExercise ? (
+        <div ref={detailRef}>
+          <ExerciseDetailPanel
+            state={state}
+            exercise={detailExercise}
+            techniqueDraft={techniqueDraft}
+            onTechniqueDraft={setTechniqueDraft}
+            onTechniqueSave={() => {
+              if (techniqueDraft == null) return;
+              setState(updateExerciseTechniqueNote(detailExercise.id, techniqueDraft));
+              setTechniqueDraft(null);
+            }}
+            onLog={() =>
+              setView({
+                kind: 'log',
+                exerciseId: detailExercise.id,
+                workoutId: detailExercise.workoutId,
+              })
+            }
+            onEditEntry={(entryId) =>
+              setView({
+                kind: 'log',
+                exerciseId: detailExercise.id,
+                workoutId: detailExercise.workoutId,
+                entryId,
+              })
+            }
+            onClose={() => {
+              setTechniqueDraft(null);
+              setDetailExerciseId(null);
+            }}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
