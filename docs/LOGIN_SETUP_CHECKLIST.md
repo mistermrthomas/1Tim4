@@ -38,7 +38,9 @@ Save.
 
 Apply to **Production** (and Preview if you use preview URLs).
 
-**Deployments → Redeploy** latest `main` (env vars only apply after a new build).
+**Important:** PATH is a Vite app. Keys named `NEXT_PUBLIC_SUPABASE_*` or bare `SUPABASE_*` do **not** enable the Sign in buttons. You must use the `VITE_` names above, then redeploy.
+
+**Deployments → Redeploy** latest `main` (env vars only apply after a new build). After redeploy, Settings should show **Sign in with Apple / Google** instead of “Cloud sign-in is not enabled”.
 
 Local dev (optional):
 
