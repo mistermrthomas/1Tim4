@@ -80,7 +80,11 @@ function extractOutputText(response: OpenAI.Responses.Response): string {
 }
 
 export class OpenAISermonPlanGenerator implements SermonPlanGenerator {
-  constructor(private readonly client: OpenAI) {}
+  private readonly client: OpenAI;
+
+  constructor(client: OpenAI) {
+    this.client = client;
+  }
 
   async generate(input: SermonPlanGenerateInput): Promise<SermonPlanGenerateResult> {
     const model = resolveOpenAIModelId(

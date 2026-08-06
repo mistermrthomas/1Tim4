@@ -3,7 +3,7 @@ import {
   isUsableSermonTitle,
   normalizeSermonTitle,
   stripSermonTitleQuotes,
-} from './sermonTitle';
+} from './sermonTitle.js';
 
 const WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as const;
 

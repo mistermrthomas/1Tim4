@@ -56,20 +56,26 @@ export async function requestSermonPlan(body: SermonPlanRequest): Promise<{
     );
   }
 
-  const payload = (await res.json().catch(() => ({}))) as {
+  const rawText = await res.text().catch(() => '');
+  let payload: {
     error?: string;
     code?: string;
     plan?: unknown;
     modelUsed?: string;
-  };
+  } = {};
+  try {
+    payload = rawText ? (JSON.parse(rawText) as typeof payload) : {};
+  } catch {
+    payload = {};
+  }
 
   if (!res.ok) {
     const code = (payload.code as SermonPlanClientErrorCode) || 'SERVER_ERROR';
-    throw new SermonPlanClientError(
-      payload.error || 'AI planning failed.',
-      code,
-      res.status,
-    );
+    const fallback =
+      rawText.includes('FUNCTION_INVOCATION_FAILED')
+        ? 'The sermon planning service crashed. Try again after a redeploy, or continue manually.'
+        : 'AI planning failed.';
+    throw new SermonPlanClientError(payload.error || fallback, code, res.status);
   }
 
   const parsed = safeParseSermonPlan(payload.plan);

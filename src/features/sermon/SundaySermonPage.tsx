@@ -88,7 +88,9 @@ export function SundaySermonPage() {
       });
       setNotesSavedOnError(true);
       setError(
-        'Your sermon notes were saved, but the weekly training could not be generated. Try again.',
+        result.error
+          ? `Your sermon notes were saved, but the weekly training could not be generated. ${result.error}`
+          : 'Your sermon notes were saved, but the weekly training could not be generated. Try again.',
       );
       return;
     }

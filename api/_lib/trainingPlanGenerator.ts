@@ -68,7 +68,11 @@ function extractOutputText(response: OpenAI.Responses.Response): string {
 }
 
 export class OpenAITrainingPlanGenerator {
-  constructor(private readonly client: OpenAI) {}
+  private readonly client: OpenAI;
+
+  constructor(client: OpenAI) {
+    this.client = client;
+  }
 
   async generate(input: TrainingPlanGenerateInput): Promise<TrainingPlanGenerateResult> {
     const model = resolveOpenAIModelId(
