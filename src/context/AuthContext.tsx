@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -25,6 +26,8 @@ export interface AuthContextValue {
   cloudSyncStatus: CloudSyncStatus;
   cloudSyncMessage: string | null;
   lastCloudSyncAt: string | null;
+  /** Increments when a sync changes local data — pages can refetch without remounting. */
+  cloudDataEpoch: number;
   signInWithApple: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOutCloud: () => Promise<void>;
@@ -35,6 +38,14 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 function getRedirectUrl(): string {
   return `${window.location.origin}/auth/callback`;
+}
+
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'object' && err && 'message' in err) {
+    return String((err as { message: unknown }).message);
+  }
+  return 'Could not sync with cloud.';
 }
 
 export function AuthProvider({
@@ -51,70 +62,77 @@ export function AuthProvider({
   );
   const [cloudSyncMessage, setCloudSyncMessage] = useState<string | null>(null);
   const [lastCloudSyncAt, setLastCloudSyncAt] = useState<string | null>(null);
+  const [cloudDataEpoch, setCloudDataEpoch] = useState(0);
 
-  const runCloudMerge = useCallback(
-    async (userId: string) => {
-      setCloudSyncStatus('syncing');
-      setCloudSyncMessage(null);
+  const reloadRef = useRef(onActiveProfileShouldReload);
+  reloadRef.current = onActiveProfileShouldReload;
+  const syncInFlightRef = useRef(false);
+  const userRef = useRef<User | null>(null);
+  userRef.current = user;
+
+  const runCloudMerge = useCallback(async (userId: string) => {
+    if (syncInFlightRef.current) return false;
+    syncInFlightRef.current = true;
+    setCloudSyncStatus('syncing');
+    setCloudSyncMessage(null);
+    try {
+      const activeId = getActiveProfileId();
+      const { activeProfileReloaded } = await syncUserTrailsOnLogin(
+        userId,
+        listProfiles(),
+        activeId,
+      );
+
+      let weeklyReloaded = false;
+      let weeklyWarning: string | null = null;
       try {
-        const activeId = getActiveProfileId();
-        const { activeProfileReloaded } = await syncUserTrailsOnLogin(
-          userId,
-          listProfiles(),
-          activeId,
-        );
-
-        let weeklyReloaded = false;
-        let weeklyWarning: string | null = null;
-        try {
-          const weekly = await syncWeeklyPlansOnLogin(userId, activeId ?? 'default');
-          weeklyReloaded = weekly.reloaded;
-        } catch (weeklyErr) {
-          const msg = weeklyErr instanceof Error ? weeklyErr.message : 'Weekly plan sync failed';
-          // Table missing until migration is applied — do not fail the whole sign-in sync.
-          weeklyWarning =
-            /relation .*path_weekly_plans.* does not exist|Could not find the table/i.test(msg)
-              ? 'Trail synced. Run the path_weekly_plans migration to sync sermons across devices.'
-              : /permission denied|42501/i.test(msg)
-                ? 'Trail synced. Sermon sync needs a database permission fix — run the grants SQL in Supabase.'
-                : `Trail synced. Sermon sync issue: ${msg}`;
-        }
-
-        const at = new Date().toISOString();
-        setLastCloudSyncAt(at);
-        setCloudSyncStatus(weeklyWarning ? 'error' : 'synced');
-        setCloudSyncMessage(
-          weeklyWarning ??
-            (weeklyReloaded
-              ? 'Trail and weekly training synced with your account.'
-              : 'Synced with your account.'),
-        );
-        // Remount formation routes after login sync so Today/Sermon reload from cache.
-        onActiveProfileShouldReload?.();
-        return activeProfileReloaded || weeklyReloaded;
-      } catch (err) {
-        setCloudSyncStatus('error');
-        const msg =
-          err instanceof Error
-            ? err.message
-            : typeof err === 'object' && err && 'message' in err
-              ? String((err as { message: unknown }).message)
-              : 'Could not sync with cloud.';
-        setCloudSyncMessage(
-          /permission denied|42501/i.test(msg)
-            ? 'Cloud sync blocked by database permissions. Run the grants SQL in Supabase, then Sync now.'
-            : msg || 'Could not sync with cloud.',
-        );
-        return false;
+        const weekly = await syncWeeklyPlansOnLogin(userId, activeId ?? 'default');
+        weeklyReloaded = weekly.reloaded;
+      } catch (weeklyErr) {
+        const msg = errorMessage(weeklyErr);
+        weeklyWarning =
+          /relation .*path_weekly_plans.* does not exist|Could not find the table/i.test(msg)
+            ? 'Trail synced. Run the path_weekly_plans migration to sync sermons across devices.'
+            : /permission denied|42501/i.test(msg)
+              ? 'Trail synced. Sermon sync needs a database permission fix — run the grants SQL in Supabase.'
+              : `Trail synced. Sermon sync issue: ${msg}`;
       }
-    },
-    [onActiveProfileShouldReload],
-  );
+
+      const at = new Date().toISOString();
+      setLastCloudSyncAt(at);
+      setCloudSyncStatus(weeklyWarning ? 'error' : 'synced');
+      setCloudSyncMessage(
+        weeklyWarning ??
+          (weeklyReloaded || activeProfileReloaded
+            ? 'Synced with your account.'
+            : 'Synced with your account.'),
+      );
+
+      if (activeProfileReloaded || weeklyReloaded) {
+        setCloudDataEpoch((n) => n + 1);
+        reloadRef.current?.();
+        window.dispatchEvent(new CustomEvent('path-cloud-synced', { detail: { at } }));
+      }
+      return activeProfileReloaded || weeklyReloaded;
+    } catch (err) {
+      const msg = errorMessage(err);
+      setCloudSyncStatus('error');
+      setCloudSyncMessage(
+        /permission denied|42501/i.test(msg)
+          ? 'Cloud sync blocked by database permissions. Run the grants SQL in Supabase, then Sync now.'
+          : msg || 'Could not sync with cloud.',
+      );
+      return false;
+    } finally {
+      syncInFlightRef.current = false;
+    }
+  }, []);
 
   useEffect(() => {
     const onHide = () => flushCloudWeeklyPlanPushes();
     const onOnline = () => {
-      if (user) void runCloudMerge(user.id);
+      const current = userRef.current;
+      if (current) void runCloudMerge(current.id);
     };
     window.addEventListener('pagehide', onHide);
     window.addEventListener('online', onOnline);
@@ -122,12 +140,14 @@ export function AuthProvider({
       window.removeEventListener('pagehide', onHide);
       window.removeEventListener('online', onOnline);
     };
-  }, [user, runCloudMerge]);
+  }, [runCloudMerge]);
 
   useEffect(() => {
     if (!supabase) return;
+    let cancelled = false;
 
-    supabase.auth.getSession().then(({ data }) => {
+    void supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
       setSession(data.session);
       setUser(data.session?.user ?? null);
       if (data.session?.user) {
@@ -135,19 +155,23 @@ export function AuthProvider({
       }
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
-      if (nextSession?.user) {
+      // Avoid TOKEN_REFRESHED / INITIAL_SESSION loops — initial load uses getSession above.
+      if (event === 'SIGNED_IN' && nextSession?.user) {
         void runCloudMerge(nextSession.user.id);
-      } else {
+      } else if (event === 'SIGNED_OUT') {
         setCloudSyncStatus('idle');
         setCloudSyncMessage(null);
         setLastCloudSyncAt(null);
       }
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, [runCloudMerge]);
 
   const signInWithOAuth = useCallback(async (provider: 'apple' | 'google') => {
@@ -187,6 +211,7 @@ export function AuthProvider({
       cloudSyncStatus,
       cloudSyncMessage,
       lastCloudSyncAt,
+      cloudDataEpoch,
       signInWithApple,
       signInWithGoogle,
       signOutCloud,
@@ -198,6 +223,7 @@ export function AuthProvider({
       cloudSyncStatus,
       cloudSyncMessage,
       lastCloudSyncAt,
+      cloudDataEpoch,
       signInWithApple,
       signInWithGoogle,
       signOutCloud,

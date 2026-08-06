@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
@@ -88,6 +88,9 @@ function AppRoutes({ cloudReloadKey }: { cloudReloadKey: number }) {
 
 export default function App() {
   const [cloudReloadKey, setCloudReloadKey] = useState(0);
+  const onCloudReload = useCallback(() => {
+    setCloudReloadKey((k) => k + 1);
+  }, []);
 
   useEffect(() => {
     void runDemoPurgeIfNeeded();
@@ -95,7 +98,7 @@ export default function App() {
 
   return (
     <ProfileProvider>
-      <AuthProvider onActiveProfileShouldReload={() => setCloudReloadKey((k) => k + 1)}>
+      <AuthProvider onActiveProfileShouldReload={onCloudReload}>
         <BrowserRouter>
           <Routes>
             <Route path="/auth/callback" element={<AuthCallbackPage />} />

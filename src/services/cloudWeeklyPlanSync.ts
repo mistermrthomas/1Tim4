@@ -1,5 +1,6 @@
 import { hasMeaningfulWeeklyPlan } from '../domain/weeklyPlan/meaningful';
 import {
+  getActiveWeeklyPlan,
   listWeeklyPlans,
   replaceWeeklyPlanFromCloud,
   setActiveWeeklyPlanId,
@@ -197,8 +198,9 @@ export async function syncWeeklyPlansOnLogin(
     .filter((p) => p.status === 'active')
     .sort((a, b) => (b.activatedAt ?? b.updatedAt).localeCompare(a.activatedAt ?? a.updatedAt));
   if (activeCandidates[0]) {
+    const previous = await getActiveWeeklyPlan();
     await setActiveWeeklyPlanId(activeCandidates[0].id);
-    reloaded = true;
+    if (previous?.id !== activeCandidates[0].id) reloaded = true;
   }
 
   return { reloaded };

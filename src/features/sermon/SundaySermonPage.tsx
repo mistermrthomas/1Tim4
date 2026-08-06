@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
   buildWeekFromSermon,
   lastSermonDefaults,
@@ -24,6 +25,7 @@ const EMPTY: SermonFormInput = {
 
 export function SundaySermonPage() {
   const navigate = useNavigate();
+  const { cloudDataEpoch } = useAuth();
   const [form, setForm] = useState<SermonFormInput>(EMPTY);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [ready, setReady] = useState(false);
@@ -58,7 +60,7 @@ export function SundaySermonPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [cloudDataEpoch]);
 
   const patch = (partial: Partial<SermonFormInput>) => {
     setForm((prev) => ({ ...prev, ...partial }));

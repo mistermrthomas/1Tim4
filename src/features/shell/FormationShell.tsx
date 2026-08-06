@@ -22,7 +22,7 @@ const MORE_LINKS = [
 ] as const;
 
 export function FormationShell() {
-  const { lastCloudSyncAt, cloudSyncStatus, user } = useAuth();
+  const { cloudSyncStatus, user } = useAuth();
   const [theme, setTheme] = useState<PathTheme>(() => readStoredTheme());
   const [pendingWeekly, setPendingWeekly] = useState(() => hasPendingWeeklyPlanSync());
   const [moreOpen, setMoreOpen] = useState(false);
@@ -40,7 +40,7 @@ export function FormationShell() {
       window.removeEventListener('path-weekly-plan-pending', refresh);
       window.removeEventListener('storage', refresh);
     };
-  }, [lastCloudSyncAt]);
+  }, []);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -159,7 +159,7 @@ export function FormationShell() {
               <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </button>
           </div>
-          <Outlet key={lastCloudSyncAt ?? 'local'} />
+          <Outlet />
         </div>
       </main>
 

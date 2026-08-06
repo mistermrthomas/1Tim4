@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { isSundayPlanningDay } from '../../domain/calendar/week';
 import { todayDateKey } from '../../domain/physical/store';
 import { hasGeneratedBiblicalTraining } from '../../domain/sermon/fromWeeklyPlan';
@@ -12,6 +13,7 @@ import './TodayPage.css';
 
 export function TodayPage() {
   const location = useLocation();
+  const { cloudDataEpoch } = useAuth();
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan | null>(null);
   const [ready, setReady] = useState(false);
   const [successFlash, setSuccessFlash] = useState(
@@ -38,7 +40,7 @@ export function TodayPage() {
     return () => {
       cancelled = true;
     };
-  }, [dateKey]);
+  }, [dateKey, cloudDataEpoch]);
 
   useEffect(() => {
     if (!successFlash) return;
