@@ -137,11 +137,13 @@ export function listPriorJournalSnippets(excludeDateKey: string, limit = 5): str
 
   const parts: string[] = [];
   for (const d of rows) {
-    if (d.morningReflection.trim()) {
-      parts.push(`${d.dateKey} observe: ${d.morningReflection.trim()}`);
+    const observe = (d.morningReflection ?? '').trim();
+    if (observe) {
+      parts.push(`${d.dateKey} observe: ${observe}`);
     }
-    if (d.reflectAnswer.trim()) {
-      parts.push(`${d.dateKey} reflect: ${d.reflectAnswer.trim()}`);
+    const reflect = (d.reflectAnswer ?? '').trim();
+    if (reflect) {
+      parts.push(`${d.dateKey} reflect: ${reflect}`);
     }
   }
   return parts.join('\n').slice(0, 3_000);

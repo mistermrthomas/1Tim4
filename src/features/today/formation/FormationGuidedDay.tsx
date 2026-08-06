@@ -77,11 +77,16 @@ export function FormationGuidedDay({
       (d) => d.date === dateKey && d.status !== 'removed' && d.title.trim().length > 0,
     )?.title.trim() || '';
 
-  const observation = log.morningReflection;
+  const observation = log.morningReflection ?? '';
   const observationReady = observation.trim().length >= OBSERVE_MIN;
   const showReflect = observationReady;
-  const showPractice = observationReady && (Boolean(log.reflectAnswer.trim()) || reflectStatus === 'ready' || reflectStatus === 'error');
-  const showBodyAndWork = showPractice || Boolean(log.concreteActionNote.trim()) || log.practiceDone;
+  const showPractice =
+    observationReady &&
+    (Boolean((log.reflectAnswer ?? '').trim()) ||
+      reflectStatus === 'ready' ||
+      reflectStatus === 'error');
+  const showBodyAndWork =
+    showPractice || Boolean((log.concreteActionNote ?? '').trim()) || log.practiceDone;
 
   useEffect(() => {
     let cancelled = false;
@@ -96,7 +101,7 @@ export function FormationGuidedDay({
 
   const generateReflectQuestion = useCallback(async () => {
     if (dayClosed) return;
-    const obs = loadBiblicalDay(dateKey).morningReflection.trim();
+    const obs = (loadBiblicalDay(dateKey).morningReflection ?? '').trim();
     if (obs.length < OBSERVE_MIN) return;
 
     const requestId = ++reflectRequestRef.current;
@@ -112,7 +117,7 @@ export function FormationGuidedDay({
         sermonNotes: weeklyPlan.church.sermonNotes,
         observation: obs,
         priorJournal: listPriorJournalSnippets(dateKey),
-        reflectPrompt: settings.reflectPrompt,
+        reflectPrompt: settings.reflectPrompt ?? '',
       });
       if (requestId !== reflectRequestRef.current) return;
       persist({
@@ -147,7 +152,7 @@ export function FormationGuidedDay({
   // Auto-ask once when observation becomes ready and no question yet.
   useEffect(() => {
     if (!observationReady || dayClosed) return;
-    if (log.reflectQuestion.trim()) {
+    if ((log.reflectQuestion ?? '').trim()) {
       setReflectStatus('ready');
       return;
     }
@@ -215,7 +220,7 @@ export function FormationGuidedDay({
             onBlur={() => {
               if (
                 observation.trim().length >= OBSERVE_MIN &&
-                !log.reflectQuestion.trim() &&
+                !(log.reflectQuestion ?? '').trim() &&
                 reflectStatus !== 'loading'
               ) {
                 void generateReflectQuestion();

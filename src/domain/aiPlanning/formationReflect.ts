@@ -35,5 +35,5 @@ export async function requestFormationReflect(
     throw new Error(payload.error || 'Could not prepare a reflection question.');
   }
 
-  return { question: payload.question.trim(), modelUsed: payload.modelUsed };
+  return { question: (payload.question ?? '').trim(), modelUsed: payload.modelUsed };
 }
