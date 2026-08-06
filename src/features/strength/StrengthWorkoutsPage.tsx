@@ -10,9 +10,12 @@ import {
   personalBestWeight,
   recommendedFromLast,
 } from '../../domain/strength/progression';
+import { getScheduledDay, readDayStatus } from '../../domain/strength/calendarSchedule';
+import { completeNextSlot } from '../../domain/strength/rotation';
 import {
   activeExercises,
   activeWorkouts,
+  addWorkoutNote,
   deleteStrengthLogEntry,
   entriesForExercise,
   entryForExerciseDate,
@@ -23,6 +26,7 @@ import {
   sessionDatesForExercises,
   updateExerciseTechniqueNote,
   upsertStrengthLogEntry,
+  workoutLogProgress,
 } from '../../domain/strength/store';
 import {
   DIFFICULTY_OPTIONS,
@@ -590,6 +594,7 @@ export function StrengthWorkoutsPage() {
   const [state, setState] = useState<StrengthState>(() => readStrengthState());
   const [techniqueDraft, setTechniqueDraft] = useState<string | null>(null);
   const [detailExerciseId, setDetailExerciseId] = useState<string | null>(null);
+  const [completionTick, setCompletionTick] = useState(0);
   const detailRef = useRef<HTMLDivElement | null>(null);
 
   const view: View = useMemo(() => {
@@ -707,6 +712,36 @@ export function StrengthWorkoutsPage() {
       | undefined;
     const exercises = exercisesForWorkout(state, view.workoutId);
     const sessionNote = state.workoutNotes.find((n) => n.workoutId === view.workoutId);
+    const todayKey = todayDateKey();
+    void completionTick;
+    const progress = workoutLogProgress(state, view.workoutId, todayKey);
+    const scheduled = getScheduledDay(todayKey);
+    const isTodaysPlan = scheduled.kind === 'workout' && scheduled.workoutId === view.workoutId;
+    const sessionMarked = state.workoutNotes.some(
+      (note) =>
+        note.workoutId === view.workoutId &&
+        note.date === todayKey &&
+        /workout complete/i.test(note.notes),
+    );
+    const workoutComplete =
+      sessionMarked || (isTodaysPlan && readDayStatus(todayKey) === 'completed');
+
+    const markComplete = () => {
+      // Only advance today’s calendar plan when this is the scheduled workout.
+      if (isTodaysPlan) {
+        completeNextSlot('', todayKey);
+      }
+      if (!sessionMarked) {
+        setState(
+          addWorkoutNote({
+            workoutId: view.workoutId,
+            date: todayKey,
+            notes: 'Workout complete.',
+          }),
+        );
+      }
+      setCompletionTick((n) => n + 1);
+    };
 
     return (
       <div className="strength-page strength-page--wide path-fade-in">
@@ -757,6 +792,39 @@ export function StrengthWorkoutsPage() {
           }
           onOpenExercise={openExerciseDetail}
         />
+
+        <section className="strength-complete path-surface" aria-label="Workout completion">
+          <p className="path-eyebrow">Today</p>
+          <p className="strength-complete__progress">
+            {progress.logged} of {progress.total} exercises logged
+            {isTodaysPlan ? ' · today’s plan' : ''}
+          </p>
+          {workoutComplete ? (
+            <p className="strength-complete__done">Workout complete for today.</p>
+          ) : (
+            <>
+              {progress.allLogged ? (
+                <p className="strength-complete__hint">
+                  All exercises are logged. Mark the workout complete when you’re finished.
+                </p>
+              ) : progress.logged > 0 ? (
+                <p className="strength-complete__hint">
+                  You can mark complete now, or finish logging the remaining exercises first.
+                </p>
+              ) : (
+                <p className="strength-complete__hint">
+                  Log today’s lifts, then mark the workout complete.
+                </p>
+              )}
+              <Button
+                onClick={markComplete}
+                disabled={progress.logged === 0}
+              >
+                Mark workout complete
+              </Button>
+            </>
+          )}
+        </section>
 
         {detailExercise ? (
           <div ref={detailRef}>

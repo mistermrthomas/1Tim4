@@ -323,6 +323,40 @@
   background: color-mix(in srgb, var(--path-gold) 10%, transparent);
 }
 
+.strength-complete {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 1rem;
+  padding: 1rem 1.05rem;
+}
+
+.strength-complete__progress {
+  margin: 0;
+  font-family: var(--path-font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--path-text);
+}
+
+.strength-complete__hint,
+.strength-complete__done {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--path-text-dim);
+}
+
+.strength-complete__done {
+  color: var(--path-gold);
+  font-weight: 600;
+}
+
+.strength-complete .path-btn {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+}
+
 .strength-detail-panel {
   display: flex;
   flex-direction: column;

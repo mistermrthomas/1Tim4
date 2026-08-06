@@ -227,6 +227,23 @@ export function sessionDatesForWorkout(
   );
 }
 
+/** How many of a workout’s active exercises have a log on the given date. */
+export function workoutLogProgress(
+  state: StrengthState,
+  workoutId: string,
+  dateKey: string,
+): { total: number; logged: number; allLogged: boolean } {
+  const exercises = exercisesForWorkout(state, workoutId);
+  const logged = exercises.filter((exercise) =>
+    Boolean(entryForExerciseDate(state, exercise.id, dateKey)),
+  ).length;
+  return {
+    total: exercises.length,
+    logged,
+    allLogged: exercises.length > 0 && logged === exercises.length,
+  };
+}
+
 export function activeExercises(state: StrengthState): StrengthExercise[] {
   return state.exercises
     .filter((e) => e.active)
