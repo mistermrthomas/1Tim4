@@ -100,7 +100,7 @@ function PhysicalOverview({ onOpen }: { onOpen: (section: PhysicalSection) => vo
   const strength = readStrengthState();
   bootstrapRotationFromLogs(strength);
   const rotation = readRotationState();
-  const next = getNextSlot(rotation);
+  const next = getNextSlot(rotation, todayDateKey());
   const last = getLastSlot(rotation);
   const travel = travelRecommendation();
   const mobilityWeek = mobilityCompletionsInLastDays(7);
@@ -109,7 +109,7 @@ function PhysicalOverview({ onOpen }: { onOpen: (section: PhysicalSection) => vo
     <>
       <dl className="training-grid training-grid--2">
         <div className="training-stat">
-          <dt>Next in rotation</dt>
+          <dt>Today’s plan</dt>
           <dd>{travel.trip ? travel.label : next.shortLabel}</dd>
         </div>
         <div className="training-stat">
@@ -153,7 +153,7 @@ function PhysicalOverview({ onOpen }: { onOpen: (section: PhysicalSection) => vo
 function StrengthSection() {
   const strength = readStrengthState();
   const [rotation, setRotation] = useState(() => bootstrapRotationFromLogs(strength));
-  const next = getNextSlot(rotation);
+  const next = getNextSlot(rotation, todayDateKey());
   const last = getLastSlot(rotation);
   const workouts = activeWorkouts(strength);
   const travel = isTravelDay();
@@ -174,17 +174,18 @@ function StrengthSection() {
           </dd>
         </div>
         <div className="training-stat">
-          <dt>Next recommended</dt>
+          <dt>Today’s scheduled</dt>
           <dd>{next.label}</dd>
         </div>
         <div className="training-stat">
           <dt>Travel</dt>
-          <dd>{travel ? 'Maintenance mode' : 'Normal rotation'}</dd>
+          <dd>{travel ? 'Maintenance mode' : 'Calendar plan'}</dd>
         </div>
       </dl>
       <p className="training-meta">
-        Rotation: A → B → Recovery/Walk → C → A → B → Recovery/Walk. Missed days do not skip
-        permanently — continue with the next slot.
+        Schedule follows the calendar week (Mon A · Tue B · Wed Recovery · Thu A · Fri B · Sat
+        Recovery/Walk · Sun Rest). A missed day is recorded in history and does not replace
+        tomorrow’s plan.
       </p>
       <div className="training-links">
         {workouts.map((workout) => (

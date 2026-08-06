@@ -16,9 +16,13 @@ import {
   resolveActiveDay,
   sermonConnectionCopy,
 } from '../../../domain/today/formationDay';
+import { saveWeeklyPlan } from '../../../domain/weeklyPlan/store';
 import type { WeeklyPlan } from '../../../domain/weeklyPlan/types';
 import { ScripturePassage } from './ScripturePassage';
-import { FormationPhysicalNext } from './FormationPhysicalNext';
+import {
+  FormationTodaysTraining,
+  FormationTrainingPreview,
+} from './FormationTodaysTraining';
 
 const OBSERVE_MIN = 12;
 
@@ -32,14 +36,23 @@ function useLiveClock(): Date {
   return now;
 }
 
+function isFormationComplete(log: BiblicalDayLog): boolean {
+  const observationReady = (log.morningReflection ?? '').trim().length >= OBSERVE_MIN;
+  const reflectAnswered = Boolean((log.reflectAnswer ?? '').trim());
+  // Spiritual journal complete after Observe + Respond. Practice can finish in Today's Training.
+  return observationReady && reflectAnswered;
+}
+
 export function FormationGuidedDay({
   weeklyPlan,
   dateKey,
   dayClosed,
+  onPlanChange,
 }: {
   weeklyPlan: WeeklyPlan;
   dateKey: string;
   dayClosed: boolean;
+  onPlanChange?: (plan: WeeklyPlan) => void;
 }) {
   const day = resolveActiveDay(weeklyPlan, dateKey);
   const [log, setLog] = useState<BiblicalDayLog>(() => loadBiblicalDay(dateKey));
@@ -48,7 +61,12 @@ export function FormationGuidedDay({
   );
   const [reflectError, setReflectError] = useState<string | null>(null);
   const [passageText, setPassageText] = useState('');
+  const [formationOpen, setFormationOpen] = useState(() => !isFormationComplete(loadBiblicalDay(dateKey)));
+  const [trainingRevealed, setTrainingRevealed] = useState(() =>
+    isFormationComplete(loadBiblicalDay(dateKey)),
+  );
   const reflectRequestRef = useRef(0);
+  const trainingRef = useRef<HTMLDivElement | null>(null);
   const now = useLiveClock();
 
   useEffect(() => {
@@ -56,6 +74,9 @@ export function FormationGuidedDay({
     setLog(next);
     setReflectStatus(next.reflectQuestion ? 'ready' : 'idle');
     setReflectError(null);
+    const complete = isFormationComplete(next);
+    setFormationOpen(!complete);
+    setTrainingRevealed(complete);
   }, [dateKey]);
 
   const persist = useCallback(
@@ -72,10 +93,11 @@ export function FormationGuidedDay({
   const scripture = day?.scripture || weeklyPlan.biblical.coreScripture;
   const practice = day?.practice || weeklyPlan.biblical.weeklyPractice;
   const connection = sermonConnectionCopy(weeklyPlan, day);
-  const workLine =
-    weeklyPlan.work.days.find(
-      (d) => d.date === dateKey && d.status !== 'removed' && d.title.trim().length > 0,
-    )?.title.trim() || '';
+  const workDay = weeklyPlan.work.days.find(
+    (d) => d.date === dateKey && d.status !== 'removed' && d.title.trim().length > 0,
+  );
+  const workLine = workDay?.title.trim() || '';
+  const workDone = workDay?.status === 'done';
 
   const observation = log.morningReflection ?? '';
   const observationReady = observation.trim().length >= OBSERVE_MIN;
@@ -87,12 +109,7 @@ export function FormationGuidedDay({
     reflectStatus === 'error';
   const showReflect = observationReady;
   const showPractice = observationReady && reflectReady;
-  // Body training appears once Observe → Reflect has started (question or answer),
-  // so the workout is never buried behind Practice alone.
-  const showBodyAndWork =
-    (observationReady && reflectReady) ||
-    Boolean((log.concreteActionNote ?? '').trim()) ||
-    log.practiceDone;
+  const formationComplete = isFormationComplete(log);
 
   useEffect(() => {
     let cancelled = false;
@@ -155,7 +172,6 @@ export function FormationGuidedDay({
     weeklyPlan.church.sermonTitle,
   ]);
 
-  // Auto-ask once when observation becomes ready and no question yet.
   useEffect(() => {
     if (!observationReady || dayClosed) return;
     if ((log.reflectQuestion ?? '').trim()) {
@@ -171,6 +187,36 @@ export function FormationGuidedDay({
     persist({ scriptureReviewed: true });
   }, [persist]);
 
+  const markWorkComplete = useCallback(async () => {
+    if (!workDay || workDay.status === 'done') return;
+    const next: WeeklyPlan = {
+      ...weeklyPlan,
+      work: {
+        ...weeklyPlan.work,
+        days: weeklyPlan.work.days.map((d) =>
+          d.id === workDay.id ? { ...d, status: 'done' as const } : d,
+        ),
+      },
+    };
+    const saved = await saveWeeklyPlan(next);
+    onPlanChange?.(saved);
+  }, [onPlanChange, weeklyPlan, workDay]);
+
+  const canContinue = formationComplete && showPractice;
+
+  // Reveal training once the spiritual steps are ready; keep Scripture open until Continue / return.
+  useEffect(() => {
+    if (canContinue || formationComplete) setTrainingRevealed(true);
+  }, [canContinue, formationComplete]);
+
+  const continueToTraining = useCallback(() => {
+    setTrainingRevealed(true);
+    setFormationOpen(false);
+    window.setTimeout(() => {
+      trainingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  }, []);
+
   return (
     <div className="formation-flow formation-flow--quiet">
       <header className="formation-hero formation-hero--quiet">
@@ -182,145 +228,191 @@ export function FormationGuidedDay({
           </span>
           <span className="formation-hero__time">{formatFormationTime(now)}</span>
         </p>
-        <h1 className="formation-hero__title">Begin today’s formation</h1>
+        <h1 className="formation-hero__title">
+          {formationComplete && !formationOpen
+            ? 'Continue today’s formation'
+            : 'Begin today’s formation'}
+        </h1>
         <p className="formation-hero__soft">
           {weeklyPlan.church.sermonTitle || weeklyPlan.biblical.weeklyTheme || 'This week'}
         </p>
       </header>
 
-      {/* 1. Read */}
-      <section className="formation-stage formation-stage--read" aria-label="Today’s reading">
-        <p className="formation-stage__label">Read</p>
-        <div className="formation-reading">
-          <ScripturePassage reference={scripture} mode="full" onReviewed={markScriptureReviewed} />
-        </div>
-      </section>
-
-      {/* 2. Observe */}
-      <section className="formation-stage formation-stage--observe" aria-label="Observe">
-        <p className="formation-stage__label">Observe</p>
-        <h2 className="formation-stage__question">What stood out to you?</h2>
-        <p className="formation-stage__hint">
-          Notice before you apply. Write what you saw in the text — a word, a tension, a surprise.
-        </p>
-        <label className="path-field formation-journal">
-          <span className="visually-hidden">Observation journal</span>
-          <textarea
-            rows={7}
-            value={observation}
-            disabled={dayClosed}
-            placeholder="Write freely…"
-            onChange={(e) => {
-              const value = e.target.value;
-              const patch: Partial<BiblicalDayLog> = {
-                morningReflection: value,
-                morningDone: value.trim().length >= OBSERVE_MIN,
-              };
-              if (log.reflectQuestion && value.trim().length < OBSERVE_MIN) {
-                patch.reflectQuestion = '';
-                patch.reflectAnswer = '';
-                setReflectStatus('idle');
-              }
-              persist(patch);
-            }}
-            onBlur={() => {
-              if (
-                observation.trim().length >= OBSERVE_MIN &&
-                !(log.reflectQuestion ?? '').trim() &&
-                reflectStatus !== 'loading'
-              ) {
-                void generateReflectQuestion();
-              }
-            }}
-          />
-        </label>
-      </section>
-
-      {/* 3. Reflect + Respond */}
-      {showReflect ? (
-        <section className="formation-stage" aria-label="Reflect">
-          <p className="formation-stage__label">Reflect</p>
-          {reflectStatus === 'loading' ? (
-            <p className="formation-stage__hint">Listening to your observation…</p>
-          ) : (
-            <>
-              <h2 className="formation-stage__question">
-                {log.reflectQuestion || 'Why do you think this stood out today?'}
-              </h2>
-              {reflectError ? (
-                <p className="formation-stage__hint">{reflectError}</p>
-              ) : (
-                <p className="formation-stage__hint">One question. Answer honestly.</p>
-              )}
-              {!dayClosed && log.reflectQuestion ? (
-                <button
-                  type="button"
-                  className="formation-text-btn"
-                  onClick={() => void generateReflectQuestion()}
-                >
-                  Ask a different question
-                </button>
-              ) : null}
-            </>
-          )}
-          <p className="formation-stage__label formation-stage__label--nested">Respond</p>
-          <label className="path-field formation-journal">
-            <span className="visually-hidden">Reflection journal</span>
-            <textarea
-              rows={6}
-              value={log.reflectAnswer}
-              disabled={dayClosed || reflectStatus === 'loading'}
-              placeholder="Write your response…"
-              onChange={(e) => persist({ reflectAnswer: e.target.value })}
-            />
-          </label>
+      {formationComplete && !formationOpen ? (
+        <section className="formation-complete-summary" aria-label="Morning formation complete">
+          <p className="formation-stage__label">Morning formation complete</p>
+          <p className="formation-complete-summary__ref">{scripture}</p>
+          <button
+            type="button"
+            className="formation-text-btn"
+            onClick={() => setFormationOpen(true)}
+          >
+            View journal entry
+          </button>
         </section>
-      ) : null}
-
-      {/* 4. Practice */}
-      {showPractice ? (
-        <section className="formation-stage" aria-label="Practice">
-          <p className="formation-stage__label">Practice</p>
-          <h2 className="formation-stage__question">One faithful action</h2>
-          <p className="formation-practice__line">
-            {practice || 'Stay with what you noticed in Scripture today.'}
-          </p>
-          <label className="path-field">
-            <span>What will you do — or what happened?</span>
-            <textarea
-              rows={3}
-              value={log.concreteActionNote}
-              disabled={dayClosed}
-              placeholder="Keep it concrete."
-              onChange={(e) =>
-                persist({
-                  concreteActionNote: e.target.value,
-                  practiceAccepted: true,
-                  practiceDone: e.target.value.trim().length > 0,
-                  concreteActionStatus:
-                    e.target.value.trim().length > 0 ? 'completed' : 'unset',
-                })
-              }
-            />
-          </label>
-        </section>
-      ) : null}
-
-      {/* 5–6. Body + work after spiritual conversation */}
-      {showBodyAndWork ? (
+      ) : (
         <>
-          <section className="formation-stage formation-stage--after" aria-label="Physical training">
-            <p className="formation-stage__label">Physical training</p>
-            <FormationPhysicalNext />
+          <section className="formation-stage formation-stage--read" aria-label="Today’s reading">
+            <p className="formation-stage__label">Read</p>
+            <div className="formation-reading">
+              <ScripturePassage
+                reference={scripture}
+                mode="full"
+                onReviewed={markScriptureReviewed}
+              />
+            </div>
           </section>
 
-          {workLine ? (
-            <section className="formation-stage formation-stage--after" aria-label="Work practice">
-              <p className="formation-stage__label">Work practice</p>
-              <p className="formation-work__line">{workLine}</p>
+          <section className="formation-stage formation-stage--observe" aria-label="Observe">
+            <p className="formation-stage__label">Observe</p>
+            <h2 className="formation-stage__question">What stood out to you?</h2>
+            <p className="formation-stage__hint">
+              Notice before you apply. Write what you saw in the text — a word, a tension, a
+              surprise.
+            </p>
+            <label className="path-field formation-journal">
+              <span className="visually-hidden">Observation journal</span>
+              <textarea
+                rows={7}
+                value={observation}
+                disabled={dayClosed}
+                placeholder="Write freely…"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const patch: Partial<BiblicalDayLog> = {
+                    morningReflection: value,
+                    morningDone: value.trim().length >= OBSERVE_MIN,
+                  };
+                  if (log.reflectQuestion && value.trim().length < OBSERVE_MIN) {
+                    patch.reflectQuestion = '';
+                    patch.reflectAnswer = '';
+                    setReflectStatus('idle');
+                  }
+                  persist(patch);
+                }}
+                onBlur={() => {
+                  if (
+                    observation.trim().length >= OBSERVE_MIN &&
+                    !(log.reflectQuestion ?? '').trim() &&
+                    reflectStatus !== 'loading'
+                  ) {
+                    void generateReflectQuestion();
+                  }
+                }}
+              />
+            </label>
+          </section>
+
+          {showReflect ? (
+            <section className="formation-stage" aria-label="Reflect">
+              <p className="formation-stage__label">Reflect</p>
+              {reflectStatus === 'loading' ? (
+                <p className="formation-stage__hint">Listening to your observation…</p>
+              ) : (
+                <>
+                  <h2 className="formation-stage__question">
+                    {log.reflectQuestion || 'Why do you think this stood out today?'}
+                  </h2>
+                  {reflectError ? (
+                    <p className="formation-stage__hint">{reflectError}</p>
+                  ) : (
+                    <p className="formation-stage__hint">One question. Answer honestly.</p>
+                  )}
+                  {!dayClosed && log.reflectQuestion ? (
+                    <button
+                      type="button"
+                      className="formation-text-btn"
+                      onClick={() => void generateReflectQuestion()}
+                    >
+                      Ask a different question
+                    </button>
+                  ) : null}
+                </>
+              )}
+              <p className="formation-stage__label formation-stage__label--nested">Respond</p>
+              <label className="path-field formation-journal">
+                <span className="visually-hidden">Reflection journal</span>
+                <textarea
+                  rows={6}
+                  value={log.reflectAnswer}
+                  disabled={dayClosed || reflectStatus === 'loading'}
+                  placeholder="Write your response…"
+                  onChange={(e) => persist({ reflectAnswer: e.target.value })}
+                />
+              </label>
             </section>
           ) : null}
+
+          {showPractice ? (
+            <section className="formation-stage" aria-label="Practice">
+              <p className="formation-stage__label">Practice</p>
+              <h2 className="formation-stage__question">One faithful action</h2>
+              <p className="formation-practice__line">
+                {practice || 'Stay with what you noticed in Scripture today.'}
+              </p>
+              <label className="path-field">
+                <span>What will you do — or what happened?</span>
+                <textarea
+                  rows={3}
+                  value={log.concreteActionNote}
+                  disabled={dayClosed}
+                  placeholder="Keep it concrete."
+                  onChange={(e) =>
+                    persist({
+                      concreteActionNote: e.target.value,
+                      practiceAccepted: true,
+                      concreteActionStatus:
+                        e.target.value.trim().length > 0 ? 'completed' : 'unset',
+                    })
+                  }
+                />
+              </label>
+            </section>
+          ) : null}
+
+          {formationComplete ? (
+            <button
+              type="button"
+              className="formation-text-btn"
+              onClick={() => setFormationOpen(false)}
+            >
+              Collapse morning formation
+            </button>
+          ) : null}
         </>
+      )}
+
+      {!trainingRevealed ? <FormationTrainingPreview dateKey={dateKey} /> : null}
+
+      {canContinue && formationOpen ? (
+        <button
+          type="button"
+          className="path-btn path-btn--primary formation-continue-btn"
+          onClick={continueToTraining}
+        >
+          Continue to Today’s Training
+        </button>
+      ) : null}
+
+      {trainingRevealed ? (
+        <div ref={trainingRef}>
+          <FormationTodaysTraining
+            dateKey={dateKey}
+            workLine={workLine}
+            workDone={workDone}
+            onWorkComplete={() => void markWorkComplete()}
+            practiceLine={practice || 'Stay with what you noticed in Scripture today.'}
+            practiceDone={log.practiceDone}
+            onPracticeComplete={() =>
+              persist({
+                practiceDone: true,
+                practiceAccepted: true,
+                concreteActionStatus: 'completed',
+              })
+            }
+            dayClosed={dayClosed}
+          />
+        </div>
       ) : null}
 
       <p className="formation-footnote">

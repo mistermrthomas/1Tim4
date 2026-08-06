@@ -253,12 +253,11 @@ export function PhysicalTrainingPanel({
   const [walkDone, setWalkDone] = useState(() => walkDoneOn(todayKey));
   const [mobilityDone, setMobilityDone] = useState(() => mobilityDoneOn(todayKey));
   const strengthWorkouts = activeWorkouts(strengthState);
-  const nextSlot = getNextSlot(rotation);
+  const nextSlot = getNextSlot(rotation, todayKey);
   const lastSlot = getLastSlot(rotation);
   const completedToday = rotation.lastCompletedDate === todayKey;
-  /** Keep today's slot visible after check-off so the checkbox can show done. */
-  const displaySlot: RotationSlot =
-    completedToday && lastSlot ? lastSlot : nextSlot;
+  /** Calendar plan for today — completion does not change which day is shown. */
+  const displaySlot: RotationSlot = nextSlot;
   const travel = travelRecommendation(todayKey);
   const viewingToday = dateKey === todayKey;
   const dayLabel = healthDayLabel(dateKey, todayKey);
@@ -293,8 +292,8 @@ export function PhysicalTrainingPanel({
       setRotation(current);
       return;
     }
-    if (getNextSlot(current).kind === 'recovery') {
-      setRotation(completeNextSlot('Recovery / walk day'));
+    if (getNextSlot(current, todayKey).kind === 'recovery') {
+      setRotation(completeNextSlot('Recovery / walk day', todayKey));
     }
   };
 
@@ -340,8 +339,9 @@ export function PhysicalTrainingPanel({
       return;
     }
 
-    const upcoming = getNextSlot(rotation);
-    if (upcoming.workoutId !== workoutId || rotation.lastCompletedDate === todayKey) return;
+    const upcoming = getNextSlot(rotation, todayKey);
+    if (upcoming.workoutId !== workoutId) return;
+    if (rotation.lastCompletedDate === todayKey) return;
 
     const logged = sessionDatesForWorkout(readStrengthState(), workoutId).includes(todayKey);
     if (

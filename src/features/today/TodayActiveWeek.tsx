@@ -273,7 +273,15 @@ export function TodayActiveWeek({
 
   return (
     <div className="today-preview path-fade-in">
-      <FormationGuidedDay weeklyPlan={weeklyPlan} dateKey={dateKey} dayClosed={dayClosed} />
+      <FormationGuidedDay
+        weeklyPlan={weeklyPlan}
+        dateKey={dateKey}
+        dayClosed={dayClosed}
+        onPlanChange={(plan) => {
+          setWeeklyPlan(plan);
+          onPlanChange(plan);
+        }}
+      />
 
       <div className="formation-complete">
         <CompleteTodayCard

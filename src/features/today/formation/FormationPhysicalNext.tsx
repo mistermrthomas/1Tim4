@@ -1,82 +1,74 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { travelRecommendation } from '../../../domain/physicalLife/travel';
-import { todayDateKey } from '../../../domain/physical/store';
 import {
-  bootstrapRotationFromLogs,
-  completeNextSlot,
-  getNextSlot,
-  readRotationState,
-  type RotationSlot,
-} from '../../../domain/strength/rotation';
-import { readStrengthState } from '../../../domain/strength/store';
+  getScheduledDay,
+  isScheduledDayActivityDone,
+  markScheduleDayComplete,
+  reconcileMissedScheduleDays,
+} from '../../../domain/strength/calendarSchedule';
+import { todayDateKey } from '../../../domain/physical/store';
 
-function slotObjective(slot: RotationSlot): string {
-  if (slot.kind === 'recovery') {
-    return 'Recover well so tomorrow’s training stays strong.';
-  }
-  return 'Train with focus. Quality reps over rushing.';
-}
-
+/** Compact physical card for Sunday / non-guided days. */
 export function FormationPhysicalNext() {
   const dateKey = todayDateKey();
-  const [slot, setSlot] = useState<RotationSlot>(() => getNextSlot(readRotationState()));
-  const travel = travelRecommendation(dateKey);
-  const onTravelDay = Boolean(travel.trip && travel.kind);
+  const [day, setDay] = useState(() => getScheduledDay(dateKey));
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    bootstrapRotationFromLogs(readStrengthState());
-    setSlot(getNextSlot(readRotationState()));
+    reconcileMissedScheduleDays(dateKey);
+    setDay(getScheduledDay(dateKey));
   }, [dateKey]);
 
-  const title = onTravelDay
-    ? travel.label
-    : slot.shortLabel || slot.label || 'Strength training';
-  const minutes = onTravelDay
-    ? travel.kind === 'walk'
-      ? 30
-      : travel.kind === 'mobility' || travel.kind === 'rest' || travel.kind === 'travel'
-        ? 20
-        : 40
-    : slot.kind === 'recovery'
-      ? 15
-      : 45;
-  const objective = onTravelDay ? travel.guidance : slotObjective(slot);
-  const href = onTravelDay
-    ? travel.kind === 'hotel_strength'
-      ? '/training/physical/strength'
-      : '/training'
-    : slot.kind === 'recovery'
-      ? '/training'
-      : '/training/physical/strength';
+  void tick;
+  const done = isScheduledDayActivityDone(day, dateKey);
+
+  const href =
+    day.primaryAction === 'start_workout'
+      ? day.workoutId
+        ? `/workouts?w=${day.workoutId}`
+        : '/training/physical/strength'
+      : day.primaryAction === 'log_walk'
+        ? '/training?area=physical&section=walking'
+        : day.primaryAction === 'start_mobility'
+          ? '/training?area=physical&section=mobility'
+          : '/training?area=physical';
 
   return (
-    <div className="formation-physical">
-      <div className="formation-physical__card">
-        <p className="formation-physical__name">{title}</p>
-        <p className="formation-physical__meta">About {minutes} min</p>
-        <p className="formation-physical__objective">{objective}</p>
-        <div className="formation-physical__actions">
-          <Link className="path-btn path-btn--primary" to={href}>
-            Start
-          </Link>
-          {!onTravelDay && (slot.kind === 'workout' || slot.kind === 'recovery') ? (
-            <button
-              type="button"
-              className="path-btn path-btn--ghost"
-              onClick={() => {
-                completeNextSlot('', dateKey);
-                setSlot(getNextSlot(readRotationState()));
-              }}
-            >
-              Mark done
-            </button>
-          ) : null}
-          <Link className="formation-link-btn" to="/training/physical/strength">
-            Strength log
-          </Link>
+    <section className="formation-stage formation-stage--after" aria-label="Physical training">
+      <p className="formation-stage__label">Physical</p>
+      <div className="formation-physical">
+        <div className="formation-physical__card">
+          <p className="formation-physical__name">{day.title}</p>
+          <p className="formation-physical__meta">{day.focus}</p>
+          {day.primaryAction !== 'rest' ? (
+            <div className="formation-physical__actions">
+              <Link className="path-btn path-btn--primary" to={href}>
+                {day.primaryAction === 'start_workout'
+                  ? 'Start workout'
+                  : day.primaryAction === 'log_walk'
+                    ? 'Log walk'
+                    : 'Start mobility'}
+              </Link>
+              {!done ? (
+                <button
+                  type="button"
+                  className="path-btn path-btn--ghost"
+                  onClick={() => {
+                    markScheduleDayComplete(dateKey);
+                    setTick((n) => n + 1);
+                  }}
+                >
+                  Mark done
+                </button>
+              ) : (
+                <span className="formation-physical__meta">Logged</span>
+              )}
+            </div>
+          ) : (
+            <p className="formation-physical__objective">No required training today.</p>
+          )}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

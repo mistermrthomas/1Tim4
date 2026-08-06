@@ -1,6 +1,12 @@
 import { notifyAccountBag } from '../../services/notifyAccountBag';
-import { addDays, toLocalDateKey } from '../calendar/week';
+import { toLocalDateKey } from '../calendar/week';
 import { todayDateKey } from '../physical/store';
+import {
+  getScheduledDay,
+  markScheduleDayComplete,
+  toRotationSlot,
+  upcomingScheduledDays,
+} from './calendarSchedule';
 import { WORKOUT_1_ID, WORKOUT_2_ID, WORKOUT_3_ID } from './seed';
 import type { StrengthState } from './types';
 
@@ -108,8 +114,12 @@ export function nextRotationIndex(lastCompletedIndex: number): number {
   return (lastCompletedIndex + 1) % STRENGTH_ROTATION.length;
 }
 
-export function getNextSlot(state = readRotationState()): RotationSlot {
-  return STRENGTH_ROTATION[nextRotationIndex(state.lastCompletedIndex)]!;
+/**
+ * Today’s scheduled slot from the calendar plan.
+ * Completion state does not change which day is shown — only whether it is done.
+ */
+export function getNextSlot(_state = readRotationState(), date = todayDateKey()): RotationSlot {
+  return toRotationSlot(getScheduledDay(date));
 }
 
 export function getLastSlot(state = readRotationState()): RotationSlot | null {
@@ -140,9 +150,16 @@ export function completeRotationSlot(
 }
 
 export function completeNextSlot(note = '', date = todayDateKey()): RotationState {
-  const state = readRotationState();
-  const index = nextRotationIndex(state.lastCompletedIndex);
-  return completeRotationSlot(index, date, note);
+  // Record completion for history / Training UI — do not use this to decide tomorrow.
+  markScheduleDayComplete(date);
+  const day = getScheduledDay(date);
+  const index = STRENGTH_ROTATION.findIndex(
+    (slot) =>
+      slot.shortLabel === day.shortLabel ||
+      (slot.kind === 'workout' && slot.workoutId && slot.workoutId === day.workoutId) ||
+      (slot.kind === 'recovery' && day.kind === 'recovery'),
+  );
+  return completeRotationSlot(index >= 0 ? index : 0, date, note);
 }
 
 /** Undo today’s completion so the same slot is next again. */
@@ -204,18 +221,14 @@ export function formatDaysSince(days: number | null): string {
   return `${days} days ago`;
 }
 
-export function upcomingDates(from = todayDateKey(), count = 7): Array<{ date: string; slot: RotationSlot }> {
-  const state = readRotationState();
-  let index = nextRotationIndex(state.lastCompletedIndex);
-  const out: Array<{ date: string; slot: RotationSlot }> = [];
-  for (let i = 0; i < count; i += 1) {
-    out.push({
-      date: addDays(from, i),
-      slot: STRENGTH_ROTATION[index]!,
-    });
-    index = (index + 1) % STRENGTH_ROTATION.length;
-  }
-  return out;
+export function upcomingDates(
+  from = todayDateKey(),
+  count = 7,
+): Array<{ date: string; slot: RotationSlot }> {
+  return upcomingScheduledDays(from, count).map((day) => ({
+    date: day.dateKey,
+    slot: toRotationSlot(day),
+  }));
 }
 
 export function localTodayLabel(): string {
