@@ -41,8 +41,17 @@ function mergeCatalog(state: StrengthState): StrengthState {
     });
   }
 
-  const entryIds = new Set(state.entries.map((e) => `${e.exerciseId}|${e.date}|${e.weightLb}`));
-  const mergedEntries = [...state.entries];
+  // Seed v4: Incline Chest Press → Chest Flyes in Workout A (keep history).
+  const remappedEntries = state.entries.map((entry) =>
+    entry.exerciseId === 'ex_incline_chest_press'
+      ? { ...entry, exerciseId: 'ex_chest_fly' }
+      : entry,
+  );
+
+  const entryIds = new Set(
+    remappedEntries.map((e) => `${e.exerciseId}|${e.date}|${e.weightLb}`),
+  );
+  const mergedEntries = [...remappedEntries];
   for (const entry of seed.entries) {
     const key = `${entry.exerciseId}|${entry.date}|${entry.weightLb}`;
     if (!entryIds.has(key)) {

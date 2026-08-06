@@ -65,7 +65,19 @@ describe('strength log', () => {
         ?.maxWeightLb,
     ).toBe(155);
     expect(state.exercises.find((e) => e.id === 'ex_dumbbell_shrug')?.active).toBe(false);
+    expect(state.exercises.find((e) => e.id === 'ex_incline_chest_press')?.active).toBe(false);
+    expect(exercisesForWorkout(state, WORKOUT_1_ID).map((e) => e.name)).toEqual([
+      'Flat Chest Press',
+      'Chest Flyes',
+      'Decline Chest Press',
+      'Tricep Pushdown',
+      'Overhead Tricep Extension',
+      'Crunch',
+      'Oblique Twist',
+    ]);
     expect(latestEntry(state, 'ex_flat_chest_press')?.weightLb).toBe(155);
+    expect(latestEntry(state, 'ex_chest_fly')?.weightLb).toBe(155);
+    expect(latestEntry(state, 'ex_chest_fly')?.reps).toEqual(['12', '12', '12']);
     expect(latestEntry(state, 'ex_bowflex_shrug')).toBeNull();
   });
 
@@ -104,6 +116,34 @@ describe('strength log', () => {
     expect(entry).toBeTruthy();
     const next = deleteStrengthLogEntry(entry!.id);
     expect(latestEntry(next, 'ex_flat_chest_press')).toBeNull();
-    expect(latestEntry(next, 'ex_incline_chest_press')?.weightLb).toBe(155);
+    expect(latestEntry(next, 'ex_chest_fly')?.weightLb).toBe(155);
+  });
+
+  it('migrates incline press history to chest flyes on seed upgrade', () => {
+    const seeded = readStrengthState();
+    const inclineEntry = {
+      ...seeded.entries.find((e) => e.exerciseId === 'ex_chest_fly')!,
+      id: 'log_incline_legacy',
+      exerciseId: 'ex_incline_chest_press',
+    };
+    localStorage.setItem(
+      STRENGTH_STORE_KEY,
+      JSON.stringify({
+        ...seeded,
+        seedVersion: 3,
+        exercises: seeded.exercises.filter((e) => e.id !== 'ex_chest_fly'),
+        entries: [
+          ...seeded.entries.filter((e) => e.exerciseId !== 'ex_chest_fly'),
+          inclineEntry,
+        ],
+      }),
+    );
+    const migrated = readStrengthState();
+    expect(migrated.seedVersion).toBe(4);
+    expect(exercisesForWorkout(migrated, WORKOUT_1_ID).some((e) => e.name === 'Chest Flyes')).toBe(
+      true,
+    );
+    expect(latestEntry(migrated, 'ex_chest_fly')?.weightLb).toBe(155);
+    expect(latestEntry(migrated, 'ex_incline_chest_press')).toBeNull();
   });
 });

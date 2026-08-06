@@ -1,7 +1,7 @@
 import { newId } from '../physical/store';
 import { EQUIPMENT_MAX_LB, type StrengthExercise, type StrengthLogEntry, type StrengthState, type StrengthWorkout, type StrengthWorkoutNote } from './types';
 
-export const STRENGTH_SEED_VERSION = 3;
+export const STRENGTH_SEED_VERSION = 4;
 
 export const WORKOUT_1_ID = 'strength_workout_1';
 export const WORKOUT_2_ID = 'strength_workout_2';
@@ -64,13 +64,24 @@ const EXERCISES: StrengthExercise[] = [
     techniqueNote: 'Use a slow, controlled tempo.',
   }),
   ex({
-    id: 'ex_incline_chest_press',
-    name: 'Incline Chest Press',
+    id: 'ex_chest_fly',
+    name: 'Chest Flyes',
     muscleGroup: 'Chest',
     equipment: 'Bowflex',
     active: true,
     workoutId: WORKOUT_1_ID,
     order: 2,
+    techniqueNote: 'Use a slow, controlled tempo. Keep a soft bend in the elbows.',
+  }),
+  // Historical-only — replaced by Chest Flyes in Workout A.
+  ex({
+    id: 'ex_incline_chest_press',
+    name: 'Incline Chest Press',
+    muscleGroup: 'Chest',
+    equipment: 'Bowflex',
+    active: false,
+    workoutId: null,
+    order: 98,
     techniqueNote: 'Use a slow, controlled tempo. Stop if shoulder discomfort increases.',
   }),
   ex({
@@ -290,13 +301,13 @@ function baselineEntries(): StrengthLogEntry[] {
       'Slow tempo. At Bowflex maximum (155 lb).',
     ),
     entry(
-      'ex_incline_chest_press',
+      'ex_chest_fly',
       WORKOUT_1_ID,
       d1,
       155,
       ['12', '12', '12'],
       'easy',
-      'Slow tempo. Monitor shoulder comfort. At Bowflex maximum (155 lb).',
+      'Slow tempo. At Bowflex maximum (155 lb).',
     ),
     entry(
       'ex_decline_chest_press',
