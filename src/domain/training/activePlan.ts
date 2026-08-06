@@ -1,5 +1,7 @@
 import type { InstalledSeasonPack } from '../../content/types';
 
+import { notifyAccountBag } from '../../services/notifyAccountBag';
+
 export const PLAN_CONFIG_STORAGE_KEY = 'path-plan-config-v1';
 
 /** Minimal day snapshot for building Today’s assignment brief. */
@@ -125,6 +127,7 @@ export function readPlanConfig(): PlanConfig | null {
 
 export function writePlanConfig(config: PlanConfig): void {
   localStorage.setItem(PLAN_CONFIG_STORAGE_KEY, JSON.stringify(config));
+  notifyAccountBag('plan_config');
 }
 
 export function clearPlanConfig(): void {

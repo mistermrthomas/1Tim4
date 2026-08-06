@@ -1,48 +1,50 @@
-# Cross-device sermon sync — diagnostic & fix
+# Cross-device account data (no Sync button)
 
-## Diagnosis (root cause)
+## Product model
 
-Sermon notes and generated weekly biblical plans were stored **only in device IndexedDB** (`formation_local_v1` keys `weeklyPlan:*`). Sign-in sync only covered the legacy trail blob in `path_profile_trails`. A Supabase `weekly_plans` table existed but was never wired from the client.
+When you are signed in, **the account is the source of truth**. Local storage is a cache. Open any device on the same Apple/Google account and you should see the same sermons, workouts, and daily training. There is no Sync now step.
 
-Therefore Device A and Device B could both be signed in as the same user and still show different sermon content.
+Automatic behavior:
+- Save on a device → upload to your account
+- Open / focus a device → pull latest from your account
+- Offline edits → upload when back online
 
 ## Storage map
 
-| Data | Was | Now (after fix) |
-|------|-----|-----------------|
-| Sermon notes / title / AI week | IndexedDB only | Supabase `path_weekly_plans` + IndexedDB cache |
-| Weekly plan payload | IndexedDB only | Same |
-| Trail journal / assessments | `path_profile_trails` | Unchanged |
-| Biblical day check-ins | localStorage | Still local-only (remaining risk) |
-| Strength / walking / mobility | localStorage | Still local-only (remaining risk) |
-| Day completion | localStorage | Still local-only (remaining risk) |
+| Data | Cloud table |
+|------|-------------|
+| Sermon notes / weekly biblical plan | `path_weekly_plans` |
+| Trail journal / assessments | `path_profile_trails` |
+| Strength log, rotation, physical tracker/plan | `path_account_bags` |
+| Walking / mobility / body / travel | `path_account_bags` |
+| Biblical day check-ins, day completion | `path_account_bags` |
+| Work training, rhythm, plan config | `path_account_bags` |
+
+## Required migrations
+
+Run in Supabase SQL Editor (in order if not already applied):
+
+1. `supabase/migrations/20260531000000_path_profile_trails.sql`
+2. `supabase/migrations/20260805120000_path_weekly_plans.sql` (+ grants migrations if needed)
+3. `supabase/migrations/20260806010000_path_account_bags.sql` — **required for workouts / strength / day logs**
 
 ## Auth & ownership
 
-- Cloud rows keyed by `auth.users.id` + local `profile_id` (text)
-- RLS: `auth.uid() = user_id` on select/insert/update/delete
-- Users cannot read another user’s rows
-
-## Required migration
-
-Run in Supabase SQL Editor:
-
-`supabase/migrations/20260805120000_path_weekly_plans.sql`
-
-Until this runs, the app still works locally and shows a sync warning after sign-in.
+- Weekly plans: keyed by `user_id` (+ `profile_id` for history); pull merges **all** profile rows (newest per week)
+- Account bags: keyed by `user_id` + `bag_key` only (not local profile UUIDs)
+- RLS: `auth.uid() = user_id`
 
 ## Conflict strategy
 
-1. Empty local draft never overwrites meaningful cloud content
-2. Meaningful local + empty cloud → push local
-3. Both meaningful → newer `updated_at` wins
-4. Pending local edits are marked (“Unsynced sermon changes”) and flushed on reconnect / pagehide
+1. Empty local never overwrites meaningful cloud
+2. Meaningful local + empty cloud → upload local
+3. Both meaningful → newer revision wins
+4. First upgrade with existing local data keeps local once, then uploads
 
 ## Manual verification
 
-1. Apply migration
-2. Device A: sign in → enter sermon → Build This Week’s Training
-3. Device B: sign in same account → open Today / Sunday Sermon → content appears
-4. Edit notes on B → refresh A → update appears
-5. Offline edit on A → reconnect → pending clears and B sees update
-6. Different account cannot see the rows (RLS)
+1. Apply `path_account_bags` migration
+2. Device A (signed in): log a strength set + build sermon week
+3. Device B (same account): open the app → Today / Strength show the same data
+4. Edit on B → reopen A → update appears
+5. No Sync button required

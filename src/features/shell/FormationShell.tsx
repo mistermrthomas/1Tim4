@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { APP_NAME, PathMark, TAGLINE } from '../../brand';
 import { useAuth } from '../../context/AuthContext';
-import {
-  hasPendingWeeklyPlanSync,
-} from '../../services/cloudWeeklyPlanSync';
+import { hasPendingAccountBagSync } from '../../services/cloudAccountStateSync';
+import { hasPendingWeeklyPlanSync } from '../../services/cloudWeeklyPlanSync';
 import { PATH_MEDIA } from '../../ui/media';
 import { readStoredTheme, storeTheme, type PathTheme } from '../../ui/theme';
 import './FormationShell.css';
@@ -24,7 +23,9 @@ const MORE_LINKS = [
 export function FormationShell() {
   const { cloudSyncStatus, user } = useAuth();
   const [theme, setTheme] = useState<PathTheme>(() => readStoredTheme());
-  const [pendingWeekly, setPendingWeekly] = useState(() => hasPendingWeeklyPlanSync());
+  const [pendingCloud, setPendingCloud] = useState(
+    () => hasPendingWeeklyPlanSync() || hasPendingAccountBagSync(),
+  );
   const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
@@ -32,12 +33,15 @@ export function FormationShell() {
   }, [theme]);
 
   useEffect(() => {
-    const refresh = () => setPendingWeekly(hasPendingWeeklyPlanSync());
+    const refresh = () =>
+      setPendingCloud(hasPendingWeeklyPlanSync() || hasPendingAccountBagSync());
     refresh();
     window.addEventListener('path-weekly-plan-pending', refresh);
+    window.addEventListener('path-account-bag-pending', refresh);
     window.addEventListener('storage', refresh);
     return () => {
       window.removeEventListener('path-weekly-plan-pending', refresh);
+      window.removeEventListener('path-account-bag-pending', refresh);
       window.removeEventListener('storage', refresh);
     };
   }, []);
@@ -114,11 +118,11 @@ export function FormationShell() {
             <NavLink to="/settings" className="formation-shell__manage">
               Settings
             </NavLink>
-            {user && pendingWeekly ? (
-              <p className="path-label formation-shell__sync-pending">Unsynced sermon changes</p>
+            {user && pendingCloud ? (
+              <p className="path-label formation-shell__sync-pending">Saving to your account…</p>
             ) : null}
             {user && cloudSyncStatus === 'syncing' ? (
-              <p className="path-label formation-shell__sync-pending">Syncing…</p>
+              <p className="path-label formation-shell__sync-pending">Loading account…</p>
             ) : null}
 
             <button
@@ -185,8 +189,8 @@ export function FormationShell() {
                 </NavLink>
               ))}
             </nav>
-            {user && pendingWeekly ? (
-              <p className="path-label formation-shell__sync-pending">Unsynced sermon changes</p>
+            {user && pendingCloud ? (
+              <p className="path-label formation-shell__sync-pending">Saving to your account…</p>
             ) : null}
           </div>
         </div>

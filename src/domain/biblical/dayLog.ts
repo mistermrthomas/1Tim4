@@ -1,3 +1,4 @@
+import { notifyAccountBag } from '../../services/notifyAccountBag';
 import { todayDateKey } from '../physical/store';
 
 const KEY = 'path-biblical-day-v1';
@@ -35,6 +36,7 @@ function readStore(): Store {
 
 function writeStore(store: Store): void {
   localStorage.setItem(KEY, JSON.stringify(store));
+  notifyAccountBag('biblical_day');
 }
 
 export function loadBiblicalDay(dateKey = todayDateKey()): BiblicalDayLog {

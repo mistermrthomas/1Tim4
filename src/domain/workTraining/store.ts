@@ -1,3 +1,4 @@
+import { notifyAccountBag } from '../../services/notifyAccountBag';
 import { startOfWeekSunday } from '../calendar/week';
 import { todayDateKey, newId } from '../physical/store';
 
@@ -36,6 +37,7 @@ export function readWorkTrainingState(): WorkState {
 
 function write(state: WorkState): void {
   localStorage.setItem(WORK_TRAINING_KEY, JSON.stringify(state));
+  notifyAccountBag('work_training');
 }
 
 export function weekStartFor(date = todayDateKey()): string {

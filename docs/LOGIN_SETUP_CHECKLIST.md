@@ -85,8 +85,8 @@ Full detail: [CLOUD_SYNC.md](./CLOUD_SYNC.md)
 1. Open https://1-tim4.vercel.app (hard refresh after deploy).
 2. Enter your name on welcome if prompted.
 3. **Guide** → **Sign in with Google** (or Apple).
-4. Add a journal note → wait a few seconds → **Sync now** should succeed.
-5. Second device/browser → same account → trail should appear after sign-in.
+4. Add a journal note or strength set → wait a few seconds (status should show account saved).
+5. Second device/browser → same account → reopen the app → data should appear with no Sync button.
 
 ---
 

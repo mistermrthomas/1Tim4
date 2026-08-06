@@ -1,6 +1,8 @@
 import { addDays } from '../calendar/week';
 import { todayDateKey, newId } from '../physical/store';
 
+import { notifyAccountBag } from '../../services/notifyAccountBag';
+
 export const MOBILITY_STORE_KEY = 'path-mobility-v1';
 
 export type MobilityMove = {
@@ -138,6 +140,7 @@ export function readMobilityState(): MobilityState {
 
 function write(state: MobilityState): void {
   localStorage.setItem(MOBILITY_STORE_KEY, JSON.stringify(state));
+  notifyAccountBag('mobility');
 }
 
 export function completeMobility(input: {

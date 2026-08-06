@@ -3,6 +3,7 @@
  * Eligibility is derived; completion is never automatic from the last checkbox.
  */
 
+import { notifyAccountBag } from '../../services/notifyAccountBag';
 import { loadBiblicalDay, type BiblicalDayLog } from '../biblical/dayLog';
 import { todayDateKey } from '../physical/store';
 import {
@@ -77,6 +78,7 @@ function readStore(): Store {
 
 function writeStore(store: Store): void {
   localStorage.setItem(KEY, JSON.stringify(store));
+  notifyAccountBag('day_completion');
 }
 
 export function loadDayCompletion(date = todayDateKey()): DayCompletionRecord {

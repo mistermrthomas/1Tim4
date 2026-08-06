@@ -10,7 +10,11 @@ import {
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { isCloudSyncConfigured, supabase } from '../lib/supabase';
-import { syncUserTrailsOnLogin } from '../services/cloudTrailSync';
+import {
+  flushCloudAccountBagPushes,
+  syncAccountBagsOnLogin,
+} from '../services/cloudAccountStateSync';
+import { flushCloudTrailPush, syncUserTrailsOnLogin } from '../services/cloudTrailSync';
 import {
   flushCloudWeeklyPlanPushes,
   syncWeeklyPlansOnLogin,
@@ -31,6 +35,7 @@ export interface AuthContextValue {
   signInWithApple: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOutCloud: () => Promise<void>;
+  /** Quiet refresh — used on focus/online; not a user-facing Sync button. */
   refreshCloudSync: () => Promise<boolean>;
 }
 
@@ -45,7 +50,15 @@ function errorMessage(err: unknown): string {
   if (typeof err === 'object' && err && 'message' in err) {
     return String((err as { message: unknown }).message);
   }
-  return 'Could not sync with cloud.';
+  return 'Could not load your account.';
+}
+
+function permissionHint(msg: string): boolean {
+  return /permission denied|42501/i.test(msg);
+}
+
+function missingTableHint(msg: string, table: string): boolean {
+  return new RegExp(`relation .*${table}.* does not exist|Could not find the table`, 'i').test(msg);
 }
 
 export function AuthProvider({
@@ -84,43 +97,61 @@ export function AuthProvider({
       );
 
       let weeklyReloaded = false;
-      let weeklyWarning: string | null = null;
+      let bagsReloaded = false;
+      const warnings: string[] = [];
+
       try {
         const weekly = await syncWeeklyPlansOnLogin(userId, activeId ?? 'default');
         weeklyReloaded = weekly.reloaded;
       } catch (weeklyErr) {
         const msg = errorMessage(weeklyErr);
-        weeklyWarning =
-          /relation .*path_weekly_plans.* does not exist|Could not find the table/i.test(msg)
-            ? 'Trail synced. Run the path_weekly_plans migration to sync sermons across devices.'
-            : /permission denied|42501/i.test(msg)
-              ? 'Trail synced. Sermon sync needs a database permission fix — run the grants SQL in Supabase.'
-              : `Trail synced. Sermon sync issue: ${msg}`;
+        warnings.push(
+          missingTableHint(msg, 'path_weekly_plans')
+            ? 'Sermon weeks need the path_weekly_plans migration in Supabase.'
+            : permissionHint(msg)
+              ? 'Sermon weeks need database grants in Supabase.'
+              : `Sermon weeks: ${msg}`,
+        );
+      }
+
+      try {
+        const bags = await syncAccountBagsOnLogin(userId);
+        bagsReloaded = bags.reloaded;
+      } catch (bagErr) {
+        const msg = errorMessage(bagErr);
+        warnings.push(
+          missingTableHint(msg, 'path_account_bags')
+            ? 'Workouts need the path_account_bags migration in Supabase.'
+            : permissionHint(msg)
+              ? 'Workouts need database grants in Supabase.'
+              : `Training logs: ${msg}`,
+        );
       }
 
       const at = new Date().toISOString();
       setLastCloudSyncAt(at);
-      setCloudSyncStatus(weeklyWarning ? 'error' : 'synced');
-      setCloudSyncMessage(
-        weeklyWarning ??
-          (weeklyReloaded || activeProfileReloaded
-            ? 'Synced with your account.'
-            : 'Synced with your account.'),
-      );
+      const reloaded = activeProfileReloaded || weeklyReloaded || bagsReloaded;
+      if (warnings.length) {
+        setCloudSyncStatus('error');
+        setCloudSyncMessage(warnings.join(' '));
+      } else {
+        setCloudSyncStatus('synced');
+        setCloudSyncMessage('Signed in — your training saves to this account automatically.');
+      }
 
-      if (activeProfileReloaded || weeklyReloaded) {
+      if (reloaded) {
         setCloudDataEpoch((n) => n + 1);
         reloadRef.current?.();
         window.dispatchEvent(new CustomEvent('path-cloud-synced', { detail: { at } }));
       }
-      return activeProfileReloaded || weeklyReloaded;
+      return reloaded;
     } catch (err) {
       const msg = errorMessage(err);
       setCloudSyncStatus('error');
       setCloudSyncMessage(
-        /permission denied|42501/i.test(msg)
-          ? 'Cloud sync blocked by database permissions. Run the grants SQL in Supabase, then Sync now.'
-          : msg || 'Could not sync with cloud.',
+        permissionHint(msg)
+          ? 'Cloud access blocked by database permissions. Run the grants SQL in Supabase.'
+          : msg || 'Could not load your account.',
       );
       return false;
     } finally {
@@ -129,16 +160,44 @@ export function AuthProvider({
   }, []);
 
   useEffect(() => {
-    const onHide = () => flushCloudWeeklyPlanPushes();
+    const flushAll = () => {
+      flushCloudWeeklyPlanPushes();
+      flushCloudAccountBagPushes();
+      const activeId = getActiveProfileId();
+      if (activeId) flushCloudTrailPush(activeId);
+    };
     const onOnline = () => {
       const current = userRef.current;
       if (current) void runCloudMerge(current.id);
     };
-    window.addEventListener('pagehide', onHide);
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      const current = userRef.current;
+      if (current) void runCloudMerge(current.id);
+    };
+    const onPushError = (event: Event) => {
+      const message =
+        event instanceof CustomEvent && typeof event.detail?.message === 'string'
+          ? event.detail.message
+          : 'Upload to your account failed.';
+      setCloudSyncStatus('error');
+      setCloudSyncMessage(
+        permissionHint(message)
+          ? 'Upload blocked by database permissions. Run the grants SQL in Supabase.'
+          : message,
+      );
+    };
+    window.addEventListener('pagehide', flushAll);
     window.addEventListener('online', onOnline);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('path-weekly-plan-sync-error', onPushError);
+    window.addEventListener('path-account-bag-sync-error', onPushError);
     return () => {
-      window.removeEventListener('pagehide', onHide);
+      window.removeEventListener('pagehide', flushAll);
       window.removeEventListener('online', onOnline);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('path-weekly-plan-sync-error', onPushError);
+      window.removeEventListener('path-account-bag-sync-error', onPushError);
     };
   }, [runCloudMerge]);
 
@@ -158,7 +217,6 @@ export function AuthProvider({
     const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
-      // Avoid TOKEN_REFRESHED / INITIAL_SESSION loops — initial load uses getSession above.
       if (event === 'SIGNED_IN' && nextSession?.user) {
         void runCloudMerge(nextSession.user.id);
       } else if (event === 'SIGNED_OUT') {
@@ -176,7 +234,7 @@ export function AuthProvider({
 
   const signInWithOAuth = useCallback(async (provider: 'apple' | 'google') => {
     if (!supabase) {
-      throw new Error('Cloud sync is not configured on this deployment.');
+      throw new Error('Cloud login is not configured on this deployment.');
     }
     const { error } = await supabase.auth.signInWithOAuth({
       provider,

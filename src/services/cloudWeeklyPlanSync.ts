@@ -21,6 +21,13 @@ export type CloudWeeklyPlanRow = {
   revision: number;
 };
 
+export type WeeklyPlanSyncResult = {
+  reloaded: boolean;
+  cloudWeeks: number;
+  pulled: number;
+  pushed: number;
+};
+
 const PENDING_KEY = 'path-weekly-plan-pending-v1';
 const syncTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const pendingPush = new Map<string, { userId: string; profileId: string; plan: WeeklyPlan }>();
@@ -67,10 +74,34 @@ function timerKey(profileId: string, weekStart: string): string {
   return `${profileId}:${weekStart}`;
 }
 
-export async function fetchCloudWeeklyPlans(
-  userId: string,
-  profileId: string,
-): Promise<CloudWeeklyPlanRow[]> {
+/** Newest cloud row per week — local weekly plans are not profile-scoped. */
+export function pickNewestCloudRowPerWeek(rows: CloudWeeklyPlanRow[]): CloudWeeklyPlanRow[] {
+  const byWeek = new Map<string, CloudWeeklyPlanRow>();
+  for (const row of rows) {
+    const existing = byWeek.get(row.week_start_date);
+    if (!existing || Date.parse(row.updated_at) >= Date.parse(existing.updated_at)) {
+      byWeek.set(row.week_start_date, row);
+    }
+  }
+  return [...byWeek.values()].sort((a, b) => b.week_start_date.localeCompare(a.week_start_date));
+}
+
+function resolvePushProfileId(
+  weekStart: string,
+  cloudRows: CloudWeeklyPlanRow[],
+  fallbackProfileId: string,
+): string {
+  const forWeek = cloudRows
+    .filter((r) => r.week_start_date === weekStart)
+    .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
+  return forWeek[0]?.profile_id ?? fallbackProfileId;
+}
+
+/**
+ * Fetch every weekly plan for this auth user across all local profile ids.
+ * Devices often have different profile UUIDs; sermon IndexedDB is shared per device.
+ */
+export async function fetchCloudWeeklyPlans(userId: string): Promise<CloudWeeklyPlanRow[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
     .from('path_weekly_plans')
@@ -78,7 +109,6 @@ export async function fetchCloudWeeklyPlans(
       'profile_id, week_start_date, week_end_date, plan_id, status, payload, activated_at, updated_at, revision',
     )
     .eq('user_id', userId)
-    .eq('profile_id', profileId)
     .order('updated_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as CloudWeeklyPlanRow[];
@@ -149,11 +179,14 @@ export function shouldReplaceLocalWeeklyPlanWithCloud(
 export async function syncWeeklyPlansOnLogin(
   userId: string,
   profileId = getActiveProfileId() ?? 'default',
-): Promise<{ reloaded: boolean }> {
-  const cloudRows = await fetchCloudWeeklyPlans(userId, profileId);
+): Promise<WeeklyPlanSyncResult> {
+  const allCloudRows = await fetchCloudWeeklyPlans(userId);
+  const cloudRows = pickNewestCloudRowPerWeek(allCloudRows);
   const localPlans = await listWeeklyPlans();
   const localByWeek = new Map(localPlans.map((p) => [p.weekStartDate, p]));
   let reloaded = false;
+  let pulled = 0;
+  let pushed = 0;
 
   for (const row of cloudRows) {
     const cloudPlan = normalizeWeeklyPlan({
@@ -170,10 +203,14 @@ export async function syncWeeklyPlansOnLogin(
     if (shouldReplaceLocalWeeklyPlanWithCloud(local, cloudPlan, row.updated_at)) {
       await replaceWeeklyPlanFromCloud(cloudPlan);
       localByWeek.set(cloudPlan.weekStartDate, cloudPlan);
+      clearPending(cloudPlan.id);
       reloaded = true;
+      pulled += 1;
     } else if (local && hasMeaningfulWeeklyPlan(local)) {
-      await pushCloudWeeklyPlan(userId, profileId, local);
+      const pushProfile = resolvePushProfileId(local.weekStartDate, allCloudRows, profileId);
+      await pushCloudWeeklyPlan(userId, pushProfile, local);
       clearPending(local.id);
+      pushed += 1;
     }
   }
 
@@ -181,14 +218,18 @@ export async function syncWeeklyPlansOnLogin(
     if (!hasMeaningfulWeeklyPlan(local)) continue;
     const cloud = cloudRows.find((r) => r.week_start_date === local.weekStartDate);
     if (!cloud) {
-      await pushCloudWeeklyPlan(userId, profileId, local);
+      const pushProfile = resolvePushProfileId(local.weekStartDate, allCloudRows, profileId);
+      await pushCloudWeeklyPlan(userId, pushProfile, local);
       clearPending(local.id);
+      pushed += 1;
       continue;
     }
     if (!shouldReplaceLocalWeeklyPlanWithCloud(local, normalizeWeeklyPlan(cloud.payload), cloud.updated_at)) {
       if (Date.parse(local.updatedAt) >= Date.parse(cloud.updated_at)) {
-        await pushCloudWeeklyPlan(userId, profileId, local);
+        const pushProfile = resolvePushProfileId(local.weekStartDate, allCloudRows, profileId);
+        await pushCloudWeeklyPlan(userId, pushProfile, local);
         clearPending(local.id);
+        pushed += 1;
       }
     }
   }
@@ -203,7 +244,12 @@ export async function syncWeeklyPlansOnLogin(
     if (previous?.id !== activeCandidates[0].id) reloaded = true;
   }
 
-  return { reloaded };
+  return {
+    reloaded,
+    cloudWeeks: cloudRows.length,
+    pulled,
+    pushed,
+  };
 }
 
 export function scheduleCloudWeeklyPlanPush(
@@ -233,8 +279,15 @@ export function scheduleCloudWeeklyPlanPush(
           const at = await pushCloudWeeklyPlan(pending.userId, pending.profileId, pending.plan);
           pendingPush.delete(key);
           onSynced?.(at);
+          window.dispatchEvent(
+            new CustomEvent('path-weekly-plan-synced', { detail: { at, planId: pending.plan.id } }),
+          );
         } catch (err) {
-          onError?.(err instanceof Error ? err.message : 'Weekly plan cloud sync failed');
+          const message = err instanceof Error ? err.message : 'Weekly plan cloud sync failed';
+          onError?.(message);
+          window.dispatchEvent(
+            new CustomEvent('path-weekly-plan-sync-error', { detail: { message } }),
+          );
         }
       })();
     }, 700),

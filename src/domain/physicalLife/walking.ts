@@ -1,3 +1,4 @@
+import { notifyAccountBag } from '../../services/notifyAccountBag';
 import { todayDateKey, newId } from '../physical/store';
 import { effectiveSteps, getStepsDay } from '../physical/stepsTracker';
 
@@ -39,6 +40,7 @@ export function readWalkingState(): WalkingState {
 
 function write(state: WalkingState): void {
   localStorage.setItem(WALKING_STORE_KEY, JSON.stringify(state));
+  notifyAccountBag('walking');
 }
 
 export function upsertWalkingEntry(input: {

@@ -1,3 +1,4 @@
+import { notifyAccountBag } from '../../services/notifyAccountBag';
 import type { PhysicalTrackerState } from './types';
 
 export const PHYSICAL_TRACKER_KEY = 'path-physical-tracker-v1';
@@ -41,6 +42,7 @@ export function readPhysicalTracker(): PhysicalTrackerState {
 
 export function writePhysicalTracker(state: PhysicalTrackerState): void {
   localStorage.setItem(PHYSICAL_TRACKER_KEY, JSON.stringify(state));
+  notifyAccountBag('physical_tracker');
 }
 
 export function todayDateKey(now = new Date()): string {

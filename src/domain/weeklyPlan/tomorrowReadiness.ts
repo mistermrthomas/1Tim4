@@ -1,5 +1,6 @@
 /** Lightweight night-before readiness checklist (does not block activation). */
 
+import { notifyAccountBag } from '../../services/notifyAccountBag';
 import type { DateKey } from '../calendar/week';
 
 const KEY = 'path-tomorrow-readiness-v1';
@@ -45,6 +46,7 @@ export function writeTomorrowReadiness(state: TomorrowReadiness): TomorrowReadin
     const all = raw ? (JSON.parse(raw) as Record<string, TomorrowReadiness>) : {};
     all[state.targetDate] = state;
     localStorage.setItem(KEY, JSON.stringify(all));
+    notifyAccountBag('tomorrow_readiness');
   } catch {
     /* ignore */
   }

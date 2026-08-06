@@ -2,7 +2,7 @@
 
 **New to setup?** Use the ordered checklist: [LOGIN_SETUP_CHECKLIST.md](./LOGIN_SETUP_CHECKLIST.md).
 
-Path saves **automatically on this device** and, when you sign in, **syncs to your Supabase account** so you can open the same trail on another iPhone, iPad, or browser.
+Path saves **automatically on this device** and, when you sign in, **keeps your account as the source of truth** so every phone and computer signed into the same Apple/Google account sees the same sermons, workouts, and daily training. There is no Sync button.
 
 ## What you need
 
@@ -23,12 +23,13 @@ Find URL and anon key in Supabase → **Project Settings → API**.
 
 In Supabase → **SQL Editor**, run these migration files (in order):
 
-1. `supabase/migrations/20260531000000_path_profile_trails.sql` — trail / journal sync
-2. `supabase/migrations/20260805120000_path_weekly_plans.sql` — **sermon notes + weekly biblical plans**
+1. `supabase/migrations/20260531000000_path_profile_trails.sql` — trail / journal
+2. `supabase/migrations/20260805120000_path_weekly_plans.sql` — sermon notes + weekly biblical plans
+3. `supabase/migrations/20260806010000_path_account_bags.sql` — **strength, workouts, walking, day logs, etc.**
 
-Both use row-level security so each user only sees their own data.
+All use row-level security so each user only sees their own data.
 
-**Required for cross-device sermon sync:** if `path_weekly_plans` is missing, Device B will not receive Sunday sermon notes or generated weeks.
+**Required for workouts across devices:** run `path_account_bags` or Device B will not receive strength logs / physical training.
 
 ---
 
@@ -137,7 +138,7 @@ IndexedDB / localStorage are an **offline cache**, not a second permanent accoun
 | Buttons say “not enabled” | Env vars missing on Vercel; redeploy |
 | Redirect loop / blank callback | Add exact `/auth/callback` URL in Supabase redirect list |
 | Apple fails, Google works | Finish Apple Service ID domains + return URL |
-| Data not on new phone | Sign in with **same** Apple/Google account; tap **Sync now** in Guide |
+| Data not on new phone | Sign in with **same** Apple/Google account; reopen the app (account loads automatically). Confirm `path_account_bags` + weekly plan migrations ran. |
 | Sermon missing on Device B | Confirm `path_weekly_plans` migration ran; sign in same account; open Today again after sync |
 | RLS error | Re-run SQL migration; confirm policies exist |
 

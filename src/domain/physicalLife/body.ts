@@ -1,5 +1,7 @@
 import { todayDateKey, newId } from '../physical/store';
 
+import { notifyAccountBag } from '../../services/notifyAccountBag';
+
 export const BODY_STORE_KEY = 'path-body-metrics-v1';
 
 export type BodyEntry = {
@@ -43,6 +45,7 @@ export function readBodyState(): BodyState {
 
 function write(state: BodyState): void {
   localStorage.setItem(BODY_STORE_KEY, JSON.stringify(state));
+  notifyAccountBag('body');
 }
 
 export function setShowBmi(show: boolean): BodyState {

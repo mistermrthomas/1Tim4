@@ -1,3 +1,4 @@
+import { notifyAccountBag } from '../../services/notifyAccountBag';
 import { addDays, toLocalDateKey } from '../calendar/week';
 import { todayDateKey } from '../physical/store';
 import { WORKOUT_1_ID, WORKOUT_2_ID, WORKOUT_3_ID } from './seed';
@@ -99,6 +100,7 @@ export function readRotationState(): RotationState {
 
 export function writeRotationState(state: RotationState): void {
   localStorage.setItem(ROTATION_KEY, JSON.stringify(state));
+  notifyAccountBag('strength_rotation');
 }
 
 export function nextRotationIndex(lastCompletedIndex: number): number {

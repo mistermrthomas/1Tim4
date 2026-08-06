@@ -809,6 +809,7 @@ export function writePhysicalPlan(plan: PhysicalPlanCatalog): void {
     PHYSICAL_PLAN_KEY,
     JSON.stringify({ ...plan, catalogSeedVersion: plan.catalogSeedVersion ?? CATALOG_SEED_VERSION }),
   );
+  void import('../../services/notifyAccountBag').then((m) => m.notifyAccountBag('physical_plan'));
 }
 
 export function resetPhysicalPlan(): PhysicalPlanCatalog {

@@ -1,3 +1,4 @@
+import { notifyAccountBag } from '../../services/notifyAccountBag';
 import { todayDateKey } from '../physical/store';
 
 export const TRAVEL_STORE_KEY = 'path-travel-v1';
@@ -62,6 +63,7 @@ export function readTravelState(): TravelState {
 
 function write(state: TravelState): void {
   localStorage.setItem(TRAVEL_STORE_KEY, JSON.stringify(state));
+  notifyAccountBag('travel');
 }
 
 export function activeTrip(date = todayDateKey()): TravelTrip | null {

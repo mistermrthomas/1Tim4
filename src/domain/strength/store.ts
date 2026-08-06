@@ -1,3 +1,4 @@
+import { notifyAccountBag } from '../../services/notifyAccountBag';
 import { newId } from '../physical/store';
 import { buildSeededStrengthState, STRENGTH_SEED_VERSION } from './seed';
 import type {
@@ -72,13 +73,13 @@ export function readStrengthState(): StrengthState {
     const raw = localStorage.getItem(STRENGTH_STORE_KEY);
     if (!raw) {
       const seeded = cloneSeed();
-      writeStrengthState(seeded);
+      writeStrengthState(seeded, { sync: false });
       return seeded;
     }
     const parsed = JSON.parse(raw) as StrengthState;
     if (parsed.version !== 1) {
       const seeded = cloneSeed();
-      writeStrengthState(seeded);
+      writeStrengthState(seeded, { sync: false });
       return seeded;
     }
     if ((parsed.seedVersion ?? 0) < STRENGTH_SEED_VERSION) {
@@ -103,13 +104,14 @@ export function readStrengthState(): StrengthState {
     };
   } catch {
     const seeded = cloneSeed();
-    writeStrengthState(seeded);
+    writeStrengthState(seeded, { sync: false });
     return seeded;
   }
 }
 
-export function writeStrengthState(state: StrengthState): void {
+export function writeStrengthState(state: StrengthState, options?: { sync?: boolean }): void {
   localStorage.setItem(STRENGTH_STORE_KEY, JSON.stringify(state));
+  if (options?.sync !== false) notifyAccountBag('strength');
 }
 
 export function updateStrengthState(mutate: (state: StrengthState) => StrengthState): StrengthState {
