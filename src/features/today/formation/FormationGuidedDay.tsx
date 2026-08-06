@@ -79,14 +79,20 @@ export function FormationGuidedDay({
 
   const observation = log.morningReflection ?? '';
   const observationReady = observation.trim().length >= OBSERVE_MIN;
+  const reflectAnswered = Boolean((log.reflectAnswer ?? '').trim());
+  const reflectReady =
+    reflectAnswered ||
+    Boolean((log.reflectQuestion ?? '').trim()) ||
+    reflectStatus === 'ready' ||
+    reflectStatus === 'error';
   const showReflect = observationReady;
-  const showPractice =
-    observationReady &&
-    (Boolean((log.reflectAnswer ?? '').trim()) ||
-      reflectStatus === 'ready' ||
-      reflectStatus === 'error');
+  const showPractice = observationReady && reflectReady;
+  // Body training appears once Observe → Reflect has started (question or answer),
+  // so the workout is never buried behind Practice alone.
   const showBodyAndWork =
-    showPractice || Boolean((log.concreteActionNote ?? '').trim()) || log.practiceDone;
+    (observationReady && reflectReady) ||
+    Boolean((log.concreteActionNote ?? '').trim()) ||
+    log.practiceDone;
 
   useEffect(() => {
     let cancelled = false;
