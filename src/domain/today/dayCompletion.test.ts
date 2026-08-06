@@ -34,6 +34,11 @@ function baseLog(partial: Partial<BiblicalDayLog> = {}): BiblicalDayLog {
     concreteActionNote: '',
     expectedTest: 'test',
     intention: 'intend',
+    prayerText: '',
+    morningReflection: '',
+    reflectQuestion: '',
+    reflectAnswer: '',
+    morningMode: 'full',
     morningDone: true,
     middayDone: true,
     eveningDone: true,
@@ -41,6 +46,7 @@ function baseLog(partial: Partial<BiblicalDayLog> = {}): BiblicalDayLog {
     tested: null,
     eveningNotes: {},
     scriptureReviewed: true,
+    updatedAt: '2026-08-03T12:00:00.000Z',
     ...partial,
   };
 }

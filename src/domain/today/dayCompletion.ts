@@ -188,10 +188,10 @@ export function evaluateWeekdayEligibility(
   if (workout === 'open') missing.push('Training outcome');
   else if (workout === 'skipped' || workout === 'partial') unfinished.push('Training');
 
+  // Work is a testing context for the biblical assignment, not a separate required Today card.
   const workAssignments = plan.work.days.filter((d) => d.date === dateKey);
   const work = workStatusForDay(workAssignments);
-  if (work === 'open') missing.push('Work priority outcome');
-  else if (work === 'deferred' || work === 'carried_forward') unfinished.push('Work priority');
+  if (work === 'deferred' || work === 'carried_forward') unfinished.push('Work priority');
 
   const health = healthTargetsSnapshot(dateKey);
   const eligible = missing.length === 0;

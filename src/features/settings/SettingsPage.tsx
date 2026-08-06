@@ -4,6 +4,14 @@ import type { AllowedSermonPlanModel, AllowedTrainingPlanModel } from '../../../
 import { DEFAULT_SERMON_PLAN_MODEL, DEFAULT_TRAINING_PLAN_MODEL } from '../../../shared/aiModels';
 import { testAiConnection } from '../../domain/aiPlanning/client';
 import {
+  DEFAULT_FORMATION_REFLECT_PROMPT,
+  isFormationReflectPromptModified,
+  readFormationReflectSettings,
+  resetFormationReflectPrompt,
+  writeFormationReflectSettings,
+  type FormationReflectSettings,
+} from '../../domain/aiPlanning/reflectSettings';
+import {
   ALLOWED_SERMON_PLAN_MODELS,
   DEFAULT_PLANNING_PROMPT,
   isPromptModified,
@@ -28,30 +36,39 @@ import './SettingsPage.css';
 export function SettingsPage() {
   const [sermon, setSermon] = useState<AiPlanningSettings | null>(null);
   const [training, setTraining] = useState<AiTrainingSettings | null>(null);
+  const [reflect, setReflect] = useState<FormationReflectSettings | null>(null);
   const [draftSermonPrompt, setDraftSermonPrompt] = useState('');
   const [draftSermonModel, setDraftSermonModel] =
     useState<AllowedSermonPlanModel>(DEFAULT_SERMON_PLAN_MODEL);
   const [draftTrainingPrompt, setDraftTrainingPrompt] = useState('');
   const [draftTrainingModel, setDraftTrainingModel] =
     useState<AllowedTrainingPlanModel>(DEFAULT_TRAINING_PLAN_MODEL);
+  const [draftReflectPrompt, setDraftReflectPrompt] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
   const [savingSermon, setSavingSermon] = useState(false);
   const [savingTraining, setSavingTraining] = useState(false);
+  const [savingReflect, setSavingReflect] = useState(false);
 
   useEffect(() => {
-    void Promise.all([readAiPlanningSettings(), readAiTrainingSettings()]).then(([s, t]) => {
+    void Promise.all([
+      readAiPlanningSettings(),
+      readAiTrainingSettings(),
+      readFormationReflectSettings(),
+    ]).then(([s, t, r]) => {
       setSermon(s);
       setDraftSermonPrompt(s.planningPrompt);
       setDraftSermonModel(s.model);
       setTraining(t);
       setDraftTrainingPrompt(t.planningPrompt);
       setDraftTrainingModel(t.model);
+      setReflect(r);
+      setDraftReflectPrompt(r.reflectPrompt);
     });
   }, []);
 
-  if (!sermon || !training) {
+  if (!sermon || !training || !reflect) {
     return <p className="settings-page__loading">Loading settings…</p>;
   }
 
@@ -59,6 +76,7 @@ export function SettingsPage() {
     draftSermonPrompt !== sermon.planningPrompt || draftSermonModel !== sermon.model;
   const trainingDirty =
     draftTrainingPrompt !== training.planningPrompt || draftTrainingModel !== training.model;
+  const reflectDirty = draftReflectPrompt !== reflect.reflectPrompt;
 
   const saveSermon = async () => {
     setSavingSermon(true);
@@ -94,6 +112,22 @@ export function SettingsPage() {
     }
   };
 
+  const saveReflect = async () => {
+    setSavingReflect(true);
+    setError(null);
+    try {
+      const next = await writeFormationReflectSettings({
+        reflectPrompt: draftReflectPrompt,
+      });
+      setReflect(next);
+      setMessage('Today reflection prompt saved');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setSavingReflect(false);
+    }
+  };
+
   const resetSermon = async () => {
     if (isPromptModified({ ...sermon, planningPrompt: draftSermonPrompt })) {
       if (!window.confirm('Reset the Biblical planning prompt to the Path default?')) return;
@@ -112,6 +146,16 @@ export function SettingsPage() {
     setTraining(next);
     setDraftTrainingPrompt(next.planningPrompt);
     setMessage('Training prompt reset to default');
+  };
+
+  const resetReflect = async () => {
+    if (isFormationReflectPromptModified({ ...reflect, reflectPrompt: draftReflectPrompt })) {
+      if (!window.confirm('Reset the Today reflection prompt to the Path default?')) return;
+    }
+    const next = await resetFormationReflectPrompt();
+    setReflect(next);
+    setDraftReflectPrompt(next.reflectPrompt);
+    setMessage('Today reflection prompt reset to default');
   };
 
   const testConnection = async () => {
@@ -140,13 +184,51 @@ export function SettingsPage() {
         <p className="path-eyebrow">Preferences</p>
         <h1 className="path-display settings-page__title">Settings</h1>
         <p className="path-body">
-          Sign in to sync across devices, then configure AI coaching. API keys stay on the server
-          only.
+          Sign in to keep formation across devices, then configure AI guidance. API keys stay on the
+          server only.
         </p>
       </header>
 
       <section className="settings-page__section path-surface settings-page__cloud">
         <CloudSignIn />
+      </section>
+
+      <section className="settings-page__section path-surface">
+        <h2 className="settings-page__h2">Today reflection (Observe → Reflect)</h2>
+        <p className="settings-page__help">
+          After the user writes what stood out in Scripture, this prompt asks AI for one follow-up
+          question. Scripture remains the teacher; AI only coaches through a question. Today’s
+          reading, sermon notes, and the user’s observation are added automatically.
+        </p>
+
+        <label className="path-field">
+          <span>Reflection follow-up prompt</span>
+          <textarea
+            className="settings-page__prompt"
+            rows={12}
+            value={draftReflectPrompt}
+            onChange={(e) => {
+              setDraftReflectPrompt(e.target.value);
+              setMessage(null);
+            }}
+          />
+        </label>
+
+        <p className="settings-page__meta">
+          Prompt version: {reflect.promptVersion}
+          {draftReflectPrompt.trim() === DEFAULT_FORMATION_REFLECT_PROMPT.trim()
+            ? ' · default'
+            : ' · customized'}
+        </p>
+
+        <div className="settings-page__toolbar">
+          <Button onClick={() => void saveReflect()} disabled={savingReflect || !reflectDirty}>
+            Save Reflection Prompt
+          </Button>
+          <Button variant="ghost" onClick={() => void resetReflect()}>
+            Reset to Default
+          </Button>
+        </div>
       </section>
 
       <section className="settings-page__section path-surface">
