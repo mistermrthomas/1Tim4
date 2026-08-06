@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   becomingStatement,
+  formatFormationDate,
+  formatFormationTime,
   formationDayKind,
   formationDayLabel,
   morningReflectionQuestion,
@@ -22,5 +24,12 @@ describe('formationDay helpers', () => {
   it('returns a Monday morning question', () => {
     expect(morningReflectionQuestion(2).toLowerCase()).toContain('stood out');
     expect(formationDayLabel(2)).toContain('Monday');
+  });
+
+  it('formats local date and time for the Today header', () => {
+    const sample = new Date(2026, 7, 6, 6, 34, 0);
+    expect(formatFormationDate(sample)).toMatch(/August/);
+    expect(formatFormationDate(sample)).toMatch(/2026/);
+    expect(formatFormationTime(sample)).toMatch(/6:34/);
   });
 });

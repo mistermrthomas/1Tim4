@@ -19,6 +19,8 @@ import {
   reopenDay,
 } from '../../domain/today/dayCompletion';
 import {
+  formatFormationDate,
+  formatFormationTime,
   greetingForNow,
 } from '../../domain/today/formationDay';
 import { completeWeeklyPlan, saveWeeklyPlan } from '../../domain/weeklyPlan/store';
@@ -30,6 +32,28 @@ import { FormationPhysicalNext } from './formation/FormationPhysicalNext';
 import { TomorrowPreview } from './TomorrowPreview';
 import './TodayPage.css';
 import './formation/FormationToday.css';
+
+function FormationDayHeader({ title, soft }: { title: string; soft: string }) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 15_000);
+    return () => window.clearInterval(id);
+  }, []);
+  return (
+    <header className="formation-hero formation-hero--quiet">
+      <p className="formation-hero__greeting">{greetingForNow(now)}</p>
+      <p className="formation-hero__datetime">
+        <span className="formation-hero__date">{formatFormationDate(now)}</span>
+        <span className="formation-hero__sep" aria-hidden>
+          ·
+        </span>
+        <span className="formation-hero__time">{formatFormationTime(now)}</span>
+      </p>
+      <h1 className="formation-hero__title">{title}</h1>
+      <p className="formation-hero__soft">{soft}</p>
+    </header>
+  );
+}
 
 export function TodayActiveWeek({
   weeklyPlan: initial,
@@ -149,13 +173,10 @@ export function TodayActiveWeek({
   if (sunday) {
     return (
       <div className="today-preview path-fade-in formation-flow formation-flow--quiet">
-        <header className="formation-hero formation-hero--quiet">
-          <p className="formation-hero__greeting">{greetingForNow()}</p>
-          <h1 className="formation-hero__title">Rest today</h1>
-          <p className="formation-hero__soft">
-            {weeklyPlan.church.sermonTitle || theme}. Formation continues Monday.
-          </p>
-        </header>
+        <FormationDayHeader
+          title="Rest today"
+          soft={`${weeklyPlan.church.sermonTitle || theme}. Formation continues Monday.`}
+        />
         <section className="formation-stage">
           <p className="formation-stage__label">Sunday</p>
           <p className="formation-stage__hint">
@@ -173,11 +194,7 @@ export function TodayActiveWeek({
   if (sabbath) {
     return (
       <div className="today-preview path-fade-in formation-flow formation-flow--quiet">
-        <header className="formation-hero formation-hero--quiet">
-          <p className="formation-hero__greeting">{greetingForNow()}</p>
-          <h1 className="formation-hero__title">Sabbath reflection</h1>
-          <p className="formation-hero__soft">{theme}</p>
-        </header>
+        <FormationDayHeader title="Sabbath reflection" soft={theme} />
 
         <section className="formation-stage">
           <p className="formation-stage__label">Reflect</p>

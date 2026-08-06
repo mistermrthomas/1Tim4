@@ -83,6 +83,24 @@ export function greetingForNow(now = new Date()): string {
   return 'Good evening';
 }
 
+/** Full weekday, month, day, year — e.g. Thursday, August 6, 2026 */
+export function formatFormationDate(now = new Date()): string {
+  return now.toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+/** Local time with AM/PM — e.g. 6:34 AM */
+export function formatFormationTime(now = new Date()): string {
+  return now.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 export function resolveActiveDay(
   plan: WeeklyPlan,
   dateKey: string,

@@ -10,6 +10,8 @@ import {
 } from '../../../domain/biblical/dayLog';
 import { fetchWebPassage } from '../../../domain/scripture/fetchWebPassage';
 import {
+  formatFormationDate,
+  formatFormationTime,
   greetingForNow,
   resolveActiveDay,
   sermonConnectionCopy,
@@ -19,6 +21,16 @@ import { ScripturePassage } from './ScripturePassage';
 import { FormationPhysicalNext } from './FormationPhysicalNext';
 
 const OBSERVE_MIN = 12;
+
+function useLiveClock(): Date {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const tick = () => setNow(new Date());
+    const id = window.setInterval(tick, 15_000);
+    return () => window.clearInterval(id);
+  }, []);
+  return now;
+}
 
 export function FormationGuidedDay({
   weeklyPlan,
@@ -37,6 +49,7 @@ export function FormationGuidedDay({
   const [reflectError, setReflectError] = useState<string | null>(null);
   const [passageText, setPassageText] = useState('');
   const reflectRequestRef = useRef(0);
+  const now = useLiveClock();
 
   useEffect(() => {
     const next = loadBiblicalDay(dateKey);
@@ -150,7 +163,14 @@ export function FormationGuidedDay({
   return (
     <div className="formation-flow formation-flow--quiet">
       <header className="formation-hero formation-hero--quiet">
-        <p className="formation-hero__greeting">{greetingForNow()}</p>
+        <p className="formation-hero__greeting">{greetingForNow(now)}</p>
+        <p className="formation-hero__datetime">
+          <span className="formation-hero__date">{formatFormationDate(now)}</span>
+          <span className="formation-hero__sep" aria-hidden>
+            ·
+          </span>
+          <span className="formation-hero__time">{formatFormationTime(now)}</span>
+        </p>
         <h1 className="formation-hero__title">Begin today’s formation</h1>
         <p className="formation-hero__soft">
           {weeklyPlan.church.sermonTitle || weeklyPlan.biblical.weeklyTheme || 'This week'}
@@ -158,13 +178,15 @@ export function FormationGuidedDay({
       </header>
 
       {/* 1. Read */}
-      <section className="formation-stage" aria-label="Today’s reading">
+      <section className="formation-stage formation-stage--read" aria-label="Today’s reading">
         <p className="formation-stage__label">Read</p>
-        <ScripturePassage reference={scripture} mode="full" onReviewed={markScriptureReviewed} />
+        <div className="formation-reading">
+          <ScripturePassage reference={scripture} mode="full" onReviewed={markScriptureReviewed} />
+        </div>
       </section>
 
       {/* 2. Observe */}
-      <section className="formation-stage" aria-label="Observe">
+      <section className="formation-stage formation-stage--observe" aria-label="Observe">
         <p className="formation-stage__label">Observe</p>
         <h2 className="formation-stage__question">What stood out to you?</h2>
         <p className="formation-stage__hint">
@@ -203,7 +225,7 @@ export function FormationGuidedDay({
         </label>
       </section>
 
-      {/* 3. Reflect */}
+      {/* 3. Reflect + Respond */}
       {showReflect ? (
         <section className="formation-stage" aria-label="Reflect">
           <p className="formation-stage__label">Reflect</p>
@@ -230,6 +252,7 @@ export function FormationGuidedDay({
               ) : null}
             </>
           )}
+          <p className="formation-stage__label formation-stage__label--nested">Respond</p>
           <label className="path-field formation-journal">
             <span className="visually-hidden">Reflection journal</span>
             <textarea
@@ -248,7 +271,9 @@ export function FormationGuidedDay({
         <section className="formation-stage" aria-label="Practice">
           <p className="formation-stage__label">Practice</p>
           <h2 className="formation-stage__question">One faithful action</h2>
-          <p className="formation-practice__line">{practice || 'Stay with what you noticed in Scripture today.'}</p>
+          <p className="formation-practice__line">
+            {practice || 'Stay with what you noticed in Scripture today.'}
+          </p>
           <label className="path-field">
             <span>What will you do — or what happened?</span>
             <textarea
@@ -274,13 +299,13 @@ export function FormationGuidedDay({
       {showBodyAndWork ? (
         <>
           <section className="formation-stage formation-stage--after" aria-label="Physical training">
-            <p className="formation-stage__label">Body</p>
+            <p className="formation-stage__label">Physical training</p>
             <FormationPhysicalNext />
           </section>
 
           {workLine ? (
             <section className="formation-stage formation-stage--after" aria-label="Work practice">
-              <p className="formation-stage__label">Work</p>
+              <p className="formation-stage__label">Work practice</p>
               <p className="formation-work__line">{workLine}</p>
             </section>
           ) : null}

@@ -7,7 +7,7 @@ import {
   type WebPassage,
 } from '../../../domain/scripture/fetchWebPassage';
 
-const COLLAPSE_CHARS = 900;
+const COLLAPSE_CHARS = 1100;
 
 export function ScripturePassage({
   reference,
@@ -58,15 +58,14 @@ export function ScripturePassage({
 
   const studyLinks = getStudyLinksForReference(reference);
   const chapterUrl = studyLinks[0]?.url ?? null;
+  const alternateLink = studyLinks.find((l) => l.url !== chapterUrl) ?? studyLinks[1] ?? null;
+  const displayRef = passage?.reference || reference || 'Today’s passage';
 
   return (
-    <section className="formation-block formation-scripture" aria-label="Scripture reading">
-      <div className="formation-block__head">
-        <p className="formation-block__eyebrow">Scripture</p>
-        <h2 className="formation-block__title">{passage?.reference || reference || 'Today’s passage'}</h2>
-        <p className="formation-scripture__translation">
-          {passage?.translationName || 'World English Bible'} · WEB
-        </p>
+    <div className="formation-scripture" aria-label="Scripture reading">
+      <div className="formation-scripture__meta">
+        <h2 className="formation-scripture__ref">{displayRef}</h2>
+        <p className="formation-scripture__translation">World English Bible · WEB</p>
       </div>
 
       {status === 'loading' ? (
@@ -75,9 +74,8 @@ export function ScripturePassage({
 
       {status === 'unavailable' ? (
         <div className="formation-scripture__fallback">
-          <p className="formation-scripture__ref-only">{reference}</p>
           <p className="formation-scripture__note">
-            Full WEB text isn’t available for this reference yet. Open the chapter to read the
+            Full WEB text isn’t available for this reference yet. Use the links below to read the
             approved wording — we never invent verse text.
           </p>
         </div>
@@ -87,11 +85,13 @@ export function ScripturePassage({
         <div className="formation-scripture__body">
           {sliced.verses.length > 0 ? (
             <div className="formation-scripture__verses">
-              {(long && !expanded ? sliced.verses.slice(0, 4) : sliced.verses).map((v) => (
-                <p key={`${v.chapter}:${v.verse}`} className="formation-scripture__verse">
-                  <sup>{v.verse}</sup>
-                  {v.text}
-                </p>
+              {(long && !expanded ? sliced.verses.slice(0, 6) : sliced.verses).map((v) => (
+                <div key={`${v.chapter}:${v.verse}`} className="formation-scripture__verse">
+                  <span className="formation-scripture__verse-num" aria-hidden>
+                    {v.verse}
+                  </span>
+                  <p className="formation-scripture__verse-text">{v.text}</p>
+                </div>
               ))}
             </div>
           ) : (
@@ -104,28 +104,27 @@ export function ScripturePassage({
           {sliced.truncated || long ? (
             <button
               type="button"
-              className="formation-link-btn"
+              className="formation-scripture__more"
               onClick={() => setExpanded((v) => !v)}
             >
-              {expanded ? 'Show less' : mode === 'full' ? 'Read full passage' : 'Show more of this passage'}
+              {expanded ? 'Show less' : 'Continue reading'}
             </button>
           ) : null}
-          <p className="formation-scripture__attr">{passage?.attribution}</p>
         </div>
       ) : null}
 
       <div className="formation-scripture__links">
         {chapterUrl ? (
-          <a className="formation-link-btn" href={chapterUrl} target="_blank" rel="noreferrer">
-            Open full chapter
+          <a href={chapterUrl} target="_blank" rel="noreferrer">
+            Read full chapter
           </a>
         ) : null}
-        {studyLinks.slice(0, 1).map((link) => (
-          <a key={link.url} className="formation-link-btn" href={link.url} target="_blank" rel="noreferrer">
-            {link.label}
+        {alternateLink ? (
+          <a href={alternateLink.url} target="_blank" rel="noreferrer">
+            Open alternate translation
           </a>
-        ))}
+        ) : null}
       </div>
-    </section>
+    </div>
   );
 }
