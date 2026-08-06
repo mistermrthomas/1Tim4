@@ -15,10 +15,17 @@ const TABS = [
   { to: '/progress', label: 'Progress', job: 'Am I improving?' },
 ] as const;
 
+const MORE_LINKS = [
+  { to: '/sermon', label: 'Sunday Sermon' },
+  { to: '/training/physical/strength', label: 'Strength log' },
+  { to: '/settings', label: 'Settings' },
+] as const;
+
 export function FormationShell() {
   const { lastCloudSyncAt, cloudSyncStatus, user } = useAuth();
   const [theme, setTheme] = useState<PathTheme>(() => readStoredTheme());
   const [pendingWeekly, setPendingWeekly] = useState(() => hasPendingWeeklyPlanSync());
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     storeTheme(theme);
@@ -156,6 +163,35 @@ export function FormationShell() {
         </div>
       </main>
 
+      {moreOpen ? (
+        <div className="formation-shell__more" role="dialog" aria-label="More links">
+          <button
+            type="button"
+            className="formation-shell__more-backdrop"
+            aria-label="Close more menu"
+            onClick={() => setMoreOpen(false)}
+          />
+          <div className="formation-shell__more-sheet">
+            <p className="path-label formation-shell__more-title">More</p>
+            <nav className="formation-shell__more-nav" aria-label="Secondary">
+              {MORE_LINKS.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className="formation-shell__more-link"
+                  onClick={() => setMoreOpen(false)}
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            </nav>
+            {user && pendingWeekly ? (
+              <p className="path-label formation-shell__sync-pending">Unsynced sermon changes</p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       <nav className="formation-shell__mobile-nav" aria-label="Primary mobile">
         {TABS.map((tab) => (
           <NavLink
@@ -165,10 +201,19 @@ export function FormationShell() {
               `formation-shell__mobile-tab${isActive ? ' formation-shell__mobile-tab--active' : ''}`
             }
             end={tab.to === '/today'}
+            onClick={() => setMoreOpen(false)}
           >
             {tab.label}
           </NavLink>
         ))}
+        <button
+          type="button"
+          className={`formation-shell__mobile-tab formation-shell__mobile-more${moreOpen ? ' formation-shell__mobile-tab--active' : ''}`}
+          aria-expanded={moreOpen}
+          onClick={() => setMoreOpen((open) => !open)}
+        >
+          More
+        </button>
       </nav>
     </div>
   );
