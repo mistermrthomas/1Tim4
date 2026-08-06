@@ -55,8 +55,12 @@ function difficultyShort(value: StrengthDifficulty): string {
   switch (value) {
     case 'easy':
       return 'E';
+    case 'easy_moderate':
+      return 'E/M';
     case 'moderate':
       return 'M';
+    case 'moderate_hard':
+      return 'M/H';
     case 'hard':
       return 'H';
     case 'max':

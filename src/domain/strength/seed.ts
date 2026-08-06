@@ -1,7 +1,7 @@
 import { newId } from '../physical/store';
 import { EQUIPMENT_MAX_LB, type StrengthExercise, type StrengthLogEntry, type StrengthState, type StrengthWorkout, type StrengthWorkoutNote } from './types';
 
-export const STRENGTH_SEED_VERSION = 4;
+export const STRENGTH_SEED_VERSION = 5;
 
 export const WORKOUT_1_ID = 'strength_workout_1';
 export const WORKOUT_2_ID = 'strength_workout_2';
@@ -122,13 +122,32 @@ const EXERCISES: StrengthExercise[] = [
     order: 6,
   }),
   ex({
-    id: 'ex_oblique_twist',
-    name: 'Oblique Twist',
+    id: 'ex_oblique_twist_left',
+    name: 'Oblique Twist Left',
     muscleGroup: 'Core',
     equipment: 'Bowflex',
     active: true,
     workoutId: WORKOUT_1_ID,
     order: 7,
+  }),
+  ex({
+    id: 'ex_oblique_twist_right',
+    name: 'Oblique Twist Right',
+    muscleGroup: 'Core',
+    equipment: 'Bowflex',
+    active: true,
+    workoutId: WORKOUT_1_ID,
+    order: 8,
+  }),
+  // Historical-only — split into Left / Right in Workout A.
+  ex({
+    id: 'ex_oblique_twist',
+    name: 'Oblique Twist',
+    muscleGroup: 'Core',
+    equipment: 'Bowflex',
+    active: false,
+    workoutId: null,
+    order: 97,
   }),
   ex({
     id: 'ex_lat_pulldown',
@@ -338,11 +357,20 @@ function baselineEntries(): StrengthLogEntry[] {
     ),
     entry('ex_crunch', WORKOUT_1_ID, d1, 120, ['20', '20', '20'], 'moderate', ''),
     entry(
-      'ex_oblique_twist',
+      'ex_oblique_twist_left',
       WORKOUT_1_ID,
       d1,
       120,
-      ['12 per side', '12 per side', '12 per side'],
+      ['12', '12', '12'],
+      'moderate',
+      '',
+    ),
+    entry(
+      'ex_oblique_twist_right',
+      WORKOUT_1_ID,
+      d1,
+      120,
+      ['12', '12', '12'],
       'moderate',
       '',
     ),

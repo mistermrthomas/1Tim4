@@ -12,8 +12,11 @@ export function recommendNextWeightLb(
     case 'easy':
       next = lastWeightLb + step;
       break;
+    case 'easy_moderate':
     case 'moderate':
+    case 'moderate_hard':
     case 'hard':
+      // Only clear Easy advances weight; in-between and harder stay put.
       next = lastWeightLb;
       break;
     case 'max':

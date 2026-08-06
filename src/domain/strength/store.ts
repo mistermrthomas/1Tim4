@@ -42,11 +42,35 @@ function mergeCatalog(state: StrengthState): StrengthState {
   }
 
   // Seed v4: Incline Chest Press → Chest Flyes in Workout A (keep history).
-  const remappedEntries = state.entries.map((entry) =>
+  const afterIncline = state.entries.map((entry) =>
     entry.exerciseId === 'ex_incline_chest_press'
       ? { ...entry, exerciseId: 'ex_chest_fly' }
       : entry,
   );
+
+  // Seed v5: combined Oblique Twist → Left / Right (duplicate history to each side).
+  const remappedEntries: StrengthLogEntry[] = [];
+  for (const entry of afterIncline) {
+    if (entry.exerciseId !== 'ex_oblique_twist') {
+      remappedEntries.push(entry);
+      continue;
+    }
+    const reps = entry.reps.map((rep) =>
+      rep.replace(/\s*per side\s*/gi, '').trim() || '12',
+    );
+    remappedEntries.push({
+      ...entry,
+      id: `${entry.id}_left`,
+      exerciseId: 'ex_oblique_twist_left',
+      reps,
+    });
+    remappedEntries.push({
+      ...entry,
+      id: `${entry.id}_right`,
+      exerciseId: 'ex_oblique_twist_right',
+      reps,
+    });
+  }
 
   const entryIds = new Set(
     remappedEntries.map((e) => `${e.exerciseId}|${e.date}|${e.weightLb}`),

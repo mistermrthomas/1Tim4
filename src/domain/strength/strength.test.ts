@@ -37,7 +37,7 @@ describe('strength log', () => {
   it('seeds three active workouts and baseline history', () => {
     const state = readStrengthState();
     expect(state.workouts.filter((w) => w.active)).toHaveLength(3);
-    expect(exercisesForWorkout(state, WORKOUT_1_ID)).toHaveLength(7);
+    expect(exercisesForWorkout(state, WORKOUT_1_ID)).toHaveLength(8);
     expect(exercisesForWorkout(state, WORKOUT_2_ID).map((e) => e.name)).toEqual([
       'Lat Pulldown',
       'Seated Row',
@@ -73,8 +73,11 @@ describe('strength log', () => {
       'Tricep Pushdown',
       'Overhead Tricep Extension',
       'Crunch',
-      'Oblique Twist',
+      'Oblique Twist Left',
+      'Oblique Twist Right',
     ]);
+    expect(latestEntry(state, 'ex_oblique_twist_left')?.reps).toEqual(['12', '12', '12']);
+    expect(latestEntry(state, 'ex_oblique_twist_right')?.reps).toEqual(['12', '12', '12']);
     expect(latestEntry(state, 'ex_flat_chest_press')?.weightLb).toBe(155);
     expect(latestEntry(state, 'ex_chest_fly')?.weightLb).toBe(155);
     expect(latestEntry(state, 'ex_chest_fly')?.reps).toEqual(['12', '12', '12']);
@@ -83,7 +86,9 @@ describe('strength log', () => {
 
   it('recommends progression from difficulty and respects equipment max', () => {
     expect(recommendNextWeightLb(110, 'easy', 5)).toBe(115);
+    expect(recommendNextWeightLb(110, 'easy_moderate', 5)).toBe(110);
     expect(recommendNextWeightLb(110, 'moderate', 5)).toBe(110);
+    expect(recommendNextWeightLb(110, 'moderate_hard', 5)).toBe(110);
     expect(recommendNextWeightLb(110, 'hard', 5)).toBe(110);
     expect(recommendNextWeightLb(110, 'max', 5)).toBe(105);
     expect(recommendNextWeightLb(155, 'easy', 5, 155)).toBe(155);
@@ -139,11 +144,13 @@ describe('strength log', () => {
       }),
     );
     const migrated = readStrengthState();
-    expect(migrated.seedVersion).toBe(4);
+    expect(migrated.seedVersion).toBe(5);
     expect(exercisesForWorkout(migrated, WORKOUT_1_ID).some((e) => e.name === 'Chest Flyes')).toBe(
       true,
     );
     expect(latestEntry(migrated, 'ex_chest_fly')?.weightLb).toBe(155);
     expect(latestEntry(migrated, 'ex_incline_chest_press')).toBeNull();
+    expect(latestEntry(migrated, 'ex_oblique_twist_left')?.weightLb).toBe(120);
+    expect(latestEntry(migrated, 'ex_oblique_twist_right')?.weightLb).toBe(120);
   });
 });

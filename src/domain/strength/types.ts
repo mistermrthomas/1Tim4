@@ -1,4 +1,10 @@
-export type StrengthDifficulty = 'easy' | 'moderate' | 'hard' | 'max';
+export type StrengthDifficulty =
+  | 'easy'
+  | 'easy_moderate'
+  | 'moderate'
+  | 'moderate_hard'
+  | 'hard'
+  | 'max';
 
 export interface StrengthWorkout {
   id: string;
@@ -68,9 +74,19 @@ export const DIFFICULTY_OPTIONS: Array<{
     definition: 'Target completed with at least three additional reps likely available.',
   },
   {
+    value: 'easy_moderate',
+    label: 'Easy / Moderate',
+    definition: 'Between easy and moderate — finished cleanly, but not clearly ready to increase.',
+  },
+  {
     value: 'moderate',
     label: 'Moderate',
     definition: 'Target completed with approximately one or two additional reps available.',
+  },
+  {
+    value: 'moderate_hard',
+    label: 'Moderate / Hard',
+    definition: 'Between moderate and hard — challenging, with little left in reserve.',
   },
   {
     value: 'hard',
