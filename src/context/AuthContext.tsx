@@ -94,7 +94,17 @@ export function AuthProvider({
         return activeProfileReloaded || weeklyReloaded;
       } catch (err) {
         setCloudSyncStatus('error');
-        setCloudSyncMessage(err instanceof Error ? err.message : 'Could not sync with cloud.');
+        const msg =
+          err instanceof Error
+            ? err.message
+            : typeof err === 'object' && err && 'message' in err
+              ? String((err as { message: unknown }).message)
+              : 'Could not sync with cloud.';
+        setCloudSyncMessage(
+          /permission denied|42501/i.test(msg)
+            ? 'Cloud sync blocked by database permissions. Run the grants SQL in Supabase, then Sync now.'
+            : msg || 'Could not sync with cloud.',
+        );
         return false;
       }
     },
