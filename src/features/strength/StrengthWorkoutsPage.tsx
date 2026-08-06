@@ -72,55 +72,6 @@ function formatColumnDate(dateKey: string): string {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-function ExerciseRow({
-  exercise,
-  last,
-  onLog,
-  onHistory,
-}: {
-  exercise: StrengthExercise;
-  last: StrengthLogEntry | null;
-  onLog: () => void;
-  onHistory: () => void;
-}) {
-  return (
-    <article className="strength-exercise path-surface">
-      <div className="strength-exercise__top">
-        <h2 className="strength-exercise__name">{exercise.name}</h2>
-        <p className="strength-exercise__equip">{exercise.equipment}</p>
-      </div>
-      <dl className="strength-exercise__grid">
-        <div className="strength-exercise__stat">
-          <dt>Last weight</dt>
-          <dd>
-            {last
-              ? formatWeight(last.weightLb, exercise.weightSuffix)
-              : '—'}
-          </dd>
-        </div>
-        <div className="strength-exercise__stat">
-          <dt>Last sets / reps</dt>
-          <dd>{last ? `${last.setCount} · ${formatReps(last.reps)}` : '—'}</dd>
-        </div>
-        <div className="strength-exercise__stat">
-          <dt>Last difficulty</dt>
-          <dd>{last ? difficultyLabel(last.difficulty) : '—'}</dd>
-        </div>
-        <div className="strength-exercise__stat">
-          <dt>Next weight</dt>
-          <dd className="dd--rec">{formatRecommendedNext(exercise, last)}</dd>
-        </div>
-      </dl>
-      <div className="strength-exercise__actions">
-        <Button onClick={onLog}>Log today’s result</Button>
-        <Button variant="ghost" onClick={onHistory}>
-          History
-        </Button>
-      </div>
-    </article>
-  );
-}
-
 function LogForm({
   state,
   exercise,
@@ -344,10 +295,11 @@ function ProgressionTable({
   state,
   exercises,
   label = 'Progression',
-  hint = 'Tap a cell to edit. Empty cells for yesterday/today add a new log.',
+  hint = 'Tap a cell to edit. Empty cells for yesterday/today add a new log. Tap an exercise name for history.',
   showWorkout = false,
   onOpenCell,
   onLogToday,
+  onOpenExercise,
 }: {
   state: StrengthState;
   exercises: StrengthExercise[];
@@ -356,6 +308,7 @@ function ProgressionTable({
   showWorkout?: boolean;
   onOpenCell: (exerciseId: string, date: string, entryId?: string) => void;
   onLogToday: (exerciseId: string) => void;
+  onOpenExercise?: (exerciseId: string) => void;
 }) {
   const todayKey = todayDateKey();
   const yesterdayKey = addDays(todayKey, -1);
@@ -405,7 +358,17 @@ function ProgressionTable({
                 return (
                   <tr key={exercise.id}>
                     <th scope="row" className="strength-table__sticky strength-table__exercise">
-                      {exercise.name}
+                      {onOpenExercise ? (
+                        <button
+                          type="button"
+                          className="strength-table__exercise-btn"
+                          onClick={() => onOpenExercise(exercise.id)}
+                        >
+                          {exercise.name}
+                        </button>
+                      ) : (
+                        exercise.name
+                      )}
                     </th>
                     <td className="strength-table__equip">{exercise.equipment}</td>
                     {showWorkout ? (
@@ -760,7 +723,8 @@ export function StrengthWorkoutsPage() {
             {workout?.shortLabel ?? 'Workout'}
           </h1>
           <p className="strength-page__lede">
-            Progression across sessions. Tap any cell to edit weight, reps, difficulty, and notes.
+            Use Log for today’s result, or tap a cell to edit. Tap an exercise name for history and
+            details.
           </p>
           {sessionNote ? (
             <p className="strength-page__lede">Latest session note: {sessionNote.notes}</p>
@@ -787,31 +751,14 @@ export function StrengthWorkoutsPage() {
               preferredDate: todayDateKey(),
             })
           }
+          onOpenExercise={(exerciseId) =>
+            setView({
+              kind: 'exercise',
+              exerciseId,
+              workoutId: view.workoutId,
+            })
+          }
         />
-
-        <div className="strength-detail-list">
-          {exercises.map((exercise) => (
-            <ExerciseRow
-              key={exercise.id}
-              exercise={exercise}
-              last={latestEntry(state, exercise.id)}
-              onLog={() =>
-                setView({
-                  kind: 'log',
-                  exerciseId: exercise.id,
-                  workoutId: view.workoutId,
-                })
-              }
-              onHistory={() =>
-                setView({
-                  kind: 'exercise',
-                  exerciseId: exercise.id,
-                  workoutId: view.workoutId,
-                })
-              }
-            />
-          ))}
-        </div>
       </div>
     );
   }
@@ -850,7 +797,7 @@ export function StrengthWorkoutsPage() {
         state={state}
         exercises={allActive}
         label="All exercises"
-        hint="Every active lift in one table. Tap a cell to edit. W1 / W2 marks the workout split."
+        hint="Every active lift in one table. Tap a cell to edit, or an exercise name for history."
         showWorkout
         onOpenCell={(exerciseId, date, entryId) => {
           const exercise = getExercise(state, exerciseId);
@@ -869,6 +816,14 @@ export function StrengthWorkoutsPage() {
             exerciseId,
             workoutId: exercise?.workoutId ?? null,
             preferredDate: todayDateKey(),
+          });
+        }}
+        onOpenExercise={(exerciseId) => {
+          const exercise = getExercise(state, exerciseId);
+          setView({
+            kind: 'exercise',
+            exerciseId,
+            workoutId: exercise?.workoutId ?? null,
           });
         }}
       />

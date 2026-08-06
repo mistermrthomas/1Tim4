@@ -23,12 +23,6 @@
   color: var(--path-text-dim);
 }
 
-.strength-detail-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
 .strength-page__header {
   display: flex;
   flex-direction: column;
@@ -302,6 +296,26 @@
   letter-spacing: 0;
   text-transform: none;
   color: var(--path-text);
+}
+
+.strength-table__exercise-btn {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--path-text);
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--path-gold) 45%, transparent);
+  text-underline-offset: 0.18em;
+}
+
+.strength-table__exercise-btn:hover {
+  color: var(--path-gold);
 }
 
 .strength-table__tag {
