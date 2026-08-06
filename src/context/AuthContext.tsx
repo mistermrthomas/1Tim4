@@ -75,7 +75,9 @@ export function AuthProvider({
           weeklyWarning =
             /relation .*path_weekly_plans.* does not exist|Could not find the table/i.test(msg)
               ? 'Trail synced. Run the path_weekly_plans migration to sync sermons across devices.'
-              : `Trail synced. Sermon sync issue: ${msg}`;
+              : /permission denied|42501/i.test(msg)
+                ? 'Trail synced. Sermon sync needs a database permission fix — run the grants SQL in Supabase.'
+                : `Trail synced. Sermon sync issue: ${msg}`;
         }
 
         const at = new Date().toISOString();
