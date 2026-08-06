@@ -21,6 +21,7 @@ import {
   writeAiTrainingSettings,
   type AiTrainingSettings,
 } from '../../domain/aiTraining/settings';
+import { CloudSignIn } from '../../components/auth/CloudSignIn';
 import { Button } from '../../ui/Button';
 import './SettingsPage.css';
 
@@ -139,9 +140,14 @@ export function SettingsPage() {
         <p className="path-eyebrow">Preferences</p>
         <h1 className="path-display settings-page__title">Settings</h1>
         <p className="path-body">
-          Configure Biblical and training AI coaching separately. API keys stay on the server only.
+          Sign in to sync across devices, then configure AI coaching. API keys stay on the server
+          only.
         </p>
       </header>
+
+      <section className="settings-page__section path-surface settings-page__cloud">
+        <CloudSignIn />
+      </section>
 
       <section className="settings-page__section path-surface">
         <h2 className="settings-page__h2">AI Biblical planning</h2>

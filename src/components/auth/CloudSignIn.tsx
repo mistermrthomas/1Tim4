@@ -19,8 +19,8 @@ export function CloudSignIn() {
       <section className="cloud-sign-in card">
         <p className="eyebrow">Sync across devices</p>
         <p className="cloud-sign-in__lead">
-          Cloud sign-in is not enabled on this deployment yet. Your trail still saves automatically
-          on this device. Add Supabase keys in Vercel to enable Apple or Google login.
+          Cloud sign-in is not enabled on this deployment yet. Your data still saves on this device
+          only. Add Supabase keys in Vercel to enable Apple or Google login.
         </p>
       </section>
     );
@@ -35,7 +35,7 @@ export function CloudSignIn() {
           Signed in as <strong>{email}</strong>
         </p>
         <p className={`cloud-sign-in__status cloud-sign-in__status--${cloudSyncStatus}`}>
-          {cloudSyncStatus === 'syncing' && 'Syncing your trail…'}
+          {cloudSyncStatus === 'syncing' && 'Syncing your account…'}
           {cloudSyncStatus === 'synced' && (cloudSyncMessage ?? 'Synced')}
           {cloudSyncStatus === 'error' && (cloudSyncMessage ?? 'Sync error')}
           {cloudSyncStatus === 'idle' && 'Ready to sync'}
@@ -52,8 +52,8 @@ export function CloudSignIn() {
           </button>
         </div>
         <p className="field-hint cloud-sign-in__note">
-          Your journal saves on this device first, then backs up to your account. Use <strong>Sync now</strong> before
-          switching devices if you just dictated entries.
+          Sermon notes and this week’s biblical training back up to your account. Use{' '}
+          <strong>Sync now</strong> after editing if you are about to switch devices.
         </p>
       </section>
     );
@@ -63,8 +63,9 @@ export function CloudSignIn() {
     <section className="cloud-sign-in card">
       <p className="eyebrow">Sync across devices</p>
       <p className="cloud-sign-in__lead">
-        Sign in to back up and restore your trail on a new phone or browser. Your data stays private
-        to your account. This device still works offline until you sign in.
+        Without signing in, each phone or browser keeps its own separate copy. Sign in with the same
+        Apple or Google account on every device so sermon notes and weekly training stay in sync.
+        This device still works offline.
       </p>
       <div className="cloud-sign-in__actions">
         <button
