@@ -360,12 +360,12 @@
 [data-path-theme='light'] .today-preview__mode--active {
   background: var(--path-nav-active-bg);
   border-color: var(--path-border-strong);
-  color: #1d1c19;
+  color: var(--path-text);
   box-shadow: none;
 }
 
 [data-path-theme='light'] .today-preview__session--active {
-  color: #1d1c19;
+  color: var(--path-text);
   border-bottom-color: var(--path-border-strong);
 }
 

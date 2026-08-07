@@ -353,7 +353,7 @@
   [data-path-theme='light'] .formation-shell__tab--active {
     background: var(--path-nav-active-bg);
     border-color: var(--path-border-strong);
-    color: #1d1c19;
+    color: var(--path-text);
   }
 
   [data-path-theme='light'] .formation-shell__tab--active .formation-shell__tab-job {

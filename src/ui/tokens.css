@@ -1,6 +1,6 @@
 /**
  * Path design system — athletic formation brand.
- * Dark: cinematic near-black + brass. Light: champagne / light-gold.
+ * Dark: cinematic near-black + brass. Light: brass-gold field + black ink.
  */
 
 :root,
@@ -65,65 +65,68 @@
 [data-path-theme='light'] {
   color-scheme: light;
 
-  /* Champagne / light-gold page — pairs with dark brass, not silver */
-  --path-bg: #f4e6bc;
-  --path-bg-elevated: #faf0d0;
-  --path-surface: #fff4d6;
-  --path-surface-solid: #fff4d6;
-  --path-surface-2: #f0dfb0;
-  --path-surface-3: #e6d090;
-  --path-border: #d4b96e;
-  --path-border-strong: #c9a227;
-  --path-hairline: #e6d6a4;
+  /*
+   * Brass-gold field · black ink.
+   * Page uses the dark-theme gold (#c9a227); former gold labels/accents flip to black.
+   * Primary actions are black with gold label so CTAs stay visible on the gold ground.
+   */
+  --path-bg: #c9a227;
+  --path-bg-elevated: #d4af40;
+  --path-surface: #d8b33c;
+  --path-surface-solid: #d8b33c;
+  --path-surface-2: #b8921f;
+  --path-surface-3: #a6861c;
+  --path-border: rgba(10, 10, 10, 0.22);
+  --path-border-strong: #0a0a0a;
+  --path-hairline: rgba(10, 10, 10, 0.14);
 
-  --path-gold: #c9a227;
-  --path-gold-bright: #d4af69;
-  --path-gold-dim: #a6861c;
-  --path-bronze: #8f6a12;
-  --path-gold-wash: #f0e0a8;
-  --path-gold-wash-strong: #e6d08a;
+  --path-gold: #0a0a0a;
+  --path-gold-bright: #1f1c12;
+  --path-gold-dim: #000000;
+  --path-bronze: #2a2410;
+  --path-gold-wash: rgba(10, 10, 10, 0.08);
+  --path-gold-wash-strong: rgba(10, 10, 10, 0.14);
 
-  --path-text: #1a160c;
-  --path-text-muted: #6b5a2e;
-  --path-text-dim: #8f7840;
+  --path-text: #0a0a0a;
+  --path-text-muted: #2a2418;
+  --path-text-dim: #3f3624;
 
-  --path-danger: #a13d32;
-  --path-success: #4f6d46;
+  --path-danger: #7a241c;
+  --path-success: #2f4a28;
 
-  --path-scripture-bg: #fff4d6;
-  --path-practice-glow: 0 6px 20px rgba(201, 162, 39, 0.16);
-  --path-sidebar-bg: #f8ecc8;
-  --path-sidebar-border: #dcc57a;
-  --path-sidebar-shadow: 4px 0 18px rgba(80, 60, 10, 0.07);
-  --path-nav-active-bg: #efe0a0;
-  --path-mobile-nav-bg: #f8ecc8;
-  --path-progress-track: #e6d498;
-  --path-shadow: 0 8px 22px rgba(80, 60, 10, 0.09);
-  --path-glow: 0 0 18px rgba(201, 162, 39, 0.18);
-  --path-on-gold: #1a160c;
-  --path-focus-ring: 0 0 0 3px rgba(201, 162, 39, 0.3);
+  --path-scripture-bg: #d8b33c;
+  --path-practice-glow: 0 8px 22px rgba(10, 10, 10, 0.16);
+  --path-sidebar-bg: #c9a227;
+  --path-sidebar-border: rgba(10, 10, 10, 0.22);
+  --path-sidebar-shadow: 4px 0 18px rgba(10, 10, 10, 0.12);
+  --path-nav-active-bg: rgba(10, 10, 10, 0.12);
+  --path-mobile-nav-bg: #c9a227;
+  --path-progress-track: rgba(10, 10, 10, 0.18);
+  --path-shadow: 0 8px 22px rgba(10, 10, 10, 0.14);
+  --path-glow: 0 0 18px rgba(10, 10, 10, 0.18);
+  --path-on-gold: #c9a227;
+  --path-focus-ring: 0 0 0 3px rgba(10, 10, 10, 0.28);
 
   /*
-   * Same gym image — warm sepia instead of silver grayscale.
-   * Champagne veil keeps the page gold while the image stays present.
+   * Warm brass veil over the gym image — page reads as the brand gold.
    */
   --path-page-focal: 76% center;
-  --path-page-filter: sepia(0.4) saturate(0.72) brightness(1.05) contrast(1.08);
+  --path-page-filter: sepia(0.55) saturate(0.85) brightness(0.92) contrast(1.08);
   --path-page-veil:
     linear-gradient(
       180deg,
-      rgba(244, 230, 188, 0.62) 0%,
-      rgba(244, 230, 188, 0.4) 40%,
-      rgba(244, 230, 188, 0.5) 78%,
-      rgba(244, 230, 188, 0.7) 100%
+      rgba(201, 162, 39, 0.72) 0%,
+      rgba(201, 162, 39, 0.55) 40%,
+      rgba(201, 162, 39, 0.62) 78%,
+      rgba(201, 162, 39, 0.82) 100%
     ),
     linear-gradient(
       90deg,
-      rgba(244, 230, 188, 0.92) 0%,
-      rgba(244, 230, 188, 0.82) 30%,
-      rgba(244, 230, 188, 0.58) 52%,
-      rgba(244, 230, 188, 0.36) 74%,
-      rgba(244, 230, 188, 0.22) 100%
+      rgba(201, 162, 39, 0.94) 0%,
+      rgba(201, 162, 39, 0.86) 30%,
+      rgba(201, 162, 39, 0.65) 52%,
+      rgba(201, 162, 39, 0.42) 74%,
+      rgba(201, 162, 39, 0.28) 100%
     );
 }
 
