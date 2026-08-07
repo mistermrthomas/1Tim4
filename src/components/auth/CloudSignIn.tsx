@@ -52,8 +52,8 @@ export function CloudSignIn() {
           </button>
         </div>
         <p className="field-hint cloud-sign-in__note">
-          Your journal saves on this device first, then backs up to your account. Use <strong>Sync now</strong> before
-          switching devices if you just dictated entries.
+          Your journal, weekly plans, and church notes save on this device first, then back up to your
+          account. Use <strong>Sync now</strong> on your phone after sign-in if Today still looks empty.
         </p>
       </section>
     );

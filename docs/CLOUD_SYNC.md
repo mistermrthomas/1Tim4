@@ -4,6 +4,18 @@
 
 Path saves **automatically on this device** and, when you sign in, **syncs to your Supabase account** so you can open the same trail on another iPhone, iPad, or browser.
 
+## What syncs
+
+| Data | Syncs across devices? |
+|------|------------------------|
+| Journal trail (Prepare / Live / Reflect, prayers, assessment) | Yes — `path_profile_trails` |
+| Weekly plans + Church Notes | Yes — `path_user_formation_state` (run migration `20260807000000_path_user_formation_state.sql`) |
+| Physical tracker / day logs | This device only (for now) |
+
+On a new phone: open **Today**, sign in with the **same** Apple/Google account, tap **Sync now**, and wait for “Synced”. If you previously created an empty local profile on the phone, Path now switches to your cloud profile automatically.
+
+---
+
 ## What you need
 
 1. A [Supabase](https://supabase.com) project (free tier is fine)
@@ -19,13 +31,14 @@ Find URL and anon key in Supabase → **Project Settings → API**.
 
 ---
 
-## Step 1 — Create the database table
+## Step 1 — Create the database tables
 
-In Supabase → **SQL Editor**, run the migration file:
+In Supabase → **SQL Editor**, run:
 
-`supabase/migrations/20260531000000_path_profile_trails.sql`
+1. `supabase/migrations/20260531000000_path_profile_trails.sql`
+2. `supabase/migrations/20260807000000_path_user_formation_state.sql` (weekly plans + church notes)
 
-This creates `path_profile_trails` with row-level security so each user only sees their own data.
+These create tables with row-level security so each user only sees their own data.
 
 ---
 

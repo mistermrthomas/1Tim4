@@ -18,6 +18,7 @@ import type { WeeklyPlan, WorkDailyAssignment } from '../../domain/weeklyPlan/ty
 import { loadSeasonPack } from '../../content/bundled/loadSeasonPack';
 import type { InstalledSeasonPack } from '../../content/types';
 import { Button } from '../../ui/Button';
+import { CloudSyncBar } from '../shell/CloudSyncBar';
 import { startCurrentWeekPath } from '../weeklyPlan/WeeklyPlanWorkspace';
 import { PhysicalTrainingPanel } from './PhysicalTrainingPanel';
 import { pickPreviewDay, resolvePreviewDay } from './resolvePreviewDay';
@@ -308,6 +309,7 @@ export function TodayPage() {
 
   return (
     <div className="today-preview path-fade-in">
+      <CloudSyncBar />
       <div className="today-grid">
         <div className="today-grid__main">
           <div className="today-grid__header">

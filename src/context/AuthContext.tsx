@@ -4,13 +4,16 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
+import { useProfile } from './ProfileContext';
 import { isCloudSyncConfigured, supabase } from '../lib/supabase';
+import { syncFormationStateOnLogin } from '../services/cloudFormationSync';
 import { syncUserTrailsOnLogin } from '../services/cloudTrailSync';
-import { getActiveProfileId, listProfiles } from '../storage/profiles';
+import { getActiveProfileId, listProfiles, setActiveProfileId } from '../storage/profiles';
 
 export type CloudSyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'unconfigured';
 
@@ -40,6 +43,7 @@ export function AuthProvider({
   children: ReactNode;
   onActiveProfileShouldReload?: () => void;
 }) {
+  const { refreshProfiles, selectProfile } = useProfile();
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [cloudSyncStatus, setCloudSyncStatus] = useState<CloudSyncStatus>(
@@ -47,31 +51,65 @@ export function AuthProvider({
   );
   const [cloudSyncMessage, setCloudSyncMessage] = useState<string | null>(null);
   const [lastCloudSyncAt, setLastCloudSyncAt] = useState<string | null>(null);
+  const mergeInFlight = useRef<Promise<boolean> | null>(null);
 
   const runCloudMerge = useCallback(
     async (userId: string) => {
-      setCloudSyncStatus('syncing');
-      setCloudSyncMessage(null);
-      try {
-        const activeId = getActiveProfileId();
-        const { activeProfileReloaded } = await syncUserTrailsOnLogin(
-          userId,
-          listProfiles(),
-          activeId,
-        );
-        const at = new Date().toISOString();
-        setLastCloudSyncAt(at);
-        setCloudSyncStatus('synced');
-        setCloudSyncMessage('Trail synced with your account.');
-        if (activeProfileReloaded) onActiveProfileShouldReload?.();
-        return activeProfileReloaded;
-      } catch (err) {
-        setCloudSyncStatus('error');
-        setCloudSyncMessage(err instanceof Error ? err.message : 'Could not sync with cloud.');
-        return false;
-      }
+      if (mergeInFlight.current) return mergeInFlight.current;
+
+      const work = (async () => {
+        setCloudSyncStatus('syncing');
+        setCloudSyncMessage(null);
+        try {
+          const activeId = getActiveProfileId();
+          const trail = await syncUserTrailsOnLogin(userId, listProfiles(), activeId);
+
+          if (trail.selectedProfileId && trail.selectedProfileId !== getActiveProfileId()) {
+            setActiveProfileId(trail.selectedProfileId);
+            selectProfile(trail.selectedProfileId);
+          } else {
+            refreshProfiles();
+          }
+
+          let formationRestored = false;
+          try {
+            formationRestored = await syncFormationStateOnLogin(userId);
+          } catch (formationErr) {
+            // Table may not be migrated yet — trail sync still succeeded
+            console.error(
+              'formation sync',
+              formationErr instanceof Error ? formationErr.message : formationErr,
+            );
+          }
+
+          const at = new Date().toISOString();
+          setLastCloudSyncAt(at);
+          setCloudSyncStatus('synced');
+          setCloudSyncMessage(
+            formationRestored
+              ? 'Trail and weekly plans synced with your account.'
+              : 'Trail synced with your account.',
+          );
+
+          if (trail.activeProfileReloaded || trail.profilesChanged || formationRestored) {
+            onActiveProfileShouldReload?.();
+          }
+          // Refresh again so UI sees registry after selectProfile
+          refreshProfiles();
+          return true;
+        } catch (err) {
+          setCloudSyncStatus('error');
+          setCloudSyncMessage(err instanceof Error ? err.message : 'Could not sync with cloud.');
+          return false;
+        } finally {
+          mergeInFlight.current = null;
+        }
+      })();
+
+      mergeInFlight.current = work;
+      return work;
     },
-    [onActiveProfileShouldReload],
+    [onActiveProfileShouldReload, refreshProfiles, selectProfile],
   );
 
   useEffect(() => {

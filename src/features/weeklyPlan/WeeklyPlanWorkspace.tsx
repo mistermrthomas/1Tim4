@@ -15,6 +15,8 @@ import {
 } from '../../domain/weeklyPlan/factory';
 import { ensureWeeklyPlan, saveWeeklyPlan } from '../../domain/weeklyPlan/store';
 import type { PhysicalDayType, WeeklyPlan } from '../../domain/weeklyPlan/types';
+import { useAuth } from '../../context/AuthContext';
+import { scheduleFormationStatePush } from '../../services/cloudFormationSync';
 import { Button } from '../../ui/Button';
 import './WeeklyPlanWorkspace.css';
 
@@ -38,6 +40,7 @@ const PHYSICAL_TYPES: Array<{ value: PhysicalDayType; label: string }> = [
 export function WeeklyPlanWorkspace() {
   const { weekStart: weekStartParam } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const weekStart = weekStartParam || startOfWeekSunday();
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [step, setStep] = useState(0);
@@ -45,6 +48,10 @@ export function WeeklyPlanWorkspace() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const templates = useMemo(() => readPhysicalPlan().templates, []);
+
+  const notifyCloud = () => {
+    if (user?.id) scheduleFormationStatePush(user.id);
+  };
 
   const load = useCallback(async () => {
     try {
@@ -72,6 +79,7 @@ export function WeeklyPlanWorkspace() {
       const saved = await saveWeeklyPlan(plan);
       setPlan(saved);
       setMessage('Draft saved');
+      notifyCloud();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -87,6 +95,7 @@ export function WeeklyPlanWorkspace() {
       const activated = await activateAndSyncWeeklyPlan(plan);
       setPlan(activated);
       setMessage('Week activated');
+      notifyCloud();
       navigate('/today');
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

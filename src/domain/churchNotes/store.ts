@@ -183,6 +183,10 @@ export async function saveWeeklyFormationPlan(
 ): Promise<WeeklyFormationPlan> {
   const next = { ...plan, updatedAt: new Date().toISOString() };
   const index = await readIndex();
+  if (!index.formationPlanIds) index.formationPlanIds = [];
+  if (!index.formationPlanIds.includes(next.id)) {
+    index.formationPlanIds = [next.id, ...index.formationPlanIds];
+  }
   if (next.active) {
     // Deactivate previous active plan in memory/IDB
     if (index.activeFormationPlanId && index.activeFormationPlanId !== next.id) {
@@ -210,6 +214,61 @@ export async function saveWeeklyFormationPlan(
     await tx.put('entities', INDEX_KEY, index);
   });
   return next;
+}
+
+export interface ChurchNotesSnapshot {
+  index: ChurchNotesIndex;
+  notes: SermonNote[];
+  analyses: SermonAnalysis[];
+  plans: WeeklyFormationPlan[];
+}
+
+export async function exportChurchNotesSnapshot(): Promise<ChurchNotesSnapshot> {
+  const index = await readIndex();
+  const notes = await listSermonNotes();
+  const analyses: SermonAnalysis[] = [];
+  for (const note of notes) {
+    const analysis = await getAnalysisForNote(note.id);
+    if (analysis) analyses.push(analysis);
+  }
+  const plans: WeeklyFormationPlan[] = [];
+  const planIds = new Set(index.formationPlanIds ?? []);
+  if (index.activeFormationPlanId) planIds.add(index.activeFormationPlanId);
+  for (const id of planIds) {
+    const plan = await getWeeklyFormationPlan(id);
+    if (plan) plans.push(plan);
+  }
+  return {
+    index: structuredClone(index),
+    notes: structuredClone(notes),
+    analyses: structuredClone(analyses),
+    plans: structuredClone(plans),
+  };
+}
+
+export async function importChurchNotesSnapshot(snapshot: ChurchNotesSnapshot): Promise<void> {
+  const index = structuredClone(snapshot.index);
+  const adapter = await getAdapter();
+  if (!adapter) {
+    mem().index = structuredClone(index);
+    mem().notes = new Map(snapshot.notes.map((n) => [n.id, structuredClone(n)]));
+    mem().analyses = new Map(snapshot.analyses.map((a) => [a.id, structuredClone(a)]));
+    mem().plans = new Map(snapshot.plans.map((p) => [p.id, structuredClone(p)]));
+    return;
+  }
+  await adapter.tx(['entities'], 'rw', async (tx) => {
+    await tx.put('entities', INDEX_KEY, index);
+    for (const note of snapshot.notes) {
+      await tx.put('entities', noteKey(note.id), note);
+    }
+    for (const analysis of snapshot.analyses) {
+      await tx.put('entities', analysisKey(analysis.id), analysis);
+      await tx.put('entities', `churchNotes:analysisByNote:${analysis.sermonNoteId}`, analysis.id);
+    }
+    for (const plan of snapshot.plans) {
+      await tx.put('entities', planKey(plan.id), plan);
+    }
+  });
 }
 
 export function __resetChurchNotesMemoryForTests(): void {

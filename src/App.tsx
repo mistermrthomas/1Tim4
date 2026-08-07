@@ -95,7 +95,7 @@ export default function App() {
             <Route path="/phase0" element={<Phase0HarnessPage />} />
             {/* Formation product is the public Path home; legacy routes remain at /prepare, /guide, etc. */}
             <Route path="/" element={<Navigate to="/today" replace />} />
-            <Route element={<FormationShell />}>
+            <Route element={<FormationShell key={cloudReloadKey} />}>
               <Route path="/today" element={<TodayPage />} />
               <Route path="/journey" element={<JourneyPage />} />
               <Route path="/growth" element={<GrowthPage />} />

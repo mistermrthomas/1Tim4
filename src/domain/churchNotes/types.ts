@@ -68,4 +68,6 @@ export interface ChurchNotesIndex {
   version: 1;
   noteIds: string[];
   activeFormationPlanId: string | null;
+  /** All formation plan ids known on this device */
+  formationPlanIds?: string[];
 }

@@ -156,6 +156,34 @@ export async function activateWeeklyPlan(planId: string): Promise<WeeklyPlan> {
   return activated;
 }
 
+export interface WeeklyPlansSnapshot {
+  index: WeeklyPlanIndex;
+  plans: WeeklyPlan[];
+}
+
+export async function exportWeeklyPlansSnapshot(): Promise<WeeklyPlansSnapshot> {
+  const index = await readIndex();
+  const plans = await listWeeklyPlans();
+  return { index: structuredClone(index), plans: structuredClone(plans) };
+}
+
+/** Replace local weekly plans with a cloud snapshot (used on login restore). */
+export async function importWeeklyPlansSnapshot(snapshot: WeeklyPlansSnapshot): Promise<void> {
+  const index = structuredClone(snapshot.index);
+  const adapter = await getAdapter();
+  if (!adapter) {
+    mem().index = structuredClone(index);
+    mem().plans = new Map(snapshot.plans.map((p) => [p.id, structuredClone(p)]));
+    return;
+  }
+  await adapter.tx(['entities'], 'rw', async (tx) => {
+    await tx.put('entities', INDEX_KEY, index);
+    for (const plan of snapshot.plans) {
+      await tx.put('entities', planKey(plan.id), plan);
+    }
+  });
+}
+
 /** Test helper */
 export function __resetWeeklyPlanMemoryForTests(): void {
   memory = { index: emptyIndex(), plans: new Map() };

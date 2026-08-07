@@ -31,6 +31,7 @@ import { activateAndSyncWeeklyPlan } from '../../domain/weeklyPlan/activate';
 import { applyBiblicalDefaultsFromChurch } from '../../domain/weeklyPlan/factory';
 import { ensureWeeklyPlan } from '../../domain/weeklyPlan/store';
 import { useAuth } from '../../context/AuthContext';
+import { scheduleFormationStatePush } from '../../services/cloudFormationSync';
 import {
   emptyStructuredAnalysis,
   type StructuredChurchAnalysis,
@@ -88,6 +89,10 @@ export function ChurchNotesPage() {
   const navigate = useNavigate();
   const { session, user } = useAuth();
   const userId = user?.id ?? 'local';
+
+  const pushCloudIfSignedIn = useCallback(() => {
+    if (user?.id) scheduleFormationStatePush(user.id);
+  }, [user?.id]);
 
   const [step, setStep] = useState<Step>('capture');
   const [note, setNote] = useState<SermonNote | null>(null);
@@ -159,6 +164,7 @@ export function ChurchNotesPage() {
             const saved = await saveSermonNote(next);
             setNote(saved);
             setSavedAt(new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
+            if (user?.id) scheduleFormationStatePush(user.id);
           } catch (e) {
             setError(e instanceof Error ? e.message : String(e));
           }
@@ -365,6 +371,7 @@ export function ChurchNotesPage() {
         },
       });
       await activateAndSyncWeeklyPlan(layered);
+      pushCloudIfSignedIn();
 
       setStep('plan');
     } catch (e) {

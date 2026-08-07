@@ -36,4 +36,9 @@ Open `/church-notes?fixture=1` to load the First Look Sunday sample notes (Roman
 
 ## Database
 
-Apply `supabase/migrations/20260802160000_church_notes_v1.sql` when enabling cloud sync for church notes. Until then, data lives in IndexedDB (`entities` store).
+Apply:
+
+1. `supabase/migrations/20260802160000_church_notes_v1.sql` (optional structured tables)
+2. `supabase/migrations/20260807000000_path_user_formation_state.sql` (**required for phone sync**)
+
+Until (2) is applied in Supabase, church notes stay on-device only. After it is applied and you are signed in, weekly plans and church notes sync with your account on login / Sync now.
