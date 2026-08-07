@@ -69,6 +69,7 @@
 
 [data-path-theme='light'] .path-btn--primary:not(:disabled):active {
   background: var(--path-gold-dim);
+  color: #fffbf0;
 }
 
 [data-path-theme='light'] .path-btn--ghost {
@@ -86,7 +87,7 @@
 [data-path-theme='light'] .path-btn--primary:disabled,
 [data-path-theme='light'] .path-btn--ghost:disabled {
   opacity: 1;
-  background: rgba(10, 10, 10, 0.18);
+  background: var(--path-surface-2);
   color: var(--path-text-dim);
   border-color: var(--path-hairline);
   box-shadow: none;

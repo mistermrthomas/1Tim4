@@ -148,6 +148,11 @@
   background: color-mix(in srgb, var(--path-gold) 12%, transparent);
 }
 
+[data-path-theme='light'] .formation-shell__mobile-tab--active {
+  color: var(--path-text);
+  background: var(--path-nav-active-bg);
+}
+
 .formation-shell__mobile-more {
   appearance: none;
   border: 0;

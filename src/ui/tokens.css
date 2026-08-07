@@ -1,6 +1,7 @@
 /**
  * Path design system — athletic formation brand.
- * Dark: cinematic near-black + brass. Light: brass-gold field + black ink.
+ * Dark: cinematic near-black + brass.
+ * Light: luminous champagne field + brass accents + ink.
  */
 
 :root,
@@ -66,67 +67,66 @@
   color-scheme: light;
 
   /*
-   * Brass-gold field · black ink.
-   * Page uses the dark-theme gold (#c9a227); former gold labels/accents flip to black.
-   * Primary actions are black with gold label so CTAs stay visible on the gold ground.
+   * Luminous champagne page — gold as atmosphere and accent, not a mustard flood.
+   * Ink for body; brass for labels/CTAs; warm ivory panels for reading surfaces.
    */
-  --path-bg: #c9a227;
-  --path-bg-elevated: #d4af40;
-  --path-surface: #d8b33c;
-  --path-surface-solid: #d8b33c;
-  --path-surface-2: #b8921f;
-  --path-surface-3: #a6861c;
-  --path-border: rgba(10, 10, 10, 0.22);
-  --path-border-strong: #0a0a0a;
-  --path-hairline: rgba(10, 10, 10, 0.14);
+  --path-bg: #f2e6c2;
+  --path-bg-elevated: #faf4e2;
+  --path-surface: #fffbf0;
+  --path-surface-solid: #fffbf0;
+  --path-surface-2: #f0e4c0;
+  --path-surface-3: #e6d6a4;
+  --path-border: #d4bc78;
+  --path-border-strong: #b8922a;
+  --path-hairline: #e6d9ae;
 
-  --path-gold: #0a0a0a;
-  --path-gold-bright: #1f1c12;
-  --path-gold-dim: #000000;
-  --path-bronze: #2a2410;
-  --path-gold-wash: rgba(10, 10, 10, 0.08);
-  --path-gold-wash-strong: rgba(10, 10, 10, 0.14);
+  --path-gold: #a8871c;
+  --path-gold-bright: #c9a227;
+  --path-gold-dim: #7a5e12;
+  --path-bronze: #8f6a12;
+  --path-gold-wash: #f0e4b8;
+  --path-gold-wash-strong: #e6d490;
 
-  --path-text: #0a0a0a;
-  --path-text-muted: #2a2418;
-  --path-text-dim: #3f3624;
+  --path-text: #14110a;
+  --path-text-muted: #5c4e2e;
+  --path-text-dim: #7a6a42;
 
-  --path-danger: #7a241c;
-  --path-success: #2f4a28;
+  --path-danger: #a13d32;
+  --path-success: #4f6d46;
 
-  --path-scripture-bg: #d8b33c;
-  --path-practice-glow: 0 8px 22px rgba(10, 10, 10, 0.16);
-  --path-sidebar-bg: #c9a227;
-  --path-sidebar-border: rgba(10, 10, 10, 0.22);
-  --path-sidebar-shadow: 4px 0 18px rgba(10, 10, 10, 0.12);
-  --path-nav-active-bg: rgba(10, 10, 10, 0.12);
-  --path-mobile-nav-bg: #c9a227;
-  --path-progress-track: rgba(10, 10, 10, 0.18);
-  --path-shadow: 0 8px 22px rgba(10, 10, 10, 0.14);
-  --path-glow: 0 0 18px rgba(10, 10, 10, 0.18);
-  --path-on-gold: #c9a227;
-  --path-focus-ring: 0 0 0 3px rgba(10, 10, 10, 0.28);
+  --path-scripture-bg: #fffbf0;
+  --path-practice-glow: 0 8px 24px rgba(120, 90, 20, 0.1);
+  --path-sidebar-bg: #f7edd4;
+  --path-sidebar-border: #dcc890;
+  --path-sidebar-shadow: 4px 0 18px rgba(80, 60, 10, 0.06);
+  --path-nav-active-bg: #efe2b0;
+  --path-mobile-nav-bg: #faf4e2;
+  --path-progress-track: #e6d9ae;
+  --path-shadow: 0 10px 26px rgba(80, 60, 10, 0.08);
+  --path-glow: 0 0 20px rgba(201, 162, 39, 0.18);
+  --path-on-gold: #14110a;
+  --path-focus-ring: 0 0 0 3px rgba(184, 146, 42, 0.28);
 
   /*
-   * Warm brass veil over the gym image — page reads as the brand gold.
+   * Soft gold atmosphere over the gym image — readable, not muddy.
    */
   --path-page-focal: 76% center;
-  --path-page-filter: sepia(0.55) saturate(0.85) brightness(0.92) contrast(1.08);
+  --path-page-filter: sepia(0.35) saturate(0.55) brightness(1.08) contrast(1.05);
   --path-page-veil:
     linear-gradient(
       180deg,
-      rgba(201, 162, 39, 0.72) 0%,
-      rgba(201, 162, 39, 0.55) 40%,
-      rgba(201, 162, 39, 0.62) 78%,
-      rgba(201, 162, 39, 0.82) 100%
+      rgba(242, 230, 194, 0.78) 0%,
+      rgba(242, 230, 194, 0.58) 40%,
+      rgba(242, 230, 194, 0.68) 78%,
+      rgba(242, 230, 194, 0.86) 100%
     ),
     linear-gradient(
       90deg,
-      rgba(201, 162, 39, 0.94) 0%,
-      rgba(201, 162, 39, 0.86) 30%,
-      rgba(201, 162, 39, 0.65) 52%,
-      rgba(201, 162, 39, 0.42) 74%,
-      rgba(201, 162, 39, 0.28) 100%
+      rgba(242, 230, 194, 0.94) 0%,
+      rgba(242, 230, 194, 0.86) 30%,
+      rgba(242, 230, 194, 0.62) 52%,
+      rgba(242, 230, 194, 0.4) 74%,
+      rgba(242, 230, 194, 0.28) 100%
     );
 }
 

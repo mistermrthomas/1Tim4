@@ -516,3 +516,52 @@
     line-height: 1.72;
   }
 }
+
+/* Light theme — reading surfaces must stay luminous and high-contrast */
+[data-path-theme='light'] .formation-stage--after {
+  border-top-color: var(--path-hairline);
+}
+
+[data-path-theme='light'] .formation-reading {
+  background: var(--path-surface);
+  box-shadow:
+    inset 0 0 0 1px var(--path-border),
+    var(--path-shadow);
+}
+
+[data-path-theme='light'] .formation-scripture__verse-num {
+  color: var(--path-gold);
+}
+
+[data-path-theme='light'] .formation-scripture__verse-text,
+[data-path-theme='light'] .formation-scripture__prose p {
+  color: var(--path-text);
+}
+
+[data-path-theme='light'] .formation-scripture__links {
+  border-top-color: var(--path-hairline);
+}
+
+[data-path-theme='light'] .formation-scripture__links a {
+  color: var(--path-gold-dim);
+}
+
+[data-path-theme='light'] .formation-journal textarea {
+  background: var(--path-bg-elevated);
+  border-color: var(--path-border);
+  color: var(--path-text);
+}
+
+[data-path-theme='light'] .formation-journal textarea:focus {
+  border-color: var(--path-border-strong);
+  box-shadow: var(--path-focus-ring);
+  outline: none;
+}
+
+[data-path-theme='light'] .formation-complete-summary {
+  border-bottom-color: var(--path-hairline);
+}
+
+[data-path-theme='light'] .formation-training-preview span {
+  color: var(--path-text);
+}
