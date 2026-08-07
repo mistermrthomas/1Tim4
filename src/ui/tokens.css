@@ -66,64 +66,64 @@
   color-scheme: light;
 
   /* Champagne / light-gold page — pairs with dark brass, not silver */
-  --path-bg: #f6edd4;
-  --path-bg-elevated: #fbf3de;
-  --path-surface: #fff8e7;
-  --path-surface-solid: #fff8e7;
-  --path-surface-2: #f3e6c4;
-  --path-surface-3: #ead9a8;
-  --path-border: #dcc896;
-  --path-border-strong: #b8922a;
-  --path-hairline: #eadcb8;
+  --path-bg: #f4e6bc;
+  --path-bg-elevated: #faf0d0;
+  --path-surface: #fff4d6;
+  --path-surface-solid: #fff4d6;
+  --path-surface-2: #f0dfb0;
+  --path-surface-3: #e6d090;
+  --path-border: #d4b96e;
+  --path-border-strong: #c9a227;
+  --path-hairline: #e6d6a4;
 
-  --path-gold: #b8922a;
-  --path-gold-bright: #c9a227;
-  --path-gold-dim: #9a7a1c;
+  --path-gold: #c9a227;
+  --path-gold-bright: #d4af69;
+  --path-gold-dim: #a6861c;
   --path-bronze: #8f6a12;
-  --path-gold-wash: #f0e2b8;
-  --path-gold-wash-strong: #e6d49a;
+  --path-gold-wash: #f0e0a8;
+  --path-gold-wash-strong: #e6d08a;
 
   --path-text: #1a160c;
-  --path-text-muted: #6b5c38;
-  --path-text-dim: #8f7d4e;
+  --path-text-muted: #6b5a2e;
+  --path-text-dim: #8f7840;
 
   --path-danger: #a13d32;
   --path-success: #4f6d46;
 
-  --path-scripture-bg: #fff8e7;
-  --path-practice-glow: 0 6px 20px rgba(184, 146, 42, 0.14);
-  --path-sidebar-bg: #faf1d8;
-  --path-sidebar-border: #e0cd9a;
-  --path-sidebar-shadow: 4px 0 18px rgba(80, 60, 10, 0.06);
-  --path-nav-active-bg: #f0e2b0;
-  --path-mobile-nav-bg: #faf1d8;
-  --path-progress-track: #e8d9b0;
-  --path-shadow: 0 8px 22px rgba(80, 60, 10, 0.08);
-  --path-glow: 0 0 18px rgba(184, 146, 42, 0.14);
+  --path-scripture-bg: #fff4d6;
+  --path-practice-glow: 0 6px 20px rgba(201, 162, 39, 0.16);
+  --path-sidebar-bg: #f8ecc8;
+  --path-sidebar-border: #dcc57a;
+  --path-sidebar-shadow: 4px 0 18px rgba(80, 60, 10, 0.07);
+  --path-nav-active-bg: #efe0a0;
+  --path-mobile-nav-bg: #f8ecc8;
+  --path-progress-track: #e6d498;
+  --path-shadow: 0 8px 22px rgba(80, 60, 10, 0.09);
+  --path-glow: 0 0 18px rgba(201, 162, 39, 0.18);
   --path-on-gold: #1a160c;
-  --path-focus-ring: 0 0 0 3px rgba(184, 146, 42, 0.28);
+  --path-focus-ring: 0 0 0 3px rgba(201, 162, 39, 0.3);
 
   /*
    * Same gym image — warm sepia instead of silver grayscale.
    * Champagne veil keeps the page gold while the image stays present.
    */
   --path-page-focal: 76% center;
-  --path-page-filter: sepia(0.32) saturate(0.58) brightness(1.04) contrast(1.1);
+  --path-page-filter: sepia(0.4) saturate(0.72) brightness(1.05) contrast(1.08);
   --path-page-veil:
     linear-gradient(
       180deg,
-      rgba(246, 237, 212, 0.58) 0%,
-      rgba(246, 237, 212, 0.38) 40%,
-      rgba(246, 237, 212, 0.48) 78%,
-      rgba(246, 237, 212, 0.66) 100%
+      rgba(244, 230, 188, 0.62) 0%,
+      rgba(244, 230, 188, 0.4) 40%,
+      rgba(244, 230, 188, 0.5) 78%,
+      rgba(244, 230, 188, 0.7) 100%
     ),
     linear-gradient(
       90deg,
-      rgba(246, 237, 212, 0.9) 0%,
-      rgba(246, 237, 212, 0.8) 30%,
-      rgba(246, 237, 212, 0.58) 52%,
-      rgba(246, 237, 212, 0.38) 74%,
-      rgba(246, 237, 212, 0.24) 100%
+      rgba(244, 230, 188, 0.92) 0%,
+      rgba(244, 230, 188, 0.82) 30%,
+      rgba(244, 230, 188, 0.58) 52%,
+      rgba(244, 230, 188, 0.36) 74%,
+      rgba(244, 230, 188, 0.22) 100%
     );
 }
 
