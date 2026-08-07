@@ -72,7 +72,7 @@
   width: 100%;
   max-width: var(--path-max-content);
   margin: 0 auto;
-  padding: 0.85rem 1.1rem 5.75rem;
+  padding: 0.85rem 1.1rem 6.5rem;
   min-height: 100dvh;
 }
 
@@ -116,13 +116,17 @@
 
 .formation-shell__mobile-nav {
   position: fixed;
-  inset: auto 0 0 0;
+  left: max(0.75rem, env(safe-area-inset-left, 0px));
+  right: max(0.75rem, env(safe-area-inset-right, 0px));
+  bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.2rem;
-  padding: 0.45rem 0.4rem calc(0.45rem + env(safe-area-inset-bottom));
+  gap: 0.3rem;
+  padding: 0.4rem 0.4rem;
   background: var(--path-mobile-nav-bg);
-  border-top: 1px solid var(--path-hairline);
+  border: 1px solid var(--path-hairline);
+  border-radius: var(--path-radius-lg);
+  box-shadow: var(--path-shadow);
   backdrop-filter: blur(14px);
   z-index: 20;
 }
@@ -135,7 +139,7 @@
   font-size: 0.78rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 0.65rem 0.2rem;
+  padding: 0.65rem 0.35rem;
   border-radius: var(--path-radius-sm);
 }
 
@@ -173,7 +177,7 @@
   position: relative;
   z-index: 1;
   width: min(100%, 28rem);
-  margin: 0 0.65rem calc(4.1rem + env(safe-area-inset-bottom));
+  margin: 0 0.75rem calc(5.25rem + env(safe-area-inset-bottom, 0px));
   padding: 0.9rem 1rem 1rem;
   border: 1px solid var(--path-border-strong);
   border-radius: 10px;
