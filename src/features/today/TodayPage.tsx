@@ -4,8 +4,9 @@ import { useAuth } from '../../context/AuthContext';
 import { isSundayPlanningDay } from '../../domain/calendar/week';
 import { todayDateKey } from '../../domain/physical/store';
 import { hasGeneratedBiblicalTraining } from '../../domain/sermon/fromWeeklyPlan';
-import { getActivePlanForDate } from '../../domain/weeklyPlan/store';
+import { getPlanCoveringDate } from '../../domain/weeklyPlan/store';
 import type { WeeklyPlan } from '../../domain/weeklyPlan/types';
+import { CloudSyncBar } from '../shell/CloudSyncBar';
 import { SundaySermonPrompt } from './SundaySermonPrompt';
 import { TodayActiveWeek } from './TodayActiveWeek';
 import { TodayPlanningEmpty } from './TodayPlanningEmpty';
@@ -24,7 +25,7 @@ export function TodayPage() {
 
   useEffect(() => {
     let cancelled = false;
-    getActivePlanForDate(dateKey)
+    getPlanCoveringDate(dateKey)
       .then((plan) => {
         if (!cancelled) {
           setWeeklyPlan(plan);
@@ -51,6 +52,7 @@ export function TodayPage() {
   if (!ready) {
     return (
       <div className="today-preview">
+        <CloudSyncBar />
         <p className="today-preview__loading">Preparing today’s training…</p>
       </div>
     );
@@ -62,15 +64,26 @@ export function TodayPage() {
     hasGeneratedBiblicalTraining(weeklyPlan);
 
   if (sunday && !weekReady) {
-    return <SundaySermonPrompt />;
+    return (
+      <>
+        <CloudSyncBar />
+        <SundaySermonPrompt />
+      </>
+    );
   }
 
   if (!weekReady) {
-    return <TodayPlanningEmpty />;
+    return (
+      <>
+        <CloudSyncBar />
+        <TodayPlanningEmpty />
+      </>
+    );
   }
 
   return (
     <>
+      <CloudSyncBar />
       {successFlash ? (
         <p className="today-sermon-ready" role="status">
           This week’s training is ready.

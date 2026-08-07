@@ -5,7 +5,7 @@
 
 import { createIndexedDbAdapter } from '../../data/storage/indexedDbAdapter';
 import type { StorageAdapter } from '../../data/storage/StorageAdapter';
-import type { DateKey } from '../calendar/week';
+import { startOfWeekSunday, type DateKey } from '../calendar/week';
 import { buildDraftWeeklyPlan } from './factory';
 import { normalizeWeeklyPlan, type WeeklyPlan, type WeeklyPlanIndex } from './types';
 
@@ -84,6 +84,19 @@ export async function getActivePlanForDate(dateKey: DateKey): Promise<WeeklyPlan
   if (!active) return null;
   if (dateKey < active.weekStartDate || dateKey > active.weekEndDate) return null;
   return active;
+}
+
+/**
+ * Plan that covers `dateKey`: prefer the active plan when it covers the date,
+ * otherwise the draft/archived plan stored for that Sunday–Saturday week.
+ */
+export async function getPlanCoveringDate(dateKey: DateKey): Promise<WeeklyPlan | null> {
+  const active = await getActivePlanForDate(dateKey);
+  if (active) return active;
+
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const weekStart = startOfWeekSunday(new Date(y!, m! - 1, d!, 12, 0, 0, 0));
+  return getWeeklyPlanByWeekStart(weekStart);
 }
 
 async function persistLocal(
@@ -239,6 +252,35 @@ export async function completeWeeklyPlan(planId: string): Promise<WeeklyPlan> {
   return completedSaved;
 }
 
+export interface WeeklyPlansSnapshot {
+  index: WeeklyPlanIndex;
+  plans: WeeklyPlan[];
+}
+
+export async function exportWeeklyPlansSnapshot(): Promise<WeeklyPlansSnapshot> {
+  const index = await readIndex();
+  const plans = await listWeeklyPlans();
+  return { index: structuredClone(index), plans: structuredClone(plans) };
+}
+
+/** Replace local weekly plans with a cloud snapshot (used on login restore). */
+export async function importWeeklyPlansSnapshot(snapshot: WeeklyPlansSnapshot): Promise<void> {
+  const index = structuredClone(snapshot.index);
+  const adapter = await getAdapter();
+  if (!adapter) {
+    mem().index = structuredClone(index);
+    mem().plans = new Map(snapshot.plans.map((p) => [p.id, structuredClone(p)]));
+    return;
+  }
+  await adapter.tx(['entities'], 'rw', async (tx) => {
+    await tx.put('entities', INDEX_KEY, index);
+    for (const plan of snapshot.plans) {
+      await tx.put('entities', planKey(plan.id), plan);
+    }
+  });
+}
+
+/** Test helper */
 export function __resetWeeklyPlanMemoryForTests(): void {
   memory = { index: emptyIndex(), plans: new Map() };
   adapterPromise = null;

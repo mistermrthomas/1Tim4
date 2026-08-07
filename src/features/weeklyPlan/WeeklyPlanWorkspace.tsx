@@ -8,10 +8,11 @@ import {
   SermonPlanClientError,
 } from '../../domain/aiPlanning/client';
 import { readAiPlanningSettings } from '../../domain/aiPlanning/settings';
+import { useAuth } from '../../context/AuthContext';
 import {
   followingSundayStart,
-  nextSundayStart,
   shortWeekdayLabel,
+  startOfWeekSunday,
 } from '../../domain/calendar/week';
 import { readPhysicalPlan } from '../../domain/physical/planCatalog';
 import { newId } from '../../domain/physical/store';
@@ -20,6 +21,7 @@ import { applyBiblicalDefaultsFromChurch } from '../../domain/weeklyPlan/factory
 import { normalizePhysicalDay } from '../../domain/weeklyPlan/physicalWorkouts';
 import { ensureWeeklyPlanByRef, saveWeeklyPlan } from '../../domain/weeklyPlan/store';
 import type { WeeklyPlan } from '../../domain/weeklyPlan/types';
+import { scheduleFormationStatePush } from '../../services/cloudFormationSync';
 import { Button } from '../../ui/Button';
 import { TrainingPlanStep } from './TrainingPlanStep';
 import './WeeklyPlanWorkspace.css';
@@ -57,7 +59,8 @@ export function WeeklyPlanWorkspace() {
   const { weekId, weekStart: weekStartParam } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const ref = weekId || weekStartParam || nextSundayStart();
+  const { user } = useAuth();
+  const ref = weekId || weekStartParam || startOfWeekSunday();
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const stepFromQuery = Number(searchParams.get('step'));
   const [step, setStep] = useState(mapLegacyStep(stepFromQuery));
@@ -85,6 +88,10 @@ export function WeeklyPlanWorkspace() {
     // Re-read after catalog seed migrations (e.g. Core Finisher) land in localStorage.
     setTemplates(readPhysicalPlan().templates);
   }, []);
+
+  const notifyCloud = () => {
+    if (user?.id) scheduleFormationStatePush(user.id);
+  };
 
   const load = useCallback(async () => {
     try {
@@ -241,6 +248,7 @@ export function WeeklyPlanWorkspace() {
       const saved = await saveWeeklyPlan(plan);
       setPlan(saved);
       setMessage('Draft saved');
+      notifyCloud();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -256,6 +264,7 @@ export function WeeklyPlanWorkspace() {
       const activated = await activateAndSyncWeeklyPlan(plan);
       setPlan(activated);
       setMessage('Week activated');
+      notifyCloud();
       navigate('/today');
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -326,6 +335,11 @@ export function WeeklyPlanWorkspace() {
       {step === 0 && (
         <section className="weekly-plan__section path-surface">
           <h2 className="weekly-plan__h2">1. What was this week’s sermon?</h2>
+          <p className="weekly-plan__note">
+            Paste or write anything you captured during church. Rough notes are fine. For AI-assisted
+            sermon review and a formation layer, use{' '}
+            <Link to="/church-notes">Church Notes</Link>.
+          </p>
           {!sermonReady ? (
             <div className="weekly-plan__note" style={{ marginBottom: '1rem' }}>
               <p>
@@ -544,7 +558,9 @@ export function WeeklyPlanWorkspace() {
           </h2>
           <p className="weekly-plan__note">
             Review all content against Scripture and your own judgment before activating. Based on
-            your notes — edit freely. This is not divine revelation.
+            your notes — edit freely. Prefer{' '}
+            <Link to="/church-notes">Church Notes AI</Link> for structured sermon analysis — this
+            draft remains fully editable.
           </p>
           {pendingAiPlan ? (
             <div className="weekly-plan__pending path-surface">
@@ -1039,10 +1055,16 @@ export function WeeklyPlanWorkspace() {
   );
 }
 
+/** Path to this week’s Sunday–Saturday plan (works Mon–Sat, not just Sunday). */
 export function startNextWeekPath(): string {
-  return '/sermon';
+  return `/plan/week/${startOfWeekSunday()}`;
 }
 
 export function startFollowingWeekPath(): string {
   return `/plan/week/${followingSundayStart()}`;
+}
+
+/** @deprecated alias — prefer startNextWeekPath for current week */
+export function startCurrentWeekPath(): string {
+  return startNextWeekPath();
 }

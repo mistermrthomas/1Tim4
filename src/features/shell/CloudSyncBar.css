@@ -1,0 +1,30 @@
+.cloud-sync-bar {
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.cloud-sync-bar__title {
+  margin: 0;
+  font-family: var(--path-font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--path-gold);
+}
+
+.cloud-sync-bar__body {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: var(--path-text-muted);
+}
+
+.cloud-sync-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.2rem;
+}

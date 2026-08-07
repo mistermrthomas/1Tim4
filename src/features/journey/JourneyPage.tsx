@@ -71,6 +71,9 @@ export function JourneyPage() {
         <Link className="path-btn path-btn--ghost" to="/today">
           Today
         </Link>
+        <Link className="path-btn path-btn--ghost" to="/plan/week">
+          This week’s plan
+        </Link>
         <Link className="path-btn path-btn--ghost" to="/progress">
           Progress
         </Link>
