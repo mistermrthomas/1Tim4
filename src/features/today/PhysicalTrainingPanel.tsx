@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import type { InstalledSeasonPack, SeasonDayEntry } from '../../content/types';
+import { Link } from 'react-router-dom';
+import { addDays, isSaturdaySabbath, parseLocalDateKey } from '../../domain/calendar/week';
 import {
   addIntake,
   getDayMeta,
@@ -16,22 +17,82 @@ import {
   getStepsDay,
   setStepsTotal,
 } from '../../domain/physical/stepsTracker';
-import { isSaturdaySabbath } from '../../domain/calendar/week';
 import { todayDateKey } from '../../domain/physical/store';
-import type { ExerciseLogEntry, ExercisePrescription, StepsDayEntry, WorkoutSession } from '../../domain/physical/types';
+import type { StepsDayEntry } from '../../domain/physical/types';
 import {
-  completeWorkout,
-  ensureWorkoutSession,
-  formatLoad,
-  savePartialWorkout,
-  setExerciseCompleted,
-  skipExercise,
-  startWorkout,
-  summarizeCompleted,
-  updateExerciseActual,
-  workoutProgress,
-} from '../../domain/physical/workoutTracker';
-import { Button } from '../../ui/Button';
+  clearMobilityOn,
+  completeMobility,
+  mobilityDoneOn,
+} from '../../domain/physicalLife/mobility';
+import { travelRecommendation } from '../../domain/physicalLife/travel';
+import {
+  clearWalksOn,
+  upsertWalkingEntry,
+  walkDoneOn,
+} from '../../domain/physicalLife/walking';
+import {
+  bootstrapRotationFromLogs,
+  completeNextSlot,
+  daysSince,
+  formatDaysSince,
+  getLastSlot,
+  getNextSlot,
+  readRotationState,
+  undoLastRotationIfDate,
+  type RotationSlot,
+} from '../../domain/strength/rotation';
+import {
+  activeWorkouts,
+  readStrengthState,
+  sessionDatesForWorkout,
+} from '../../domain/strength/store';
+
+function TodayActionRow({
+  to,
+  label,
+  done,
+  onToggle,
+  primary = false,
+}: {
+  to: string;
+  label: string;
+  done: boolean;
+  onToggle: () => void;
+  primary?: boolean;
+}) {
+  return (
+    <div className={`today-action-row${done ? ' today-action-row--done' : ''}`}>
+      <Link
+        className={`path-btn ${primary ? 'path-btn--primary' : 'path-btn--ghost'} today-action-row__btn`}
+        to={to}
+      >
+        {label}
+      </Link>
+      <button
+        type="button"
+        className={`today-habit__check${done ? ' today-habit__check--done' : ''}`}
+        aria-pressed={done}
+        aria-label={`Mark ${label} ${done ? 'incomplete' : 'complete'}`}
+        onClick={onToggle}
+      >
+        {done ? '✓' : ''}
+      </button>
+    </div>
+  );
+}
+
+/** How far back daily targets (steps / protein / water) can be edited. */
+const HEALTH_LOOKBACK_DAYS = 14;
+
+function healthDayLabel(dateKey: string, today: string): string {
+  if (dateKey === today) return 'Today';
+  if (dateKey === addDays(today, -1)) return 'Yesterday';
+  return parseLocalDateKey(dateKey).toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+}
 
 function SessionProgress({
   title,
@@ -43,189 +104,24 @@ function SessionProgress({
   const doneCount = items.filter((i) => i.done).length;
   const percent = items.length ? Math.round((doneCount / items.length) * 100) : 0;
   return (
-    <div className="today-progress">
-      <div className="today-progress__head">
-        <p className="today-progress__title">{title}</p>
-        <p className="today-progress__count">
-          {doneCount} of {items.length}
+    <div className="today-session-progress">
+      <div className="today-session-progress__head">
+        <p className="today-panel__label">{title}</p>
+        <p className="today-session-progress__meta">
+          {doneCount}/{items.length}
         </p>
       </div>
-      <div className="path-progress__track today-progress__track" aria-hidden>
+      <div className="path-progress__track" aria-hidden>
         <div className="path-progress__fill" style={{ width: `${percent}%` }} />
       </div>
-      <ul className="today-progress__list">
+      <ul className="today-session-progress__list">
         {items.map((item) => (
-          <li
-            key={item.label}
-            className={`today-progress__item${item.done ? ' today-progress__item--done' : ''}`}
-          >
-            <span aria-hidden>{item.done ? '●' : '○'}</span>
-            <span>{item.label}</span>
+          <li key={item.label} className={item.done ? 'is-done' : undefined}>
+            {item.done ? '✓' : '○'} {item.label}
           </li>
         ))}
       </ul>
     </div>
-  );
-}
-
-function prescriptionEquals(a: ExercisePrescription, b: ExercisePrescription): boolean {
-  return a.load === b.load && a.loadUnit === b.loadUnit && a.sets === b.sets && a.reps === b.reps;
-}
-
-function summaryLine(exercise: ExerciseLogEntry): string {
-  if (exercise.completed) return summarizeCompleted(exercise);
-  const load = formatLoad(exercise.actual.load, exercise.actual.loadUnit);
-  return `${load} · ${exercise.actual.sets} × ${exercise.actual.reps}`;
-}
-
-function ExerciseRow({
-  exercise,
-  locked,
-  editing,
-  onToggle,
-  onStartEdit,
-  onCancelEdit,
-  onSaveEdit,
-  onSkip,
-}: {
-  exercise: ExerciseLogEntry;
-  locked: boolean;
-  editing: boolean;
-  onToggle: (completed: boolean) => void;
-  onStartEdit: () => void;
-  onCancelEdit: () => void;
-  onSaveEdit: (actual: ExercisePrescription) => void;
-  onSkip: () => void;
-}) {
-  const [draftLoad, setDraftLoad] = useState(
-    exercise.actual.loadUnit === 'bw' ? 'BW' : String(exercise.actual.load ?? ''),
-  );
-  const [draftSets, setDraftSets] = useState(String(exercise.actual.sets));
-  const [draftReps, setDraftReps] = useState(exercise.actual.reps);
-
-  useEffect(() => {
-    if (!editing) return;
-    setDraftLoad(exercise.actual.loadUnit === 'bw' ? 'BW' : String(exercise.actual.load ?? ''));
-    setDraftSets(String(exercise.actual.sets));
-    setDraftReps(exercise.actual.reps);
-  }, [editing, exercise.actual]);
-
-  const changed = !prescriptionEquals(exercise.actual, exercise.prescribed);
-  const shortName = exercise.exerciseName.replace(/^Bowflex\s+/i, '');
-
-  const save = () => {
-    const raw = draftLoad.trim();
-    const isBw = raw.toUpperCase() === 'BW' || raw === '';
-    const load = isBw ? null : Number(raw);
-    onSaveEdit({
-      load: isBw || !Number.isFinite(load) ? null : load,
-      loadUnit: isBw ? 'bw' : exercise.actual.loadUnit === 'bw' ? 'lb' : exercise.actual.loadUnit,
-      sets: Number(draftSets) || 0,
-      reps: draftReps.trim() || exercise.prescribed.reps,
-    });
-  };
-
-  if (exercise.skipped) {
-    return (
-      <li className="today-exercise today-exercise--skipped">
-        <div className="today-exercise__top">
-          <span className="today-exercise__name">{shortName}</span>
-          <span className="today-exercise__skipped-label">Skipped</span>
-        </div>
-      </li>
-    );
-  }
-
-  return (
-    <li className={`today-exercise${exercise.completed ? ' today-exercise--done' : ''}`}>
-      <div className="today-exercise__top">
-        <label className="today-exercise__check">
-          <input
-            type="checkbox"
-            checked={exercise.completed}
-            disabled={locked}
-            onChange={(e) => onToggle(e.target.checked)}
-          />
-          <span className="today-exercise__name">{shortName}</span>
-        </label>
-      </div>
-      {exercise.cautionNote ? (
-        <p className="today-exercise__caution">{exercise.cautionNote.split('—')[0]?.trim() || 'Shoulder caution'}</p>
-      ) : null}
-
-      {editing ? (
-        <div className="today-exercise__editor">
-          <div className="today-exercise__fields">
-            <label className="today-exercise__field today-exercise__field--load">
-              <span>Weight</span>
-              <span className="today-exercise__control">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={draftLoad}
-                  onChange={(e) => setDraftLoad(e.target.value)}
-                  aria-label="Weight or resistance"
-                />
-                {draftLoad.toUpperCase() !== 'BW' ? (
-                  <span className="today-exercise__unit">lb</span>
-                ) : null}
-              </span>
-            </label>
-            <label className="today-exercise__field today-exercise__field--sets">
-              <span>Sets</span>
-              <input
-                type="number"
-                min={0}
-                value={draftSets}
-                onChange={(e) => setDraftSets(e.target.value)}
-                aria-label="Sets"
-              />
-            </label>
-            <span className="today-exercise__times" aria-hidden>
-              ×
-            </span>
-            <label className="today-exercise__field today-exercise__field--reps">
-              <span>Reps</span>
-              <input
-                type="text"
-                value={draftReps}
-                onChange={(e) => setDraftReps(e.target.value)}
-                aria-label="Reps"
-              />
-            </label>
-          </div>
-          <div className="today-exercise__edit-actions">
-            <button type="button" className="today-exercise__save" onClick={save}>
-              Save
-            </button>
-            <button type="button" className="today-exercise__cancel" onClick={onCancelEdit}>
-              Cancel
-            </button>
-            {!locked ? (
-              <button type="button" className="today-exercise__cancel" onClick={onSkip}>
-                Skip
-              </button>
-            ) : null}
-          </div>
-        </div>
-      ) : (
-        <div className="today-exercise__summary">
-          <div className="today-exercise__summary-main">
-            <span>{summaryLine(exercise)}</span>
-            {!locked ? (
-              <button type="button" className="today-exercise__edit" onClick={onStartEdit}>
-                Edit
-              </button>
-            ) : null}
-          </div>
-          {changed && !exercise.completed ? (
-            <span className="today-exercise__planned">
-              Planned: {exercise.prescribed.sets} × {exercise.prescribed.reps}
-            </span>
-          ) : null}
-        </div>
-      )}
-    </li>
   );
 }
 
@@ -333,43 +229,142 @@ function IntakeComposer({
 }
 
 export function PhysicalTrainingPanel({
-  pack,
-  day,
+  unscheduled = false,
 }: {
-  pack: InstalledSeasonPack;
-  day: SeasonDayEntry;
+  unscheduled?: boolean;
 }) {
-  const dateKey = todayDateKey();
+  const todayKey = todayDateKey();
+  const earliestKey = addDays(todayKey, -HEALTH_LOOKBACK_DAYS);
+  const [dateKey, setDateKey] = useState(todayKey);
   const rootRef = useRef<HTMLElement | null>(null);
   const [sticky, setSticky] = useState(false);
-  const [session, setSession] = useState<WorkoutSession | null>(null);
   const [protein, setProtein] = useState(0);
   const [water, setWater] = useState(0);
-  const [steps, setSteps] = useState<StepsDayEntry>(() => getStepsDay(dateKey));
+  const [steps, setSteps] = useState<StepsDayEntry>(() => getStepsDay(todayKey));
   const [recoveryDone, setRecovery] = useState(false);
   const [waterUnit, setUnit] = useState<'oz' | 'ml' | 'L'>('oz');
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [pendingProtein, setPendingProtein] = useState<number | null>(null);
   const [pendingWater, setPendingWater] = useState<number | null>(null);
   const [showStepsSet, setShowStepsSet] = useState(false);
   const [stepsDraft, setStepsDraft] = useState('');
   const [targets, setTargets] = useState(() => readPhysicalPlan().targets);
+  const [strengthState, setStrengthState] = useState(() => readStrengthState());
+  const [rotation, setRotation] = useState(() => bootstrapRotationFromLogs(strengthState));
+  const [walkDone, setWalkDone] = useState(() => walkDoneOn(todayKey));
+  const [mobilityDone, setMobilityDone] = useState(() => mobilityDoneOn(todayKey));
+  const strengthWorkouts = activeWorkouts(strengthState);
+  const nextSlot = getNextSlot(rotation, todayKey);
+  const lastSlot = getLastSlot(rotation);
+  const completedToday = rotation.lastCompletedDate === todayKey;
+  /** Calendar plan for today — completion does not change which day is shown. */
+  const displaySlot: RotationSlot = nextSlot;
+  const travel = travelRecommendation(todayKey);
+  const viewingToday = dateKey === todayKey;
+  const dayLabel = healthDayLabel(dateKey, todayKey);
 
   const reload = useCallback(() => {
     const plan = readPhysicalPlan();
     setTargets(plan.targets);
-    const next = ensureWorkoutSession(pack, day, dateKey);
-    setSession(next);
     setProtein(totalIntake(dateKey, 'protein'));
     setWater(totalIntake(dateKey, 'water'));
     setSteps(getStepsDay(dateKey));
     setRecovery(getDayMeta(dateKey).recoveryDone);
     setUnit(getWaterUnit() || plan.targets.waterUnit);
-  }, [pack, day, dateKey]);
+    setStrengthState(readStrengthState());
+    setRotation(bootstrapRotationFromLogs(readStrengthState()));
+    setWalkDone(walkDoneOn(todayKey));
+    setMobilityDone(mobilityDoneOn(todayKey));
+  }, [dateKey, todayKey]);
 
   useEffect(() => {
     reload();
   }, [reload]);
+
+  useEffect(() => {
+    const onFocus = () => reload();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [reload]);
+
+  const ensureRecoveryComplete = () => {
+    const current = readRotationState();
+    if (current.lastCompletedDate === todayKey) {
+      setRotation(current);
+      return;
+    }
+    if (getNextSlot(current, todayKey).kind === 'recovery') {
+      setRotation(completeNextSlot('Recovery / walk day', todayKey));
+    }
+  };
+
+  const maybeUndoRecovery = () => {
+    if (walkDoneOn(todayKey) || mobilityDoneOn(todayKey)) return;
+    const current = readRotationState();
+    if (current.lastCompletedDate === todayKey && getLastSlot(current)?.kind === 'recovery') {
+      setRotation(undoLastRotationIfDate(todayKey));
+    }
+  };
+
+  const toggleWalk = () => {
+    if (walkDoneOn(todayKey)) {
+      clearWalksOn(todayKey);
+      setWalkDone(false);
+      maybeUndoRecovery();
+    } else {
+      upsertWalkingEntry({ date: todayKey, note: 'Walk' });
+      setWalkDone(true);
+      ensureRecoveryComplete();
+    }
+  };
+
+  const toggleMobility = () => {
+    if (mobilityDoneOn(todayKey)) {
+      clearMobilityOn(todayKey);
+      setMobilityDone(false);
+      maybeUndoRecovery();
+    } else {
+      completeMobility({ date: todayKey });
+      setMobilityDone(true);
+      ensureRecoveryComplete();
+    }
+  };
+
+  const toggleWorkout = (workoutId: string, shortLabel: string) => {
+    const last = getLastSlot(rotation);
+    const markedToday =
+      rotation.lastCompletedDate === todayKey && last?.workoutId === workoutId;
+
+    if (markedToday) {
+      setRotation(undoLastRotationIfDate(todayKey));
+      return;
+    }
+
+    const upcoming = getNextSlot(rotation, todayKey);
+    if (upcoming.workoutId !== workoutId) return;
+    if (rotation.lastCompletedDate === todayKey) return;
+
+    const logged = sessionDatesForWorkout(readStrengthState(), workoutId).includes(todayKey);
+    if (
+      logged ||
+      window.confirm(`Mark ${shortLabel} complete in the rotation?`)
+    ) {
+      setRotation(completeNextSlot());
+    }
+  };
+
+  useEffect(() => {
+    // Keep "today" current if the panel stays open past midnight.
+    if (viewingToday && dateKey !== todayKey) setDateKey(todayKey);
+  }, [todayKey, viewingToday, dateKey]);
+
+  const shiftDay = (delta: number) => {
+    const next = addDays(dateKey, delta);
+    if (next < earliestKey || next > todayKey) return;
+    setPendingProtein(null);
+    setPendingWater(null);
+    setShowStepsSet(false);
+    setDateKey(next);
+  };
 
   useEffect(() => {
     const el = rootRef.current;
@@ -388,10 +383,8 @@ export function PhysicalTrainingPanel({
       desktopMq.removeEventListener('change', update);
       window.removeEventListener('resize', update);
     };
-  }, [session, protein, water, steps, recoveryDone, editingId, pendingProtein, pendingWater]);
+  }, [protein, water, steps, recoveryDone]);
 
-  const progress = session ? workoutProgress(session) : null;
-  const isRecoveryDay = !session && (day.sessionType === 'recovery' || day.sessionType === 'rest_walk');
   const stepsTotal = effectiveSteps(steps);
   const stepsTarget = steps.target || targets.steps;
   const waterTarget =
@@ -407,14 +400,6 @@ export function PhysicalTrainingPanel({
     waterUnit === 'ml' ? targets.waterQuickAddsMl : waterUnit === 'L' ? [0.1, 0.25, 0.5, 1] : targets.waterQuickAddsOz;
 
   const physicalProgress = [
-    {
-      label: 'Exercises completed',
-      done: progress ? progress.allDone : isRecoveryDay,
-    },
-    {
-      label: 'Workout status',
-      done: session?.status === 'completed' || session?.status === 'partial' || isRecoveryDay,
-    },
     { label: 'Steps target', done: stepsTotal >= stepsTarget },
     { label: 'Protein target', done: protein >= targets.proteinG },
     { label: 'Water target', done: water >= waterTarget },
@@ -427,105 +412,196 @@ export function PhysicalTrainingPanel({
     >
       <div className="today-panel today-panel--physical">
         <header className="today-column__header today-panel__header">
-          <h2 className="path-display today-column__title">Physical training</h2>
+          <h2 className="path-display today-column__title">Do this today</h2>
           <p className="today-column__intro">
             {isSaturdaySabbath()
-              ? 'Sabbath — no required workout. Steps, protein, and water stay available.'
-              : 'Today’s workout and health targets.'}
+              ? 'Sabbath — rest is the plan. Optional walk or mobility only.'
+              : travel.trip
+                ? `${travel.trip.name}: ${travel.label}`
+                : 'One next physical action. Everything else can wait.'}
           </p>
         </header>
 
         <hr className="today-panel__divider" />
 
-        <section className="today-panel__section today-workout">
-          <p className="today-panel__label">Today’s workout</p>
-
-          {session ? (
-            <>
-              <div className="today-workout__summary">
-                <div className="today-workout__summary-text">
-                  <p className="today-workout__title">{session.workoutName}</p>
-                  <p className="today-workout__meta">
-                    {progress?.completedCount ?? 0} of {progress?.total ?? 0} exercises
-                  </p>
-                </div>
-                {session.status === 'scheduled' ? (
-                  <Button
-                    variant="ghost"
-                    className="today-workout__btn"
-                    onClick={() => setSession(startWorkout(dateKey))}
-                  >
-                    Start
-                  </Button>
-                ) : null}
-              </div>
-
-              <ul className="today-exercise-list">
-                {session.exercises.map((exercise) => (
-                  <ExerciseRow
-                    key={exercise.id}
-                    exercise={exercise}
-                    locked={session.status === 'completed' || session.status === 'skipped'}
-                    editing={editingId === exercise.id}
-                    onToggle={(completed) => {
-                      if (!session.startedAt) startWorkout(dateKey);
-                      setSession(setExerciseCompleted(dateKey, exercise.id, completed));
-                    }}
-                    onStartEdit={() => setEditingId(exercise.id)}
-                    onCancelEdit={() => setEditingId(null)}
-                    onSaveEdit={(actual) => {
-                      if (!session.startedAt) startWorkout(dateKey);
-                      setSession(updateExerciseActual(dateKey, exercise.id, actual));
-                      setEditingId(null);
-                    }}
-                    onSkip={() => {
-                      setSession(skipExercise(dateKey, exercise.id, true));
-                      setEditingId(null);
-                    }}
+        {viewingToday ? (
+          <section className="today-panel__section today-workout">
+            <p className="today-panel__label">Next action</p>
+            <p
+              className="path-display"
+              style={{ margin: '0.15rem 0 0.35rem', fontSize: '1.35rem', lineHeight: 1.2 }}
+            >
+              {travel.trip ? travel.label : displaySlot.label}
+            </p>
+            {!travel.trip ? (
+              <p className="path-body" style={{ margin: 0, opacity: 0.75, fontSize: '0.88rem' }}>
+                {completedToday && lastSlot
+                  ? 'Done for today.'
+                  : lastSlot
+                    ? `Last: ${lastSlot.shortLabel} · ${formatDaysSince(daysSince(rotation.lastCompletedDate))}`
+                    : 'No rotation entry yet — start with Workout A.'}
+              </p>
+            ) : null}
+            <div className="today-action-list">
+              {travel.trip ? (
+                <>
+                  {travel.kind === 'hotel_strength' && displaySlot.workoutId ? (
+                    <TodayActionRow
+                      primary
+                      to={`/workouts?w=${displaySlot.workoutId}`}
+                      label={`Begin hotel strength (${displaySlot.shortLabel})`}
+                      done={
+                        completedToday ||
+                        sessionDatesForWorkout(strengthState, displaySlot.workoutId).includes(
+                          todayKey,
+                        )
+                      }
+                      onToggle={() =>
+                        toggleWorkout(displaySlot.workoutId!, displaySlot.shortLabel)
+                      }
+                    />
+                  ) : null}
+                  {travel.kind === 'walk' || travel.kind === 'travel' ? (
+                    <TodayActionRow
+                      primary
+                      to="/training?area=physical&section=walking"
+                      label="Take a Walk"
+                      done={walkDone}
+                      onToggle={toggleWalk}
+                    />
+                  ) : null}
+                  {travel.kind === 'mobility' || travel.kind === 'rest' ? (
+                    <TodayActionRow
+                      primary
+                      to="/training?area=physical&section=mobility"
+                      label="Do Mobility"
+                      done={mobilityDone}
+                      onToggle={toggleMobility}
+                    />
+                  ) : null}
+                  <Link className="today-action-row__more" to="/training?area=physical&section=travel">
+                    Travel options
+                  </Link>
+                </>
+              ) : displaySlot.kind === 'recovery' ? (
+                <>
+                  <TodayActionRow
+                    primary
+                    to="/training?area=physical&section=walking"
+                    label="Take a Walk"
+                    done={walkDone}
+                    onToggle={toggleWalk}
                   />
-                ))}
-              </ul>
-
-              <div className="today-workout__actions">
-                {session.status !== 'completed' && progress?.allDone ? (
-                  <Button
-                    className="today-workout__btn"
-                    onClick={() => setSession(completeWorkout(dateKey))}
-                  >
-                    Complete workout
-                  </Button>
-                ) : null}
-                {session.status === 'in_progress' && progress?.anyDone && !progress.allDone ? (
-                  <Button
-                    variant="ghost"
-                    className="today-workout__btn"
-                    onClick={() => setSession(savePartialWorkout(dateKey))}
-                  >
-                    Save partial
-                  </Button>
-                ) : null}
-                {session.status === 'completed' ? (
-                  <p className="today-workout__done">Workout saved to history.</p>
-                ) : null}
-                {session.status === 'partial' ? (
-                  <p className="today-workout__done">Partial workout saved.</p>
-                ) : null}
-              </div>
-            </>
-          ) : isRecoveryDay || targets.recoveryEnabled ? (
-            <div className="today-recovery">
-              <p className="today-workout__title">Recovery / rest</p>
-              <p className="path-body">No strength workout scheduled today.</p>
+                  <TodayActionRow
+                    to="/training?area=physical&section=mobility"
+                    label="Do Mobility"
+                    done={mobilityDone}
+                    onToggle={toggleMobility}
+                  />
+                </>
+              ) : displaySlot.workoutId ? (
+                <TodayActionRow
+                  primary
+                  to={`/workouts?w=${displaySlot.workoutId}`}
+                  label={`Begin ${displaySlot.shortLabel}`}
+                  done={
+                    completedToday ||
+                    sessionDatesForWorkout(strengthState, displaySlot.workoutId).includes(todayKey)
+                  }
+                  onToggle={() => toggleWorkout(displaySlot.workoutId!, displaySlot.shortLabel)}
+                />
+              ) : null}
+              <Link className="today-action-row__more" to="/training?area=physical">
+                All physical training
+              </Link>
             </div>
-          ) : (
-            <p className="path-body">No workout scheduled for today.</p>
-          )}
-        </section>
+            {!travel.trip && !isSaturdaySabbath() && !unscheduled ? (
+              <details style={{ marginTop: '0.75rem' }}>
+                <summary style={{ cursor: 'pointer', fontSize: '0.82rem', opacity: 0.75 }}>
+                  Other workouts
+                </summary>
+                <div className="today-action-list" style={{ marginTop: '0.45rem' }}>
+                  {strengthWorkouts.map((workout) => {
+                    const logged = sessionDatesForWorkout(strengthState, workout.id).includes(
+                      todayKey,
+                    );
+                    const marked =
+                      completedToday && lastSlot?.workoutId === workout.id;
+                    return (
+                      <TodayActionRow
+                        key={workout.id}
+                        to={`/workouts?w=${workout.id}`}
+                        label={workout.shortLabel}
+                        done={logged || marked}
+                        onToggle={() => toggleWorkout(workout.id, workout.shortLabel)}
+                      />
+                    );
+                  })}
+                </div>
+              </details>
+            ) : null}
+          </section>
+        ) : (
+          <section className="today-panel__section today-workout">
+            <p className="today-panel__label">Strength log</p>
+            <p className="path-body" style={{ opacity: 0.75, fontSize: '0.88rem', margin: 0 }}>
+              Strength logging is limited to yesterday and today. Switch back to Today to open a
+              workout.
+            </p>
+            <button
+              type="button"
+              className="path-btn path-btn--ghost"
+              style={{ marginTop: '0.55rem' }}
+              onClick={() => setDateKey(todayKey)}
+            >
+              Back to today
+            </button>
+          </section>
+        )}
 
         <hr className="today-panel__divider" />
 
         <section className="today-panel__section">
-          <p className="today-panel__label">Daily targets</p>
+          <div className="today-day-nav" role="group" aria-label="Health tracking day">
+            <button
+              type="button"
+              className="today-day-nav__btn"
+              aria-label="Previous day"
+              disabled={dateKey <= earliestKey}
+              onClick={() => shiftDay(-1)}
+            >
+              ‹
+            </button>
+            <div className="today-day-nav__label">
+              <p className="today-panel__label" style={{ margin: 0 }}>
+                Daily targets
+              </p>
+              <p className="today-day-nav__date">{dayLabel}</p>
+            </div>
+            <button
+              type="button"
+              className="today-day-nav__btn"
+              aria-label="Next day"
+              disabled={dateKey >= todayKey}
+              onClick={() => shiftDay(1)}
+            >
+              ›
+            </button>
+            {!viewingToday ? (
+              <button
+                type="button"
+                className="today-day-nav__today"
+                onClick={() => {
+                  setPendingProtein(null);
+                  setPendingWater(null);
+                  setShowStepsSet(false);
+                  setDateKey(todayKey);
+                }}
+              >
+                Today
+              </button>
+            ) : null}
+          </div>
 
           <div className="today-intake">
             <div className="today-intake__head">
@@ -546,21 +622,21 @@ export function PhysicalTrainingPanel({
               <button
                 type="button"
                 className="today-intake__chip"
-                onClick={() => setSteps(adjustSteps(-100))}
+                onClick={() => setSteps(adjustSteps(-100, dateKey))}
               >
                 −100
               </button>
               <button
                 type="button"
                 className="today-intake__chip"
-                onClick={() => setSteps(adjustSteps(100))}
+                onClick={() => setSteps(adjustSteps(100, dateKey))}
               >
                 +100
               </button>
               <button
                 type="button"
                 className="today-intake__chip"
-                onClick={() => setSteps(adjustSteps(1000))}
+                onClick={() => setSteps(adjustSteps(1000, dateKey))}
               >
                 +1,000
               </button>
@@ -590,7 +666,7 @@ export function PhysicalTrainingPanel({
                   onClick={() => {
                     const total = Number(stepsDraft);
                     if (!Number.isFinite(total)) return;
-                    setSteps(setStepsTotal(total));
+                    setSteps(setStepsTotal(total, dateKey));
                     setShowStepsSet(false);
                   }}
                 >
@@ -620,7 +696,7 @@ export function PhysicalTrainingPanel({
             }}
             onClear={() => setPendingProtein(null)}
             onUndo={() => {
-              undoLastIntake('protein');
+              undoLastIntake('protein', dateKey);
               setProtein(totalIntake(dateKey, 'protein'));
             }}
           />
@@ -663,7 +739,7 @@ export function PhysicalTrainingPanel({
             }}
             onClear={() => setPendingWater(null)}
             onUndo={() => {
-              undoLastIntake('water');
+              undoLastIntake('water', dateKey);
               setWater(totalIntake(dateKey, 'water'));
             }}
             minusStep={waterUnit === 'ml' ? 50 : waterUnit === 'L' ? 0.1 : 1}
@@ -681,7 +757,9 @@ export function PhysicalTrainingPanel({
                   className={`today-habit__check${recoveryDone ? ' today-habit__check--done' : ''}`}
                   aria-pressed={recoveryDone}
                   aria-label={`Mark recovery ${recoveryDone ? 'incomplete' : 'complete'}`}
-                  onClick={() => setRecovery(setRecoveryDone(!recoveryDone).recoveryDone)}
+                  onClick={() =>
+                    setRecovery(setRecoveryDone(!recoveryDone, dateKey).recoveryDone)
+                  }
                 >
                   {recoveryDone ? '✓' : ''}
                 </button>
@@ -692,7 +770,10 @@ export function PhysicalTrainingPanel({
 
         <hr className="today-panel__divider" />
 
-        <SessionProgress title="Today’s physical progress" items={physicalProgress} />
+        <SessionProgress
+          title={`${viewingToday ? 'Today’s' : `${dayLabel} ·`} physical progress`}
+          items={physicalProgress}
+        />
       </div>
     </aside>
   );

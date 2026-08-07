@@ -1,5 +1,7 @@
 /** User-editable physical plan: exercise library, templates, weekly schedule, targets. */
 
+import { CATALOG_SEED_VERSION } from '../demo/demoIds';
+import type { WorkoutClassification } from '../weeklyPlan/types';
 import { newId } from './store';
 import type { PrescribedExercise, ResistanceUnit } from './types';
 
@@ -8,7 +10,9 @@ export const PHYSICAL_PLAN_KEY = 'path-physical-plan-v1';
 export type EquipmentKind =
   | 'Bowflex Xtreme 2 SE'
   | '25 lb dumbbells'
-  | 'Pilates reformer'
+  | 'Pilates Reformer'
+  | 'Mobility'
+  | 'Recovery'
   | 'Bodyweight'
   | string;
 
@@ -24,6 +28,9 @@ export interface CatalogExercise {
   cautionNote: string;
   needsWorkingWeight: boolean;
   notes: string;
+  /** Soft flag — planning UI should not auto-schedule these. */
+  avoidAutoSchedule?: boolean;
+  useCautiously?: boolean;
 }
 
 export interface CatalogTemplateExercise {
@@ -40,6 +47,10 @@ export interface CatalogTemplateExercise {
 export interface CatalogTemplate {
   id: string;
   name: string;
+  /** Organizational metadata — does not restrict scheduling. */
+  classification: WorkoutClassification;
+  /** Human-readable duration hint, e.g. "6–10 minutes". */
+  estimatedDuration?: string;
   exercises: CatalogTemplateExercise[];
 }
 
@@ -56,19 +67,58 @@ export interface PhysicalPlanTargets {
   waterQuickAddsMl: number[];
 }
 
-/** Keys '0'..'6' = Sunday..Saturday → template id or null (rest). */
-export type WeekSchedule = Record<string, string | null>;
+/** One scheduled workout slot for a weekday (ordered). */
+export interface WeekScheduleSlot {
+  id: string;
+  workoutTemplateId: string | null;
+  order: number;
+  workoutName?: string;
+  classification?: WorkoutClassification;
+  estimatedMinutes?: number;
+  rationale?: string;
+  exercises?: Array<{
+    exerciseId: string;
+    sets: number;
+    reps: string;
+    load: number | null;
+    loadUnit: ResistanceUnit;
+    note: string;
+    cautionNote: string;
+    order: number;
+    restSeconds?: number;
+    progressionInstruction?: string;
+  }>;
+}
+
+/**
+ * Keys '0'..'6' = Sunday..Saturday → ordered workout slots (empty = rest / unscheduled).
+ * Legacy values were `string | null` (single template id).
+ */
+export type WeekSchedule = Record<string, WeekScheduleSlot[]>;
 
 export interface PhysicalPlanCatalog {
   version: 1;
+  /** Bumped when the seeded library changes; drives one-time migrations. */
+  catalogSeedVersion: number;
   exercises: CatalogExercise[];
   templates: CatalogTemplate[];
   weekSchedule: WeekSchedule;
   targets: PhysicalPlanTargets;
 }
 
+const SHOULDER_NOTE =
+  'Shoulder caution (personal history, not a diagnosis): mild discomfort near the top of the left shoulder has occurred. Incline pressing previously irritated the shoulder and was stopped after two sets. Shoulder-isolation work commonly irritates it. Do not auto-increase resistance on incline pressing. Use cautiously.';
+
 function ex(
-  partial: Omit<CatalogExercise, 'defaultSets' | 'defaultReps' | 'cautionNote' | 'needsWorkingWeight' | 'notes' | 'muscleGroups'> &
+  partial: Omit<
+    CatalogExercise,
+    | 'defaultSets'
+    | 'defaultReps'
+    | 'cautionNote'
+    | 'needsWorkingWeight'
+    | 'notes'
+    | 'muscleGroups'
+  > &
     Partial<CatalogExercise>,
 ): CatalogExercise {
   return {
@@ -82,8 +132,69 @@ function ex(
   };
 }
 
+export function emptyWeekSchedule(): WeekSchedule {
+  return {
+    '0': [],
+    '1': [],
+    '2': [],
+    '3': [],
+    '4': [],
+    '5': [],
+    '6': [],
+  };
+}
+
+/** Normalize legacy `string | null` or string[] into ordered slots. */
+export function normalizeWeekDaySlots(value: unknown, dayKey = '0'): WeekScheduleSlot[] {
+  if (value == null) return [];
+  if (typeof value === 'string') {
+    if (!value) return [];
+    return [{ id: `slot_${dayKey}_${value}`, workoutTemplateId: value, order: 0 }];
+  }
+  if (!Array.isArray(value)) return [];
+  if (value.length === 0) return [];
+  if (typeof value[0] === 'string') {
+    return (value as string[])
+      .filter(Boolean)
+      .map((workoutTemplateId, order) => ({
+        id: `slot_${dayKey}_${workoutTemplateId}_${order}`,
+        workoutTemplateId,
+        order,
+      }));
+  }
+  return (value as WeekScheduleSlot[])
+    .filter(
+      (slot) =>
+        Boolean(slot?.workoutTemplateId) || (Array.isArray(slot?.exercises) && slot.exercises.length > 0),
+    )
+    .map((slot, order) => ({
+      id:
+        slot.id ||
+        `slot_${dayKey}_${slot.workoutTemplateId || 'custom'}_${order}`,
+      workoutTemplateId: slot.workoutTemplateId ?? null,
+      order: typeof slot.order === 'number' ? slot.order : order,
+      workoutName: slot.workoutName,
+      classification: slot.classification,
+      estimatedMinutes: slot.estimatedMinutes,
+      rationale: slot.rationale,
+      exercises: slot.exercises,
+    }))
+    .sort((a, b) => a.order - b.order)
+    .map((slot, order) => ({ ...slot, order }));
+}
+
+export function normalizeWeekSchedule(raw: Record<string, unknown> | WeekSchedule | undefined): WeekSchedule {
+  const base = emptyWeekSchedule();
+  if (!raw) return base;
+  for (const key of Object.keys(base)) {
+    base[key] = normalizeWeekDaySlots((raw as Record<string, unknown>)[key], key);
+  }
+  return base;
+}
+
 function seedExercises(): CatalogExercise[] {
   return [
+    // —— Bowflex Xtreme 2 SE · Chest ——
     ex({
       id: 'bowflex_chest_press',
       name: 'Chest Press',
@@ -93,18 +204,7 @@ function seedExercises(): CatalogExercise[] {
       defaultLoadUnit: 'lb',
       defaultSets: 3,
       defaultReps: '12',
-      notes: 'Bowflex resistance (not free-weight equivalent).',
-    }),
-    ex({
-      id: 'bowflex_decline_chest_press',
-      name: 'Decline Chest Press',
-      equipment: 'Bowflex Xtreme 2 SE',
-      muscleGroups: ['chest', 'triceps'],
-      defaultLoad: 155,
-      defaultLoadUnit: 'lb',
-      defaultSets: 3,
-      defaultReps: '12',
-      notes: 'Bowflex resistance.',
+      notes: 'Last used: Bowflex 155 lb · 3×12. Editable working weight.',
     }),
     ex({
       id: 'bowflex_incline_chest_press',
@@ -115,8 +215,20 @@ function seedExercises(): CatalogExercise[] {
       defaultLoadUnit: 'lb',
       defaultSets: 2,
       defaultReps: '12',
-      cautionNote: 'Shoulder caution — mild left-shoulder discomfort; stop if irritated.',
-      notes: 'Most recent: 2×12. Prefer caution over progression.',
+      cautionNote: SHOULDER_NOTE,
+      useCautiously: true,
+      notes: 'Last used: Bowflex 155 lb · 2×12 (stopped early). Use cautiously — do not auto-increase load.',
+    }),
+    ex({
+      id: 'bowflex_decline_chest_press',
+      name: 'Decline Chest Press',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['chest', 'triceps'],
+      defaultLoad: 155,
+      defaultLoadUnit: 'lb',
+      defaultSets: 3,
+      defaultReps: '12',
+      notes: 'Last used: Bowflex 155 lb · 3×12.',
     }),
     ex({
       id: 'bowflex_chest_fly',
@@ -127,7 +239,80 @@ function seedExercises(): CatalogExercise[] {
       defaultLoadUnit: 'lb',
       defaultSets: 3,
       defaultReps: '12',
-      notes: 'Bowflex resistance. Prior working prescription.',
+      notes: 'Last used: Bowflex 155 lb · 3×12.',
+    }),
+
+    // —— Back ——
+    ex({
+      id: 'bowflex_lat_pulldown',
+      name: 'Lat Pulldown',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['back', 'biceps'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_seated_row',
+      name: 'Seated Row',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['back', 'biceps'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_reverse_fly',
+      name: 'Reverse Fly / Rear Deltoid Row',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['back', 'shoulders'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      cautionNote: SHOULDER_NOTE,
+      useCautiously: true,
+      avoidAutoSchedule: true,
+      needsWorkingWeight: true,
+      notes: 'Shoulder-isolation tendency — do not auto-schedule.',
+    }),
+    ex({
+      id: 'bowflex_low_back_extension',
+      name: 'Low Back Extension',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['back'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_shoulder_pullover',
+      name: 'Shoulder Pullover',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['back', 'chest'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      cautionNote: SHOULDER_NOTE,
+      useCautiously: true,
+      needsWorkingWeight: true,
+    }),
+
+    // —— Arms ——
+    ex({
+      id: 'bowflex_biceps_curl',
+      name: 'Biceps Curl',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['biceps'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_reverse_curl',
+      name: 'Reverse Curl',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['biceps', 'forearms'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      needsWorkingWeight: true,
     }),
     ex({
       id: 'bowflex_triceps_pushdown',
@@ -138,7 +323,7 @@ function seedExercises(): CatalogExercise[] {
       defaultLoadUnit: 'lb',
       defaultSets: 3,
       defaultReps: '12',
-      notes: 'Bowflex resistance.',
+      notes: 'Last used: Bowflex 110 lb · 3×12.',
     }),
     ex({
       id: 'bowflex_oh_rope_triceps',
@@ -149,100 +334,316 @@ function seedExercises(): CatalogExercise[] {
       defaultLoadUnit: 'lb',
       defaultSets: 3,
       defaultReps: '12',
-      notes: 'Bowflex resistance.',
+      notes: 'Last used: Bowflex 110 lb · 3×12.',
     }),
     ex({
-      id: 'bodyweight_squat',
+      id: 'bowflex_seated_triceps_extension',
+      name: 'Seated Triceps Extension',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['triceps'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      needsWorkingWeight: true,
+    }),
+
+    // —— Lower body ——
+    ex({
+      id: 'bowflex_squat',
+      name: 'Squat',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['legs', 'glutes'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_leg_extension',
+      name: 'Leg Extension',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['legs'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_leg_curl',
+      name: 'Leg Curl',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['legs'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_calf_raise',
+      name: 'Standing or Seated Calf Raise',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['calves'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_glute_kickback',
+      name: 'Glute Kickback',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['glutes'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_hip_abduction',
+      name: 'Seated Hip Abduction',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['hips'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_hip_adduction',
+      name: 'Seated Hip Adduction',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['hips'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      needsWorkingWeight: true,
+    }),
+
+    // —— Core ——
+    ex({
+      id: 'bowflex_abdominal_crunch',
+      name: 'Ab Crunch',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['core'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      defaultSets: 3,
+      defaultReps: '12-15',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_oblique_twist_left',
+      name: 'Oblique Twist — Left',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['core'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      defaultSets: 3,
+      defaultReps: '10-15',
+      needsWorkingWeight: true,
+    }),
+    ex({
+      id: 'bowflex_oblique_twist_right',
+      name: 'Oblique Twist — Right',
+      equipment: 'Bowflex Xtreme 2 SE',
+      muscleGroups: ['core'],
+      defaultLoad: null,
+      defaultLoadUnit: 'lb',
+      defaultSets: 3,
+      defaultReps: '10-15',
+      needsWorkingWeight: true,
+    }),
+
+    // —— Dumbbells (pair of 25 lb) ——
+    ex({
+      id: 'db_deadlift',
+      name: 'Dumbbell Deadlift',
+      equipment: '25 lb dumbbells',
+      muscleGroups: ['posterior', 'legs'],
+      defaultLoad: 25,
+      defaultLoadUnit: 'lb',
+      defaultReps: '10',
+      notes: 'Available equipment: pair of 25 lb dumbbells.',
+    }),
+    ex({
+      id: 'db_goblet_squat',
+      name: 'Goblet Squat',
+      equipment: '25 lb dumbbells',
+      muscleGroups: ['legs', 'glutes'],
+      defaultLoad: 25,
+      defaultLoadUnit: 'lb',
+      defaultReps: '10',
+    }),
+    ex({
+      id: 'db_fly',
+      name: 'Dumbbell Fly',
+      equipment: '25 lb dumbbells',
+      muscleGroups: ['chest'],
+      defaultLoad: 25,
+      defaultLoadUnit: 'lb',
+      defaultReps: '10',
+    }),
+    ex({
+      id: 'db_hammer_curl',
+      name: 'Hammer Curl',
+      equipment: '25 lb dumbbells',
+      muscleGroups: ['biceps'],
+      defaultLoad: 25,
+      defaultLoadUnit: 'lb',
+      defaultReps: '10',
+    }),
+    ex({
+      id: 'db_curl',
+      name: 'Dumbbell Curl',
+      equipment: '25 lb dumbbells',
+      muscleGroups: ['biceps'],
+      defaultLoad: 25,
+      defaultLoadUnit: 'lb',
+      defaultReps: '10',
+    }),
+    ex({
+      id: 'db_shrug',
+      name: 'Dumbbell Shrug',
+      equipment: '25 lb dumbbells',
+      muscleGroups: ['traps'],
+      defaultLoad: 25,
+      defaultLoadUnit: 'lb',
+      defaultReps: '10',
+      cautionNote: SHOULDER_NOTE,
+      useCautiously: true,
+    }),
+    ex({
+      id: 'db_weighted_situp',
+      name: 'Weighted Sit-Up',
+      equipment: '25 lb dumbbells',
+      muscleGroups: ['core'],
+      defaultLoad: 25,
+      defaultLoadUnit: 'lb',
+      defaultReps: '10',
+    }),
+
+    // —— Bodyweight (catalog only — not auto-scheduled) ——
+    ex({
+      id: 'bw_squat',
       name: 'Bodyweight Squat',
       equipment: 'Bodyweight',
       muscleGroups: ['legs'],
       defaultLoad: null,
       defaultLoadUnit: 'bw',
-      defaultSets: 3,
+      defaultReps: '10',
+    }),
+    ex({
+      id: 'bw_pushup',
+      name: 'Push-Up',
+      equipment: 'Bodyweight',
+      muscleGroups: ['chest', 'triceps'],
+      defaultLoad: null,
+      defaultLoadUnit: 'bw',
+      defaultReps: '8-12',
+    }),
+    ex({
+      id: 'bw_plank',
+      name: 'Plank',
+      equipment: 'Bodyweight',
+      muscleGroups: ['core'],
+      defaultLoad: null,
+      defaultLoadUnit: 'bw',
+      defaultReps: '30-60s',
+    }),
+    ex({
+      id: 'bw_hip_hinge',
+      name: 'Standing Hip Hinge',
+      equipment: 'Bodyweight',
+      muscleGroups: ['posterior'],
+      defaultLoad: null,
+      defaultLoadUnit: 'bw',
       defaultReps: '8-10',
-      notes: 'Editable default prescription.',
     }),
+
+    // —— Pilates / Mobility / Recovery (structure only) ——
     ex({
-      id: 'db_needs_weight',
-      name: 'Dumbbell exercise',
-      equipment: '25 lb dumbbells',
+      id: 'pilates_placeholder',
+      name: 'Pilates Reformer (add exercises later)',
+      equipment: 'Pilates Reformer',
       muscleGroups: [],
       defaultLoad: null,
       defaultLoadUnit: 'lb',
-      defaultSets: 3,
-      defaultReps: '10',
       needsWorkingWeight: true,
-      notes: 'Rename and set an initial working weight before assigning.',
+      avoidAutoSchedule: true,
+      notes: 'Category placeholder — not assigned automatically.',
     }),
     ex({
-      id: 'reformer_needs_weight',
-      name: 'Reformer exercise',
-      equipment: 'Pilates reformer',
+      id: 'mobility_placeholder',
+      name: 'Mobility work (add exercises later)',
+      equipment: 'Mobility',
       muscleGroups: [],
       defaultLoad: null,
-      defaultLoadUnit: 'lb',
-      defaultSets: 3,
-      defaultReps: '10',
-      needsWorkingWeight: true,
-      notes: 'Rename and set spring/resistance before assigning. No invented load.',
+      defaultLoadUnit: 'bw',
+      avoidAutoSchedule: true,
+      notes: 'Category placeholder — not assigned automatically.',
+    }),
+    ex({
+      id: 'recovery_placeholder',
+      name: 'Recovery / easy movement (add later)',
+      equipment: 'Recovery',
+      muscleGroups: [],
+      defaultLoad: null,
+      defaultLoadUnit: 'bw',
+      avoidAutoSchedule: true,
+      notes: 'Category placeholder — not assigned automatically.',
     }),
   ];
 }
 
-function item(
-  exerciseId: string,
-  catalog: CatalogExercise[],
-  overrides: Partial<CatalogTemplateExercise> = {},
-): CatalogTemplateExercise {
-  const base = catalog.find((e) => e.id === exerciseId)!;
-  return {
-    exerciseId,
-    sets: base.defaultSets,
-    reps: base.defaultReps,
-    load: base.defaultLoad,
-    loadUnit: base.defaultLoadUnit,
-    note: base.notes,
-    cautionNote: base.cautionNote,
-    order: 0,
-    ...overrides,
-  };
-}
-
-function seedTemplates(exercises: CatalogExercise[]): CatalogTemplate[] {
-  const chestItems = [
-    'bowflex_chest_press',
-    'bowflex_decline_chest_press',
-    'bowflex_chest_fly',
-    'bowflex_triceps_pushdown',
-    'bowflex_oh_rope_triceps',
-  ].map((id, order) => item(id, exercises, { order }));
-
+/**
+ * Legacy weekly-plan templates — deactivated.
+ * Active strength tracking lives in `path-strength-log-v1` (/workouts).
+ */
+function seedTemplates(_exercises: CatalogExercise[]): CatalogTemplate[] {
   return [
-    { id: 'tmpl_chest_triceps', name: 'Chest and Triceps', exercises: chestItems },
-    { id: 'tmpl_back_biceps', name: 'Back and Biceps', exercises: [] },
+    {
+      id: 'tmpl_chest_triceps',
+      name: 'Retired — use Strength Log Workout 1',
+      classification: 'primary',
+      exercises: [],
+    },
+    {
+      id: 'tmpl_back_biceps',
+      name: 'Retired — use Strength Log Workout 2',
+      classification: 'primary',
+      exercises: [],
+    },
     {
       id: 'tmpl_lower_body',
-      name: 'Lower Body',
-      exercises: [item('bodyweight_squat', exercises, { order: 0 })],
+      name: 'Retired — legs not active yet',
+      classification: 'primary',
+      exercises: [],
     },
     {
       id: 'tmpl_full_body',
-      name: 'Full Body',
-      exercises: [item('bodyweight_squat', exercises, { order: 0 })],
+      name: 'Retired template',
+      classification: 'primary',
+      exercises: [],
     },
-    { id: 'tmpl_conditioning', name: 'Conditioning / Recovery', exercises: [] },
+    {
+      id: 'tmpl_core_finisher',
+      name: 'Retired — core is in Workout 1',
+      classification: 'finisher',
+      exercises: [],
+    },
+    {
+      id: 'tmpl_recovery',
+      name: 'Recovery',
+      classification: 'recovery',
+      exercises: [],
+    },
   ];
 }
 
-function seedSchedule(): WeekSchedule {
+function defaultTargets(): PhysicalPlanTargets {
   return {
-    '0': null,
-    '1': 'tmpl_chest_triceps',
-    '2': 'tmpl_back_biceps',
-    '3': 'tmpl_lower_body',
-    '4': 'tmpl_full_body',
-    '5': 'tmpl_chest_triceps',
-    '6': 'tmpl_chest_triceps',
+    steps: 8000,
+    proteinG: 120,
+    waterOz: 80,
+    waterUnit: 'oz',
+    recoveryEnabled: false,
+    recoveryLabel: 'Protect bedtime',
+    stepsSource: 'manual',
+    proteinQuickAdds: [1, 5, 10, 20],
+    waterQuickAddsOz: [1, 5, 10, 16],
+    waterQuickAddsMl: [50, 100, 250, 500],
   };
 }
 
@@ -250,21 +651,11 @@ export function buildDefaultPhysicalPlan(): PhysicalPlanCatalog {
   const exercises = seedExercises();
   return {
     version: 1,
+    catalogSeedVersion: CATALOG_SEED_VERSION,
     exercises,
     templates: seedTemplates(exercises),
-    weekSchedule: seedSchedule(),
-    targets: {
-      steps: 8000,
-      proteinG: 120,
-      waterOz: 80,
-      waterUnit: 'oz',
-      recoveryEnabled: false,
-      recoveryLabel: 'Protect bedtime',
-      stepsSource: 'manual',
-      proteinQuickAdds: [1, 5, 10, 20],
-      waterQuickAddsOz: [1, 5, 10, 16],
-      waterQuickAddsMl: [50, 100, 250, 500],
-    },
+    weekSchedule: emptyWeekSchedule(),
+    targets: defaultTargets(),
   };
 }
 
@@ -275,8 +666,23 @@ function mergeExercises(
   if (!stored?.length) return defaults;
   const byId = new Map<string, CatalogExercise>();
   for (const item of defaults) byId.set(item.id, item);
-  for (const item of stored) byId.set(item.id, { ...(byId.get(item.id) ?? item), ...item });
-  // Keep default order first, then any user-added ids.
+  for (const item of stored) {
+    const base = byId.get(item.id);
+    // Prefer stored working loads; keep seed caution metadata when stored is empty.
+    byId.set(item.id, {
+      ...(base ?? item),
+      ...item,
+      // Keep seed display names for known renames (Abdominal Crunch → Ab Crunch).
+      name:
+        item.id === 'bowflex_abdominal_crunch' ? (base?.name ?? item.name) : item.name || base?.name || '',
+      cautionNote: item.cautionNote || base?.cautionNote || '',
+      notes: item.notes || base?.notes || '',
+      useCautiously: item.useCautiously ?? base?.useCautiously,
+      avoidAutoSchedule: item.avoidAutoSchedule ?? base?.avoidAutoSchedule,
+      defaultSets: item.defaultSets ?? base?.defaultSets ?? 3,
+      defaultReps: item.defaultReps || base?.defaultReps || '12',
+    });
+  }
   const ordered: CatalogExercise[] = [];
   const seen = new Set<string>();
   for (const item of defaults) {
@@ -285,19 +691,89 @@ function mergeExercises(
   }
   for (const item of stored) {
     if (seen.has(item.id)) continue;
+    // Drop obsolete placeholder rows
+    if (item.id === 'db_needs_weight' || item.id === 'reformer_needs_weight') continue;
+    if (item.id === 'bodyweight_squat') continue; // renamed to bw_squat
     ordered.push(byId.get(item.id)!);
     seen.add(item.id);
   }
   return ordered;
 }
 
-function mergeWithDefaults(parsed: Partial<PhysicalPlanCatalog>): PhysicalPlanCatalog {
+function mergeTemplates(
+  stored: CatalogTemplate[] | undefined,
+  defaults: CatalogTemplate[],
+): CatalogTemplate[] {
+  // Strength log owns active programming — always prefer retired empty seed templates.
+  if (!stored?.length) return defaults;
+  const byId = new Map(defaults.map((t) => [t.id, { ...t, exercises: [] as CatalogTemplate['exercises'] }]));
+  for (const def of defaults) {
+    byId.set(def.id, { ...def, exercises: [] });
+  }
+  // Preserve any unknown custom template ids without recommended exercises.
+  for (const t of stored) {
+    if (!byId.has(t.id)) {
+      byId.set(t.id, {
+        ...t,
+        name: t.name.startsWith('Retired') ? t.name : `Retired — ${t.name}`,
+        exercises: [],
+        classification: t.classification ?? 'primary',
+      });
+    }
+  }
+  const order = [
+    'tmpl_chest_triceps',
+    'tmpl_back_biceps',
+    'tmpl_lower_body',
+    'tmpl_full_body',
+    'tmpl_core_finisher',
+    'tmpl_recovery',
+  ];
+  const ordered: CatalogTemplate[] = [];
+  const seen = new Set<string>();
+  for (const id of order) {
+    const t = byId.get(id);
+    if (t) {
+      ordered.push({
+        ...t,
+        exercises: [],
+        classification: t.classification ?? 'primary',
+      });
+      seen.add(id);
+    }
+  }
+  for (const t of byId.values()) {
+    if (!seen.has(t.id)) {
+      ordered.push({
+        ...t,
+        exercises: [],
+        classification: t.classification ?? 'primary',
+      });
+    }
+  }
+  return ordered;
+}
+
+/** Upgrade stored plan to current catalog seed without inventing a schedule. */
+export function migratePhysicalPlanCatalog(
+  parsed: Partial<PhysicalPlanCatalog> & { weekSchedule?: WeekSchedule | Record<string, unknown> },
+): PhysicalPlanCatalog {
   const defaults = buildDefaultPhysicalPlan();
+  const priorVersion = parsed.catalogSeedVersion ?? 1;
+  const templates = mergeTemplates(parsed.templates, defaults.templates);
+
+  let weekSchedule = emptyWeekSchedule();
+  // v1 demo schedules are dropped; v2+ user/weekly-plan schedules are preserved and reshaped.
+  if (priorVersion >= 2 && parsed.weekSchedule) {
+    weekSchedule = normalizeWeekSchedule(parsed.weekSchedule as Record<string, unknown>);
+  }
+
   return {
     version: 1,
+    catalogSeedVersion: CATALOG_SEED_VERSION,
     exercises: mergeExercises(parsed.exercises, defaults.exercises),
-    templates: parsed.templates?.length ? parsed.templates : defaults.templates,
-    weekSchedule: { ...defaults.weekSchedule, ...(parsed.weekSchedule ?? {}) },
+    templates,
+    weekSchedule,
     targets: { ...defaults.targets, ...(parsed.targets ?? {}) },
   };
 }
@@ -310,14 +786,30 @@ export function readPhysicalPlan(): PhysicalPlanCatalog {
       localStorage.setItem(PHYSICAL_PLAN_KEY, JSON.stringify(seeded));
       return structuredClone(seeded);
     }
-    return mergeWithDefaults(JSON.parse(raw) as Partial<PhysicalPlanCatalog>);
+    const parsed = JSON.parse(raw) as Partial<PhysicalPlanCatalog>;
+    const migrated = migratePhysicalPlanCatalog(parsed);
+    const storedHasCore = (parsed.templates ?? []).some((t) => t.id === 'tmpl_core_finisher');
+    const migratedHasCore = migrated.templates.some((t) => t.id === 'tmpl_core_finisher');
+    if (
+      parsed.catalogSeedVersion !== migrated.catalogSeedVersion ||
+      (parsed.exercises?.length ?? 0) < migrated.exercises.length ||
+      (parsed.templates?.length ?? 0) < migrated.templates.length ||
+      (migratedHasCore && !storedHasCore)
+    ) {
+      localStorage.setItem(PHYSICAL_PLAN_KEY, JSON.stringify(migrated));
+    }
+    return structuredClone(migrated);
   } catch {
     return buildDefaultPhysicalPlan();
   }
 }
 
 export function writePhysicalPlan(plan: PhysicalPlanCatalog): void {
-  localStorage.setItem(PHYSICAL_PLAN_KEY, JSON.stringify(plan));
+  localStorage.setItem(
+    PHYSICAL_PLAN_KEY,
+    JSON.stringify({ ...plan, catalogSeedVersion: plan.catalogSeedVersion ?? CATALOG_SEED_VERSION }),
+  );
+  void import('../../services/notifyAccountBag').then((m) => m.notifyAccountBag('physical_plan'));
 }
 
 export function resetPhysicalPlan(): PhysicalPlanCatalog {
@@ -330,41 +822,101 @@ export function weekdayKey(date = new Date()): string {
   return String(date.getDay());
 }
 
-export function resolveTodaysPrescription(
-  date = new Date(),
-): {
+export type ResolvedWorkoutPrescription = {
+  scheduledWorkoutId: string;
   templateId: string;
   templateSessionId: string;
   workoutName: string;
+  classification: WorkoutClassification;
+  estimatedDuration?: string;
+  order: number;
   exercises: Array<PrescribedExercise & { cautionNote: string; note: string }>;
-} | null {
-  const plan = readPhysicalPlan();
-  const templateId = plan.weekSchedule[weekdayKey(date)] ?? null;
-  if (!templateId) return null;
+};
 
-  const template = plan.templates.find((t) => t.id === templateId);
+function resolveSlotPrescription(
+  plan: PhysicalPlanCatalog,
+  slot: WeekScheduleSlot,
+): ResolvedWorkoutPrescription | null {
+  const template = slot.workoutTemplateId
+    ? plan.templates.find((t) => t.id === slot.workoutTemplateId)
+    : undefined;
+
+  const inline = Array.isArray(slot.exercises) ? [...slot.exercises].sort((a, b) => a.order - b.order) : [];
+  if (inline.length > 0) {
+    const templateId = slot.workoutTemplateId || `custom_${slot.id}`;
+    return {
+      scheduledWorkoutId: slot.id,
+      templateId,
+      templateSessionId: `${templateId}.session`,
+      workoutName: slot.workoutName || template?.name || 'Workout',
+      classification: slot.classification ?? template?.classification ?? 'primary',
+      estimatedDuration:
+        slot.estimatedMinutes != null
+          ? `${slot.estimatedMinutes} min`
+          : template?.estimatedDuration,
+      order: slot.order,
+      exercises: inline.map((row) => {
+        const lib = plan.exercises.find((e) => e.id === row.exerciseId);
+        return {
+          exerciseId: row.exerciseId,
+          name: lib?.name ?? row.exerciseId,
+          equipment: lib?.equipment ?? 'none',
+          sets: row.sets,
+          reps: row.reps,
+          load: row.load,
+          loadUnit: row.loadUnit,
+          cautionNote: row.cautionNote || lib?.cautionNote || '',
+          note: row.note || row.progressionInstruction || lib?.notes || '',
+        };
+      }),
+    };
+  }
+
   if (!template || template.exercises.length === 0) return null;
 
   const ordered = [...template.exercises].sort((a, b) => a.order - b.order);
   return {
+    scheduledWorkoutId: slot.id,
     templateId: template.id,
     templateSessionId: `${template.id}.session`,
-    workoutName: template.name,
-    exercises: ordered.map((item) => {
-      const lib = plan.exercises.find((e) => e.id === item.exerciseId);
+    workoutName: slot.workoutName || template.name,
+    classification: slot.classification ?? template.classification ?? 'primary',
+    estimatedDuration:
+      slot.estimatedMinutes != null
+        ? `${slot.estimatedMinutes} min`
+        : template.estimatedDuration,
+    order: slot.order,
+    exercises: ordered.map((row) => {
+      const lib = plan.exercises.find((e) => e.id === row.exerciseId);
       return {
-        exerciseId: item.exerciseId,
-        name: lib?.name ?? item.exerciseId,
+        exerciseId: row.exerciseId,
+        name: lib?.name ?? row.exerciseId,
         equipment: lib?.equipment ?? 'none',
-        sets: item.sets,
-        reps: item.reps,
-        load: item.load,
-        loadUnit: item.loadUnit,
-        cautionNote: item.cautionNote || lib?.cautionNote || '',
-        note: item.note || lib?.notes || '',
+        sets: row.sets,
+        reps: row.reps,
+        load: row.load,
+        loadUnit: row.loadUnit,
+        cautionNote: row.cautionNote || lib?.cautionNote || '',
+        note: row.note || lib?.notes || '',
       };
     }),
   };
+}
+
+/** All scheduled workouts for a date (ordered). Empty templates are skipped. */
+export function resolveTodaysPrescriptions(date = new Date()): ResolvedWorkoutPrescription[] {
+  const plan = readPhysicalPlan();
+  const slots = normalizeWeekDaySlots(plan.weekSchedule[weekdayKey(date)], weekdayKey(date));
+  return slots
+    .map((slot) => resolveSlotPrescription(plan, slot))
+    .filter((p): p is ResolvedWorkoutPrescription => Boolean(p));
+}
+
+/** @deprecated Prefer resolveTodaysPrescriptions — returns the first scheduled workout only. */
+export function resolveTodaysPrescription(
+  date = new Date(),
+): ResolvedWorkoutPrescription | null {
+  return resolveTodaysPrescriptions(date)[0] ?? null;
 }
 
 export function addCatalogExercise(
@@ -413,6 +965,7 @@ export function duplicateTemplate(templateId: string): CatalogTemplate | null {
     ...structuredClone(source),
     id: newId('tmpl'),
     name: `${source.name} (copy)`,
+    classification: source.classification ?? 'primary',
   };
   plan.templates.push(copy);
   writePhysicalPlan(plan);
@@ -421,7 +974,15 @@ export function duplicateTemplate(templateId: string): CatalogTemplate | null {
 
 export function setWeekdayTemplate(weekday: string, templateId: string | null): void {
   const plan = readPhysicalPlan();
-  plan.weekSchedule[weekday] = templateId;
+  plan.weekSchedule[weekday] = templateId
+    ? [{ id: newId('slot'), workoutTemplateId: templateId, order: 0 }]
+    : [];
+  writePhysicalPlan(plan);
+}
+
+export function setWeekdaySlots(weekday: string, slots: WeekScheduleSlot[]): void {
+  const plan = readPhysicalPlan();
+  plan.weekSchedule[weekday] = slots.map((slot, order) => ({ ...slot, order }));
   writePhysicalPlan(plan);
 }
 

@@ -2,7 +2,7 @@
 
 **New to setup?** Use the ordered checklist: [LOGIN_SETUP_CHECKLIST.md](./LOGIN_SETUP_CHECKLIST.md).
 
-Path saves **automatically on this device** and, when you sign in, **syncs to your Supabase account** so you can open the same trail on another iPhone, iPad, or browser.
+Path saves **automatically on this device** and, when you sign in, **keeps your account as the source of truth** so every phone and computer signed into the same Apple/Google account sees the same sermons, workouts, and daily training. There is no Sync button.
 
 ## What syncs
 
@@ -33,12 +33,18 @@ Find URL and anon key in Supabase → **Project Settings → API**.
 
 ## Step 1 — Create the database tables
 
-In Supabase → **SQL Editor**, run:
+In Supabase → **SQL Editor**, run these migration files (in order):
 
-1. `supabase/migrations/20260531000000_path_profile_trails.sql`
-2. `supabase/migrations/20260807000000_path_user_formation_state.sql` (weekly plans + church notes)
+1. `supabase/migrations/20260531000000_path_profile_trails.sql` — trail / journal
+2. `supabase/migrations/20260805120000_path_weekly_plans.sql` — sermon notes + weekly biblical plans
+3. `supabase/migrations/20260806010000_path_account_bags.sql` — **strength, workouts, walking, day logs, etc.**
+4. `supabase/migrations/20260807000000_path_user_formation_state.sql` — weekly plans + church notes snapshot (`path_user_formation_state`)
 
-These create tables with row-level security so each user only sees their own data.
+All use row-level security so each user only sees their own data.
+
+**Required for workouts across devices:** run `path_account_bags` or Device B will not receive strength logs / physical training.
+
+**Required for church notes across devices:** run `path_user_formation_state`.
 
 ---
 
@@ -126,12 +132,17 @@ npm run dev
 | Action | Behavior |
 |--------|----------|
 | Use app without signing in | Data stays **local only** (same as before) |
-| Sign in with Apple or Google | Cloud copy is **merged** with this device (newer wins per profile) |
-| Journal, assessment, prayers | **Auto-upload** ~1.5s after each change |
-| Sign out of cloud | Local data remains; cloud copy stays on server |
-| Optional export file | Still available in Guide as extra safety |
+| Sign in with Apple or Google | Cloud copy is **merged** with this device |
+| Journal, assessment, prayers | Auto-upload after each change (`path_profile_trails`) |
+| Sermon notes + weekly biblical plan | Auto-upload after meaningful saves (`path_weekly_plans`) |
+| Empty local draft vs cloud content | Cloud wins (empty drafts never overwrite server content) |
+| Both sides have content | Newer `updated_at` wins; pending local edits are kept briefly |
+| Offline edits | Marked pending (“Unsynced sermon changes”); flush on reconnect |
+| Sign out of cloud | Local cache remains; cloud copy stays on server |
 
-Each **local profile name** syncs as a separate row keyed by profile id.
+Each **local profile name** syncs as a separate row keyed by `(user_id, profile_id)`.
+
+IndexedDB / localStorage are an **offline cache**, not a second permanent account.
 
 ---
 
@@ -142,7 +153,8 @@ Each **local profile name** syncs as a separate row keyed by profile id.
 | Buttons say “not enabled” | Env vars missing on Vercel; redeploy |
 | Redirect loop / blank callback | Add exact `/auth/callback` URL in Supabase redirect list |
 | Apple fails, Google works | Finish Apple Service ID domains + return URL |
-| Data not on new phone | Sign in with **same** Apple/Google account; tap **Sync now** in Guide |
+| Data not on new phone | Sign in with **same** Apple/Google account; reopen the app (account loads automatically). Confirm `path_account_bags` + weekly plan migrations ran. |
+| Sermon missing on Device B | Confirm `path_weekly_plans` migration ran; sign in same account; open Today again after sync |
 | RLS error | Re-run SQL migration; confirm policies exist |
 
 ---

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProfileProvider, useProfile } from './context/ProfileContext';
+import { runDemoPurgeIfNeeded } from './domain/demo/purgeDemoData';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { AppShell } from './components/layout/AppShell';
 import { HomePage } from './pages/HomePage';
@@ -21,9 +22,13 @@ import { Phase0HarnessPage } from './pages/Phase0HarnessPage';
 import { FormationShell } from './features/shell/FormationShell';
 import { TodayPage } from './features/today/TodayPage';
 import { JourneyPage } from './features/journey/JourneyPage';
-import { GrowthPage } from './features/growth/GrowthPage';
 import { CoachPage } from './features/coach/CoachPage';
-import { PlanBuilderPage } from './features/plan/PlanBuilderPage';
+import { ProgressPage } from './features/progress/ProgressPage';
+import { TrainingPage } from './features/training/TrainingPage';
+import { ExercisesPage } from './features/catalog/ExercisesPage';
+import { WorkoutsPage } from './features/catalog/WorkoutsPage';
+import { SettingsPage } from './features/settings/SettingsPage';
+import { SundaySermonPage } from './features/sermon/SundaySermonPage';
 import { WeeklyPlanWorkspace } from './features/weeklyPlan/WeeklyPlanWorkspace';
 import { ChurchNotesPage } from './features/churchNotes/ChurchNotesPage';
 import './styles/global.css';
@@ -85,10 +90,17 @@ function AppRoutes({ cloudReloadKey }: { cloudReloadKey: number }) {
 
 export default function App() {
   const [cloudReloadKey, setCloudReloadKey] = useState(0);
+  const onCloudReload = useCallback(() => {
+    setCloudReloadKey((k) => k + 1);
+  }, []);
+
+  useEffect(() => {
+    void runDemoPurgeIfNeeded();
+  }, []);
 
   return (
     <ProfileProvider>
-      <AuthProvider onActiveProfileShouldReload={() => setCloudReloadKey((k) => k + 1)}>
+      <AuthProvider onActiveProfileShouldReload={onCloudReload}>
         <BrowserRouter>
           <Routes>
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
@@ -97,14 +109,27 @@ export default function App() {
             <Route path="/" element={<Navigate to="/today" replace />} />
             <Route element={<FormationShell key={cloudReloadKey} />}>
               <Route path="/today" element={<TodayPage />} />
+              <Route path="/training" element={<TrainingPage />} />
+              <Route path="/progress" element={<ProgressPage />} />
               <Route path="/journey" element={<JourneyPage />} />
-              <Route path="/growth" element={<GrowthPage />} />
+              <Route path="/growth" element={<Navigate to="/progress" replace />} />
               <Route path="/coach" element={<CoachPage />} />
-              <Route path="/plan" element={<PlanBuilderPage />} />
+              <Route path="/sermon" element={<SundaySermonPage />} />
+              <Route path="/plan" element={<Navigate to="/sermon" replace />} />
               <Route path="/plan/week" element={<WeeklyPlanWorkspace />} />
               <Route path="/plan/week/:weekStart" element={<WeeklyPlanWorkspace />} />
               <Route path="/church-notes" element={<ChurchNotesPage />} />
               <Route path="/church-notes/:noteId" element={<ChurchNotesPage />} />
+              <Route path="/exercises" element={<ExercisesPage />} />
+              <Route path="/workouts" element={<WorkoutsPage />} />
+              <Route
+                path="/training/physical/strength"
+                element={<Navigate to="/training?area=physical&section=strength" replace />}
+              />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/seasons" element={<Navigate to="/journey" replace />} />
+              <Route path="/season/:id" element={<Navigate to="/journey" replace />} />
+              <Route path="/journey/season/:id" element={<Navigate to="/journey" replace />} />
               <Route path="/preview" element={<Navigate to="/today" replace />} />
             </Route>
             <Route path="*" element={<AppRoutes cloudReloadKey={cloudReloadKey} />} />

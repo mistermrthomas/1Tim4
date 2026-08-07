@@ -144,6 +144,83 @@
   background: color-mix(in srgb, var(--path-gold) 12%, transparent);
 }
 
+.formation-shell__mobile-more {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  cursor: pointer;
+}
+
+.formation-shell__more {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.formation-shell__more-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: color-mix(in srgb, #000 45%, transparent);
+  cursor: pointer;
+}
+
+.formation-shell__more-sheet {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 28rem);
+  margin: 0 0.65rem calc(4.1rem + env(safe-area-inset-bottom));
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid var(--path-border-strong);
+  border-radius: 10px;
+  background: var(--path-surface);
+  box-shadow: var(--path-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.formation-shell__more-title {
+  margin: 0;
+}
+
+.formation-shell__more-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.formation-shell__more-link {
+  display: block;
+  text-decoration: none;
+  color: var(--path-text);
+  font-family: var(--path-font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.84rem;
+  padding: 0.75rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--path-hairline);
+  background: color-mix(in srgb, var(--path-gold) 6%, transparent);
+}
+
+.formation-shell__more-link:hover,
+.formation-shell__more-link.active {
+  border-color: var(--path-gold);
+  color: var(--path-gold);
+}
+
+@media (min-width: 960px) {
+  .formation-shell__more,
+  .formation-shell__mobile-more {
+    display: none;
+  }
+}
+
 @media (min-width: 960px) {
   .formation-shell {
     display: block;
@@ -327,6 +404,12 @@
 
   .formation-shell__manage:hover {
     text-decoration: underline;
+  }
+
+  .formation-shell__sync-pending {
+    margin: 0.15rem 0 0;
+    color: var(--path-text-dim);
+    opacity: 0.9;
   }
 
   .formation-shell__manage.active {

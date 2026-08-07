@@ -1,23 +1,50 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { APP_NAME, PathMark, TAGLINE } from '../../brand';
+import { useAuth } from '../../context/AuthContext';
+import { hasPendingAccountBagSync } from '../../services/cloudAccountStateSync';
+import { hasPendingWeeklyPlanSync } from '../../services/cloudWeeklyPlanSync';
 import { PATH_MEDIA } from '../../ui/media';
 import { readStoredTheme, storeTheme, type PathTheme } from '../../ui/theme';
 import './FormationShell.css';
 
 const TABS = [
-  { to: '/today', label: 'Today', job: 'Train today' },
-  { to: '/journey', label: 'Journey', job: 'Goals and plan' },
-  { to: '/growth', label: 'Growth', job: 'Review progress' },
-  { to: '/coach', label: 'Coach', job: 'Guidance & adjustments' },
+  { to: '/today', label: 'Today', job: 'What should I do?' },
+  { to: '/training', label: 'Training', job: 'What am I training?' },
+  { to: '/progress', label: 'Progress', job: 'Am I improving?' },
+] as const;
+
+const MORE_LINKS = [
+  { to: '/sermon', label: 'Sunday Sermon' },
+  { to: '/training/physical/strength', label: 'Strength log' },
+  { to: '/settings', label: 'Settings' },
 ] as const;
 
 export function FormationShell() {
+  const { cloudSyncStatus, user } = useAuth();
   const [theme, setTheme] = useState<PathTheme>(() => readStoredTheme());
+  const [pendingCloud, setPendingCloud] = useState(
+    () => hasPendingWeeklyPlanSync() || hasPendingAccountBagSync(),
+  );
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     storeTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    const refresh = () =>
+      setPendingCloud(hasPendingWeeklyPlanSync() || hasPendingAccountBagSync());
+    refresh();
+    window.addEventListener('path-weekly-plan-pending', refresh);
+    window.addEventListener('path-account-bag-pending', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('path-weekly-plan-pending', refresh);
+      window.removeEventListener('path-account-bag-pending', refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -82,9 +109,21 @@ export function FormationShell() {
           </figure>
 
           <div className="formation-shell__footer">
-            <NavLink to="/plan" className="formation-shell__manage">
-              Manage plan
+            <NavLink to="/sermon" className="formation-shell__manage">
+              Sunday Sermon
             </NavLink>
+            <NavLink to="/training/physical/strength" className="formation-shell__manage">
+              Strength log
+            </NavLink>
+            <NavLink to="/settings" className="formation-shell__manage">
+              Settings
+            </NavLink>
+            {user && pendingCloud ? (
+              <p className="path-label formation-shell__sync-pending">Saving to your account…</p>
+            ) : null}
+            {user && cloudSyncStatus === 'syncing' ? (
+              <p className="path-label formation-shell__sync-pending">Loading account…</p>
+            ) : null}
 
             <button
               type="button"
@@ -103,11 +142,8 @@ export function FormationShell() {
                 M
               </div>
               <div>
-                <p className="formation-shell__profile-name">Preview</p>
-                <p className="path-label">Season 01 · Week 1 of 6</p>
-                <div className="path-progress__track formation-shell__season-bar" aria-hidden>
-                  <div className="path-progress__fill" style={{ width: '16%' }} />
-                </div>
+                <p className="formation-shell__profile-name">Michael</p>
+                <p className="path-label">Daily training</p>
               </div>
             </div>
           </div>
@@ -131,6 +167,35 @@ export function FormationShell() {
         </div>
       </main>
 
+      {moreOpen ? (
+        <div className="formation-shell__more" role="dialog" aria-label="More links">
+          <button
+            type="button"
+            className="formation-shell__more-backdrop"
+            aria-label="Close more menu"
+            onClick={() => setMoreOpen(false)}
+          />
+          <div className="formation-shell__more-sheet">
+            <p className="path-label formation-shell__more-title">More</p>
+            <nav className="formation-shell__more-nav" aria-label="Secondary">
+              {MORE_LINKS.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className="formation-shell__more-link"
+                  onClick={() => setMoreOpen(false)}
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            </nav>
+            {user && pendingCloud ? (
+              <p className="path-label formation-shell__sync-pending">Saving to your account…</p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       <nav className="formation-shell__mobile-nav" aria-label="Primary mobile">
         {TABS.map((tab) => (
           <NavLink
@@ -140,10 +205,19 @@ export function FormationShell() {
               `formation-shell__mobile-tab${isActive ? ' formation-shell__mobile-tab--active' : ''}`
             }
             end={tab.to === '/today'}
+            onClick={() => setMoreOpen(false)}
           >
             {tab.label}
           </NavLink>
         ))}
+        <button
+          type="button"
+          className={`formation-shell__mobile-tab formation-shell__mobile-more${moreOpen ? ' formation-shell__mobile-tab--active' : ''}`}
+          aria-expanded={moreOpen}
+          onClick={() => setMoreOpen((open) => !open)}
+        >
+          More
+        </button>
       </nav>
     </div>
   );

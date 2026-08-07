@@ -9,19 +9,21 @@ import type {
   WorkDailyAssignment,
   WorkOutcome,
 } from './types';
+import { emptyAiMeta, emptySaturdayReflection } from './types';
 
 function emptyChurch(sermonDate: DateKey): ChurchEntry {
   return {
     sermonDate,
     sermonTitle: '',
     speaker: '',
-    churchOrSeries: '',
+    churchName: '',
     primaryScripture: '',
     sermonNotes: '',
     sermonUrl: '',
-    stoodOutMost: '',
-    whyItStoodOut: '',
-    behaviorChange: '',
+    centralTruth: '',
+    whatNeedsToChange: '',
+    whatToPractice: '',
+    actOfObedience: '',
     additionalContext: '',
     uncertainty: '',
   };
@@ -93,20 +95,26 @@ export function buildDraftWeeklyPlan(weekStartDate: DateKey): WeeklyPlan {
   });
 
   const physicalDays: PhysicalDailyAssignment[] = range.days.map((day) => {
-    const templateId = catalog.weekSchedule[String(day.weekday)] ?? null;
-    const template = templateId
-      ? catalog.templates.find((t) => t.id === templateId)
-      : undefined;
+    const slots = catalog.weekSchedule[String(day.weekday)] ?? [];
+    const scheduledWorkouts = slots.map((slot, order) => ({
+      id: slot.id || newId('sw'),
+      workoutTemplateId: slot.workoutTemplateId,
+      order,
+    }));
+    const names = scheduledWorkouts
+      .map((b) => catalog.templates.find((t) => t.id === b.workoutTemplateId)?.name)
+      .filter(Boolean);
     const isSat = day.dayNumber === 7;
     return {
       id: newId('pday'),
       date: day.dateKey,
       dayNumber: day.dayNumber,
-      type: isSat ? 'rest' : template ? 'workout' : 'unscheduled',
-      workoutTemplateId: isSat ? null : templateId,
-      workoutName: isSat ? 'Sabbath / Full Rest' : (template?.name ?? ''),
+      type: isSat ? 'rest' : scheduledWorkouts.length ? 'workout' : 'unscheduled',
+      scheduledWorkouts: isSat ? [] : scheduledWorkouts,
+      workoutTemplateId: isSat ? null : (scheduledWorkouts[0]?.workoutTemplateId ?? null),
+      workoutName: isSat ? 'Sabbath / Full Rest' : names.join(' + '),
       notes: isSat ? 'Rest from structured training.' : '',
-      isRequired: !isSat && Boolean(template),
+      isRequired: !isSat && scheduledWorkouts.length > 0,
     };
   });
 
@@ -119,19 +127,7 @@ export function buildDraftWeeklyPlan(weekStartDate: DateKey): WeeklyPlan {
   const workDays: WorkDailyAssignment[] = range.days.flatMap((day): WorkDailyAssignment[] => {
     if (day.dayNumber === 7) return [];
     if (day.dayNumber === 1) {
-      return [
-        {
-          id: newId('wday'),
-          date: day.dateKey,
-          dayNumber: day.dayNumber,
-          title: 'Activate weekly plan',
-          outcomeId: null,
-          priority: 1,
-          status: 'open',
-          notes: '',
-          optional: false,
-        },
-      ];
+      return [];
     }
     return [
       {
@@ -156,12 +152,14 @@ export function buildDraftWeeklyPlan(weekStartDate: DateKey): WeeklyPlan {
     createdAt: now,
     updatedAt: now,
     activatedAt: null,
+    completedAt: null,
     church: emptyChurch(weekStartDate),
     biblical: {
       sermonSummary: '',
       centralPrinciple: '',
       weeklyTheme: '',
       weeklyPractice: '',
+      actOfObedience: '',
       coreScripture: '',
       supportingScriptures: [],
       days: biblicalDays,
@@ -183,6 +181,8 @@ export function buildDraftWeeklyPlan(weekStartDate: DateKey): WeeklyPlan {
       days: workDays,
       approved: false,
     },
+    saturdayReflection: emptySaturdayReflection(),
+    aiMeta: emptyAiMeta(),
   };
 }
 
@@ -194,14 +194,16 @@ function parseNoon(dateKey: DateKey): Date {
 export function applyBiblicalDefaultsFromChurch(plan: WeeklyPlan): WeeklyPlan {
   const scripture = plan.church.primaryScripture.trim();
   const practice =
-    plan.church.behaviorChange.trim() ||
+    plan.church.whatToPractice.trim() ||
     plan.biblical.weeklyPractice ||
     'Define one observable practice for this week.';
+  const obedience =
+    plan.church.actOfObedience.trim() || plan.biblical.actOfObedience || practice;
   const theme =
     plan.biblical.weeklyTheme ||
-    plan.church.stoodOutMost.trim() ||
+    plan.church.centralTruth.trim() ||
     plan.church.sermonTitle.trim() ||
-    'Weekly biblical focus';
+    'Weekly Biblical focus';
 
   return {
     ...plan,
@@ -209,11 +211,12 @@ export function applyBiblicalDefaultsFromChurch(plan: WeeklyPlan): WeeklyPlan {
       ...plan.biblical,
       weeklyTheme: theme,
       weeklyPractice: practice,
+      actOfObedience: obedience,
       coreScripture: scripture || plan.biblical.coreScripture,
       centralPrinciple:
         plan.biblical.centralPrinciple ||
-        plan.church.stoodOutMost.trim() ||
-        'Name the central principle from the sermon.',
+        plan.church.centralTruth.trim() ||
+        'Name the central truth from the sermon.',
       sermonSummary:
         plan.biblical.sermonSummary ||
         (plan.church.sermonNotes.trim()
@@ -226,7 +229,7 @@ export function applyBiblicalDefaultsFromChurch(plan: WeeklyPlan): WeeklyPlan {
         focus: day.focus,
       })),
       sourceNotes:
-        'Draft from church notes and personal response. Review against Scripture before activating.',
+        'Draft from sermon notes and weekly Biblical focus. Review against Scripture before activating.',
     },
     updatedAt: new Date().toISOString(),
   };
@@ -234,8 +237,11 @@ export function applyBiblicalDefaultsFromChurch(plan: WeeklyPlan): WeeklyPlan {
 
 export function suggestPhysicalSchedule(plan: WeeklyPlan, desiredCount = 4): WeeklyPlan {
   const catalog = readPhysicalPlan();
+  // Prefer primary split templates even when exercise rows were retired (strength log owns lifts).
   const strength = catalog.templates.filter(
-    (t) => t.exercises.length > 0 && !/recovery|conditioning/i.test(t.name),
+    (t) =>
+      (t.classification ?? 'primary') === 'primary' &&
+      !/recovery|conditioning|finisher|legs not active|retired template/i.test(t.name),
   );
   const recovery = catalog.templates.find((t) => /recovery/i.test(t.name));
   const pick = (i: number) => strength[i % Math.max(strength.length, 1)];
@@ -258,6 +264,7 @@ export function suggestPhysicalSchedule(plan: WeeklyPlan, desiredCount = 4): Wee
       return {
         ...day,
         type: 'rest' as const,
+        scheduledWorkouts: [],
         workoutTemplateId: null,
         workoutName: 'Sabbath / Full Rest',
         isRequired: false,
@@ -265,9 +272,13 @@ export function suggestPhysicalSchedule(plan: WeeklyPlan, desiredCount = 4): Wee
       };
     }
     if (kind === 'recovery') {
+      const scheduledWorkouts = recovery
+        ? [{ id: newId('sw'), workoutTemplateId: recovery.id, order: 0 }]
+        : [];
       return {
         ...day,
         type: 'recovery' as const,
+        scheduledWorkouts,
         workoutTemplateId: recovery?.id ?? null,
         workoutName: recovery?.name ?? 'Recovery',
         isRequired: false,
@@ -278,6 +289,7 @@ export function suggestPhysicalSchedule(plan: WeeklyPlan, desiredCount = 4): Wee
       return {
         ...day,
         type: 'optional_movement' as const,
+        scheduledWorkouts: [],
         workoutTemplateId: null,
         workoutName: 'Optional movement / make-up',
         isRequired: false,
@@ -288,6 +300,7 @@ export function suggestPhysicalSchedule(plan: WeeklyPlan, desiredCount = 4): Wee
       return {
         ...day,
         type: 'unscheduled' as const,
+        scheduledWorkouts: [],
         workoutTemplateId: null,
         workoutName: '',
         isRequired: false,
@@ -296,9 +309,13 @@ export function suggestPhysicalSchedule(plan: WeeklyPlan, desiredCount = 4): Wee
     }
     const tmpl = pick(workoutIdx);
     workoutIdx += 1;
+    const scheduledWorkouts = tmpl
+      ? [{ id: newId('sw'), workoutTemplateId: tmpl.id, order: 0 }]
+      : [];
     return {
       ...day,
       type: 'workout' as const,
+      scheduledWorkouts,
       workoutTemplateId: tmpl?.id ?? null,
       workoutName: tmpl?.name ?? 'Workout',
       isRequired: true,

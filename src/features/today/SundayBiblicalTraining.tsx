@@ -1,0 +1,220 @@
+import { Link } from 'react-router-dom';
+import {
+  fallbackSermonTitle,
+  toTitleCase,
+} from '../../../shared/sermonTitle';
+import { shortWeekdayLabel, type DateKey } from '../../domain/calendar/week';
+import { weekPlanPath, type SetupItemView } from '../../domain/weeklyPlan/setupStatus';
+import type { WeeklyPlan } from '../../domain/weeklyPlan/types';
+
+function field(value: string | undefined | null, fallback: string): string {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : fallback;
+}
+
+function resolveSermonDisplayTitle(plan: WeeklyPlan | null): string {
+  if (!plan) return 'Add sermon notes to begin';
+
+  const stored = plan.church.sermonTitle.trim();
+  if (stored) return toTitleCase(stored);
+
+  const theme = plan.biblical.weeklyTheme.trim();
+  if (theme) return toTitleCase(theme);
+
+  const aiTitle = plan.biblical.aiProposal?.sermonTitle?.trim();
+  if (aiTitle) return toTitleCase(aiTitle);
+
+  const planGenerated = Boolean(
+    plan.biblical.aiProposal ||
+      plan.biblical.approved ||
+      plan.biblical.centralPrinciple.trim() ||
+      plan.biblical.weeklyPractice.trim() ||
+      plan.biblical.days.some((d) => d.dayNumber >= 2 && d.practice.trim().length > 12),
+  );
+
+  if (planGenerated) {
+    return fallbackSermonTitle({
+      centralTruth: plan.church.centralTruth || plan.biblical.centralPrinciple,
+      weeklyTheme: plan.biblical.weeklyTheme,
+      actOfObedience: plan.church.actOfObedience || plan.biblical.actOfObedience,
+      weeklyPractice: plan.biblical.weeklyPractice,
+    });
+  }
+
+  return 'Add sermon notes to begin';
+}
+
+export function SundayBiblicalTraining({
+  plan,
+  mondayKey,
+  weekStart,
+  biblicalSetup,
+}: {
+  plan: WeeklyPlan | null;
+  mondayKey: DateKey;
+  weekStart: string;
+  biblicalSetup: SetupItemView;
+}) {
+  const church = plan?.church;
+  const biblical = plan?.biblical;
+  const monday = biblical?.days.find((d) => d.date === mondayKey);
+  const weekDays =
+    biblical?.days
+      .filter((d) => d.dayNumber >= 2 && d.dayNumber <= 7)
+      .slice()
+      .sort((a, b) => a.dayNumber - b.dayNumber) ?? [];
+
+  const sermonTitle = resolveSermonDisplayTitle(plan);
+  const scripture = field(
+    biblical?.coreScripture || church?.primaryScripture,
+    'Add the primary scripture',
+  );
+  const centralTruth = field(
+    church?.centralTruth || biblical?.centralPrinciple,
+    'Capture the central Biblical truth from the sermon',
+  );
+  const response = field(
+    church?.actOfObedience || biblical?.actOfObedience || biblical?.weeklyPractice,
+    'Name the intended response for this week',
+  );
+  const weeklyFocus = field(
+    biblical?.weeklyTheme || church?.whatToPractice,
+    'Set this week’s Biblical focus',
+  );
+
+  const reviewHref = weekPlanPath(weekStart, 0);
+  const editHref = weekPlanPath(weekStart, 0);
+
+  return (
+    <>
+      <section className="sunday-biblical path-surface sunday-home__sermon" aria-label="Sermon and Biblical plan">
+        <div className="sunday-biblical__head">
+          <p className="today-panel__label">Sermon &amp; Biblical plan</p>
+          <span className={`sunday-biblical__badge sunday-biblical__badge--${biblicalSetup.status}`}>
+            {biblicalSetup.status === 'complete'
+              ? 'Complete'
+              : biblicalSetup.status === 'needs_review'
+                ? 'Needs review'
+                : biblicalSetup.status === 'in_progress'
+                  ? 'In progress'
+                  : 'Not started'}
+          </span>
+        </div>
+        <h2 className="sunday-biblical__title path-display">{sermonTitle}</h2>
+        <dl className="sunday-biblical__fields">
+          <div className="sunday-biblical__field">
+            <dt>Primary scripture</dt>
+            <dd>{scripture}</dd>
+          </div>
+          <div className="sunday-biblical__field">
+            <dt>Central truth</dt>
+            <dd>{centralTruth}</dd>
+          </div>
+          <div className="sunday-biblical__field">
+            <dt>Intended response</dt>
+            <dd>{response}</dd>
+          </div>
+        </dl>
+        {biblicalSetup.status !== 'complete' ? (
+          <p className="sunday-biblical__hint">{biblicalSetup.summary}</p>
+        ) : null}
+      </section>
+
+      <section className="sunday-biblical path-surface sunday-home__focus" aria-label="This week’s Biblical focus">
+        <p className="today-panel__label">This week’s Biblical focus</p>
+        <p className="sunday-biblical__focus-text">{weeklyFocus}</p>
+        {biblical?.weeklyPractice.trim() ? (
+          <p className="sunday-biblical__practice">
+            <span>Practice</span>
+            {biblical.weeklyPractice.trim()}
+          </p>
+        ) : null}
+      </section>
+
+      <section className="sunday-biblical path-surface sunday-home__monday" aria-label="Monday preview">
+        <p className="today-panel__label">Monday preview</p>
+        <p className="sunday-biblical__monday-sub">
+          {monday ? shortWeekdayLabel(monday.dayNumber) : 'Monday'} · start the week here
+        </p>
+        <dl className="sunday-biblical__fields sunday-biblical__fields--compact">
+          <div className="sunday-biblical__field">
+            <dt>Read</dt>
+            <dd>
+              {field(
+                monday?.scripture || biblical?.coreScripture || church?.primaryScripture,
+                'Complete the Biblical plan to preview Monday’s reading.',
+              )}
+            </dd>
+          </div>
+          <div className="sunday-biblical__field">
+            <dt>Focus</dt>
+            <dd>
+              {field(
+                monday?.focus || monday?.title,
+                'Monday’s focus appears after the plan is drafted.',
+              )}
+            </dd>
+          </div>
+          <div className="sunday-biblical__field">
+            <dt>Practice</dt>
+            <dd>
+              {field(
+                monday?.practice || biblical?.weeklyPractice,
+                'Monday’s practice appears after the plan is drafted.',
+              )}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section
+        className="sunday-biblical path-surface sunday-home__weekdays"
+        aria-label="Daily scripture and discipleship plan"
+      >
+        <p className="today-panel__label">Daily scripture &amp; discipleship</p>
+        {weekDays.some((d) => d.scripture.trim() || d.focus.trim() || d.practice.trim()) ? (
+          <ol className="sunday-biblical__days">
+            {weekDays.map((day) => (
+              <li key={day.id} className="sunday-biblical__day">
+                <div className="sunday-biblical__day-head">
+                  <strong>{shortWeekdayLabel(day.dayNumber)}</strong>
+                  <span>{day.title.trim() || '—'}</span>
+                </div>
+                <p className="sunday-biblical__day-scripture">
+                  {day.scripture.trim() || biblical?.coreScripture.trim() || '—'}
+                </p>
+                <p className="sunday-biblical__day-focus">
+                  {day.focus.trim() || day.practice.trim() || 'No focus set yet.'}
+                </p>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="sunday-biblical__hint">
+            The Monday–Saturday discipleship plan will appear here after you generate or draft the
+            Biblical week.
+          </p>
+        )}
+      </section>
+
+      <div className="sunday-biblical__actions sunday-home__actions">
+        {biblicalSetup.status === 'not_started' || biblicalSetup.status === 'in_progress' ? (
+          <button
+            type="button"
+            className="path-btn path-btn--primary"
+            onClick={() => document.getElementById('sunday-sermon-notes')?.focus()}
+          >
+            Edit sermon notes above
+          </button>
+        ) : (
+          <Link className="path-btn path-btn--primary" to={reviewHref}>
+            Review Biblical plan
+          </Link>
+        )}
+        <Link className="path-btn path-btn--ghost sunday-home__secondary" to={editHref}>
+          Full plan editor
+        </Link>
+      </div>
+    </>
+  );
+}

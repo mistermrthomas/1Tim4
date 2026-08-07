@@ -1,53 +1,93 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import type { SermonPlan } from '../../../shared/sermonPlanSchema';
+import { applySermonPlanToWeeklyPlan } from '../../domain/aiPlanning/applySermonPlan';
+import {
+  notesAreMeaningful,
+  requestSermonPlan,
+  SermonPlanClientError,
+} from '../../domain/aiPlanning/client';
+import { readAiPlanningSettings } from '../../domain/aiPlanning/settings';
+import { useAuth } from '../../context/AuthContext';
 import {
   followingSundayStart,
   shortWeekdayLabel,
   startOfWeekSunday,
-  weekRangeFor,
 } from '../../domain/calendar/week';
 import { readPhysicalPlan } from '../../domain/physical/planCatalog';
 import { newId } from '../../domain/physical/store';
 import { activateAndSyncWeeklyPlan } from '../../domain/weeklyPlan/activate';
-import {
-  applyBiblicalDefaultsFromChurch,
-  suggestPhysicalSchedule,
-} from '../../domain/weeklyPlan/factory';
-import { ensureWeeklyPlan, saveWeeklyPlan } from '../../domain/weeklyPlan/store';
-import type { PhysicalDayType, WeeklyPlan } from '../../domain/weeklyPlan/types';
-import { useAuth } from '../../context/AuthContext';
+import { applyBiblicalDefaultsFromChurch } from '../../domain/weeklyPlan/factory';
+import { normalizePhysicalDay } from '../../domain/weeklyPlan/physicalWorkouts';
+import { ensureWeeklyPlanByRef, saveWeeklyPlan } from '../../domain/weeklyPlan/store';
+import type { WeeklyPlan } from '../../domain/weeklyPlan/types';
 import { scheduleFormationStatePush } from '../../services/cloudFormationSync';
 import { Button } from '../../ui/Button';
+import { TrainingPlanStep } from './TrainingPlanStep';
 import './WeeklyPlanWorkspace.css';
 
-const STEPS = [
-  'Church notes',
-  'Personal response',
-  'Biblical plan',
-  'Physical plan',
-  'Work plan',
-  'Review & activate',
-] as const;
+/** Four screens max — Biblical is one scrollable screen (notes + focus + plan). */
+const STEPS = ['Biblical plan', 'Training', 'Work', 'Activate'] as const;
 
-const PHYSICAL_TYPES: Array<{ value: PhysicalDayType; label: string }> = [
-  { value: 'workout', label: 'Workout' },
-  { value: 'recovery', label: 'Recovery' },
-  { value: 'optional_movement', label: 'Optional movement' },
-  { value: 'rest', label: 'Full rest' },
-  { value: 'unscheduled', label: 'Unscheduled' },
+/** Map legacy ?step=0..5 deep links onto the collapsed steps. */
+function mapLegacyStep(raw: number): number {
+  if (!Number.isFinite(raw)) return 0;
+  if (raw <= 2) return 0;
+  if (raw === 3) return 1;
+  if (raw === 4) return 2;
+  return 3;
+}
+
+const LOADING_MESSAGES = [
+  'Building your week from the sermon notes…',
+  'Identifying the central truth…',
+  'Developing the Monday–Friday progression…',
+  'Turning the message into concrete practices…',
+  'Preparing the Saturday reflection…',
 ];
 
+function hasSermonContent(plan: WeeklyPlan): boolean {
+  return Boolean(
+    plan.church.sermonTitle.trim() ||
+      plan.church.sermonNotes.trim() ||
+      plan.church.sermonUrl.trim() ||
+      plan.church.primaryScripture.trim(),
+  );
+}
+
 export function WeeklyPlanWorkspace() {
-  const { weekStart: weekStartParam } = useParams();
+  const { weekId, weekStart: weekStartParam } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const weekStart = weekStartParam || startOfWeekSunday();
+  const ref = weekId || weekStartParam || startOfWeekSunday();
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
-  const [step, setStep] = useState(0);
+  const stepFromQuery = Number(searchParams.get('step'));
+  const [step, setStep] = useState(mapLegacyStep(stepFromQuery));
+
+  useEffect(() => {
+    const raw = searchParams.get('step');
+    if (raw == null) return;
+    setStep(mapLegacyStep(Number(raw)));
+  }, [searchParams]);
   const [saving, setSaving] = useState(false);
+  const [autosaveLabel, setAutosaveLabel] = useState('Edits autosave');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const templates = useMemo(() => readPhysicalPlan().templates, []);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0]!);
+  const [adjustment, setAdjustment] = useState('');
+  const [lastAiPlan, setLastAiPlan] = useState<SermonPlan | null>(null);
+  const [pendingAiPlan, setPendingAiPlan] = useState<SermonPlan | null>(null);
+  const [templates, setTemplates] = useState(() => readPhysicalPlan().templates);
+  const planRef = useRef<WeeklyPlan | null>(null);
+  const autosaveTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    // Re-read after catalog seed migrations (e.g. Core Finisher) land in localStorage.
+    setTemplates(readPhysicalPlan().templates);
+  }, []);
 
   const notifyCloud = () => {
     if (user?.id) scheduleFormationStatePush(user.id);
@@ -55,21 +95,150 @@ export function WeeklyPlanWorkspace() {
 
   const load = useCallback(async () => {
     try {
-      const next = await ensureWeeklyPlan(weekStart);
+      const next = await ensureWeeklyPlanByRef(ref);
       setPlan(next);
+      planRef.current = next;
+      setLastAiPlan(next.biblical.aiProposal ?? null);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [weekStart]);
+  }, [ref]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    planRef.current = plan;
+  }, [plan]);
+
+  useEffect(() => {
+    if (!generating) return;
+    let i = 0;
+    const id = window.setInterval(() => {
+      i = (i + 1) % LOADING_MESSAGES.length;
+      setLoadingMsg(LOADING_MESSAGES[i]!);
+    }, 2200);
+    return () => window.clearInterval(id);
+  }, [generating]);
+
+  useEffect(() => {
+    return () => {
+      if (autosaveTimer.current) window.clearTimeout(autosaveTimer.current);
+      const current = planRef.current;
+      if (current) void saveWeeklyPlan(current).catch(() => undefined);
+    };
+  }, []);
+
+  const flushAutosave = useCallback(async () => {
+    const current = planRef.current;
+    if (!current) return;
+    setAutosaveLabel('Saving…');
+    try {
+      const saved = await saveWeeklyPlan(current);
+      planRef.current = saved;
+      setPlan(saved);
+      setAutosaveLabel('Saved');
+    } catch {
+      setAutosaveLabel('Save failed');
+    }
+  }, []);
+
   const patch = (updater: (prev: WeeklyPlan) => WeeklyPlan) => {
-    setPlan((prev) => (prev ? updater(prev) : prev));
+    setPlan((prev) => {
+      if (!prev) return prev;
+      const next = updater(prev);
+      planRef.current = next;
+      return next;
+    });
     setMessage(null);
+    setAutosaveLabel('Saving…');
+    if (autosaveTimer.current) window.clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = window.setTimeout(() => {
+      void flushAutosave();
+    }, 450);
+  };
+
+  const generateBiblicalPlan = async (opts?: { regenerate?: boolean }) => {
+    if (!plan || generating) return;
+    if (!notesAreMeaningful(plan.church.sermonNotes)) {
+      setAiError('Add meaningful sermon notes (at least a few sentences) before generating.');
+      return;
+    }
+    setGenerating(true);
+    setAiError(null);
+    setMessage(null);
+    setLoadingMsg(LOADING_MESSAGES[0]!);
+    try {
+      // Always persist notes before AI — failed generate must not lose them.
+      if (autosaveTimer.current) {
+        window.clearTimeout(autosaveTimer.current);
+        autosaveTimer.current = null;
+      }
+      const persisted = await saveWeeklyPlan(planRef.current ?? plan);
+      setPlan(persisted);
+      planRef.current = persisted;
+      setAutosaveLabel('Saved');
+
+      const settings = await readAiPlanningSettings();
+      const result = await requestSermonPlan({
+        sermonTitle: persisted.church.sermonTitle,
+        sermonDate: persisted.church.sermonDate,
+        sermonNotes: persisted.church.sermonNotes,
+        primaryScripture: persisted.church.primaryScripture || undefined,
+        sermonSpeaker: persisted.church.speaker || undefined,
+        churchName: persisted.church.churchName || undefined,
+        sermonUrl: persisted.church.sermonUrl || undefined,
+        additionalContext: persisted.church.additionalContext || undefined,
+        planningPrompt: settings.planningPrompt,
+        model: settings.model,
+        adjustmentInstruction: opts?.regenerate ? adjustment : undefined,
+        currentPlan: opts?.regenerate
+          ? lastAiPlan ?? persisted.biblical.aiProposal ?? undefined
+          : undefined,
+      });
+      if (opts?.regenerate) {
+        setPendingAiPlan(result.plan);
+        setMessage('Regenerated plan ready — accept to replace the current draft.');
+      } else {
+        const next = applySermonPlanToWeeklyPlan(persisted, result.plan, {
+          modelUsed: result.modelUsed,
+          promptVersion: settings.promptVersion,
+        });
+        const saved = await saveWeeklyPlan(next);
+        setPlan(saved);
+        planRef.current = saved;
+        setLastAiPlan(result.plan);
+        setStep(0);
+        setMessage('Biblical plan generated — review on this screen, then activate when ready.');
+      }
+    } catch (e) {
+      if (e instanceof SermonPlanClientError) {
+        setAiError(e.message);
+      } else {
+        setAiError(e instanceof Error ? e.message : 'Generation failed');
+      }
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const acceptPendingAi = async () => {
+    if (!plan || !pendingAiPlan) return;
+    const settings = await readAiPlanningSettings();
+    const next = applySermonPlanToWeeklyPlan(plan, pendingAiPlan, {
+      modelUsed: plan.aiMeta?.modelUsed || 'unknown',
+      promptVersion: settings.promptVersion,
+      regenerated: true,
+    });
+    const saved = await saveWeeklyPlan(next);
+    setPlan(saved);
+    setLastAiPlan(pendingAiPlan);
+    setPendingAiPlan(null);
+    setAdjustment('');
+    setMessage('Updated Biblical plan from regeneration.');
+    setStep(0);
   };
 
   const saveDraft = async () => {
@@ -107,19 +276,19 @@ export function WeeklyPlanWorkspace() {
   if (error) return <p className="weekly-plan__error">{error}</p>;
   if (!plan) return <p className="weekly-plan__loading">Loading weekly plan…</p>;
 
-  const range = weekRangeFor(new Date(`${plan.weekStartDate}T12:00:00`));
+  const sermonReady = hasSermonContent(plan);
 
   return (
     <div className="weekly-plan path-fade-in">
       <header className="weekly-plan__hero">
         <p className="path-eyebrow">Sunday planning</p>
-        <h1 className="path-display weekly-plan__title">Weekly kickoff</h1>
+        <h1 className="path-display weekly-plan__title">Build this week’s plan</h1>
         <p className="path-body weekly-plan__lede">
-          Turn church notes, physical training, and work priorities into one intentional
-          Sunday–Saturday plan. Tracks stay independent.
+          Start with the sermon. Then shape faith, training, and work for Sunday through Saturday.
+          Tracks stay independent.
         </p>
         <p className="weekly-plan__meta">
-          Week of {plan.weekStartDate} → {plan.weekEndDate} · Status: {plan.status}
+          This week: {plan.weekStartDate} → {plan.weekEndDate} · {plan.status}
         </p>
       </header>
 
@@ -127,14 +296,26 @@ export function WeeklyPlanWorkspace() {
         <Button variant="ghost" onClick={() => void saveDraft()} disabled={saving}>
           Save draft
         </Button>
+        <span className="weekly-plan__status">{autosaveLabel}</span>
         <Link className="path-btn path-btn--ghost" to="/today">
-          Back to Today
+          Today
         </Link>
-        <Link className="path-btn path-btn--ghost" to="/plan">
-          Manage templates
+        <Link className="path-btn path-btn--ghost" to="/training">
+          Training
+        </Link>
+        <Link className="path-btn path-btn--ghost" to="/settings">
+          Settings
         </Link>
         {message ? <p className="weekly-plan__status">{message}</p> : null}
       </div>
+
+      {generating ? (
+        <div className="weekly-plan__loading-banner path-surface" role="status" aria-live="polite">
+          <p className="weekly-plan__h3">AI planning</p>
+          <p className="path-body">{loadingMsg}</p>
+          <p className="weekly-plan__note">Your sermon notes stay saved. This may take a moment.</p>
+        </div>
+      ) : null}
 
       <div className="weekly-plan__steps" role="tablist" aria-label="Planning steps">
         {STEPS.map((label, index) => (
@@ -153,19 +334,69 @@ export function WeeklyPlanWorkspace() {
 
       {step === 0 && (
         <section className="weekly-plan__section path-surface">
-          <h2 className="weekly-plan__h2">1. Church notes</h2>
+          <h2 className="weekly-plan__h2">1. What was this week’s sermon?</h2>
           <p className="weekly-plan__note">
             Paste or write anything you captured during church. Rough notes are fine. For AI-assisted
             sermon review and a formation layer, use{' '}
             <Link to="/church-notes">Church Notes</Link>.
           </p>
+          {!sermonReady ? (
+            <div className="weekly-plan__note" style={{ marginBottom: '1rem' }}>
+              <p>
+                <strong>Start with this week’s sermon.</strong>
+              </p>
+              <p>Add your church notes or paste the link to the sermon you need to watch.</p>
+              <div className="weekly-plan__toolbar" style={{ marginTop: '0.75rem' }}>
+                <Button
+                  onClick={() => {
+                    const el = document.getElementById('sermon-notes-field');
+                    el?.focus();
+                  }}
+                >
+                  Add Sermon Notes
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    const el = document.getElementById('sermon-url-field');
+                    el?.focus();
+                  }}
+                >
+                  Add Sermon Link
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    const el = document.getElementById('central-truth-field');
+                    el?.focus();
+                  }}
+                >
+                  Build week manually
+                </Button>
+              </div>
+            </div>
+          ) : null}
           <div className="weekly-plan__grid">
             <label className="path-field">
-              <span>Sermon title</span>
+              <span>Sermon title — optional</span>
               <input
                 value={plan.church.sermonTitle}
                 onChange={(e) =>
                   patch((p) => ({ ...p, church: { ...p.church, sermonTitle: e.target.value } }))
+                }
+                placeholder="Leave blank for AI"
+              />
+              <span className="weekly-plan__field-help">
+                Leave blank and AI will create one from your notes.
+              </span>
+            </label>
+            <label className="path-field">
+              <span>Sermon date</span>
+              <input
+                type="date"
+                value={plan.church.sermonDate}
+                onChange={(e) =>
+                  patch((p) => ({ ...p, church: { ...p.church, sermonDate: e.target.value } }))
                 }
               />
             </label>
@@ -179,14 +410,11 @@ export function WeeklyPlanWorkspace() {
               />
             </label>
             <label className="path-field">
-              <span>Church or series (optional)</span>
+              <span>Church name (optional)</span>
               <input
-                value={plan.church.churchOrSeries}
+                value={plan.church.churchName}
                 onChange={(e) =>
-                  patch((p) => ({
-                    ...p,
-                    church: { ...p.church, churchOrSeries: e.target.value },
-                  }))
+                  patch((p) => ({ ...p, church: { ...p.church, churchName: e.target.value } }))
                 }
               />
             </label>
@@ -203,18 +431,11 @@ export function WeeklyPlanWorkspace() {
               />
             </label>
             <label className="path-field">
-              <span>Sermon date</span>
-              <input
-                type="date"
-                value={plan.church.sermonDate}
-                onChange={(e) =>
-                  patch((p) => ({ ...p, church: { ...p.church, sermonDate: e.target.value } }))
-                }
-              />
-            </label>
-            <label className="path-field">
               <span>Sermon link (optional)</span>
               <input
+                id="sermon-url-field"
+                type="url"
+                placeholder="https://"
                 value={plan.church.sermonUrl}
                 onChange={(e) =>
                   patch((p) => ({ ...p, church: { ...p.church, sermonUrl: e.target.value } }))
@@ -224,6 +445,7 @@ export function WeeklyPlanWorkspace() {
             <label className="path-field weekly-plan__span-2">
               <span>Sermon notes</span>
               <textarea
+                id="sermon-notes-field"
                 rows={8}
                 placeholder="Paste or write anything you captured during church."
                 value={plan.church.sermonNotes}
@@ -232,48 +454,11 @@ export function WeeklyPlanWorkspace() {
                 }
               />
             </label>
-          </div>
-          <Button onClick={() => setStep(1)}>Continue</Button>
-        </section>
-      )}
-
-      {step === 1 && (
-        <section className="weekly-plan__section path-surface">
-          <h2 className="weekly-plan__h2">2. Personal response</h2>
-          <div className="weekly-plan__grid">
             <label className="path-field weekly-plan__span-2">
-              <span>What stood out most?</span>
+              <span>Additional personal context (optional)</span>
               <textarea
-                rows={3}
-                value={plan.church.stoodOutMost}
-                onChange={(e) =>
-                  patch((p) => ({ ...p, church: { ...p.church, stoodOutMost: e.target.value } }))
-                }
-              />
-            </label>
-            <label className="path-field weekly-plan__span-2">
-              <span>Why do you think it stood out?</span>
-              <textarea
-                rows={3}
-                value={plan.church.whyItStoodOut}
-                onChange={(e) =>
-                  patch((p) => ({ ...p, church: { ...p.church, whyItStoodOut: e.target.value } }))
-                }
-              />
-            </label>
-            <label className="path-field weekly-plan__span-2">
-              <span>Where could this change your behavior this week?</span>
-              <textarea
-                rows={3}
-                value={plan.church.behaviorChange}
-                onChange={(e) =>
-                  patch((p) => ({ ...p, church: { ...p.church, behaviorChange: e.target.value } }))
-                }
-              />
-            </label>
-            <label className="path-field weekly-plan__span-2">
-              <span>Specific relationship, decision, habit, or situation? (optional)</span>
-              <input
+                rows={4}
+                placeholder="What you are struggling with, a decision, a relationship, hurry, pride, resistance — anything you want the plan to address."
                 value={plan.church.additionalContext}
                 onChange={(e) =>
                   patch((p) => ({
@@ -283,12 +468,77 @@ export function WeeklyPlanWorkspace() {
                 }
               />
             </label>
+          </div>
+          <p className="weekly-plan__note">
+            AI suggestions are based on your notes — not divine revelation. Review against Scripture
+            before activating. You can also build the week manually.
+          </p>
+          {aiError ? <p className="weekly-plan__error">{aiError}</p> : null}
+          <div className="weekly-plan__toolbar">
+            <Button
+              onClick={() => void generateBiblicalPlan()}
+              disabled={generating || !notesAreMeaningful(plan.church.sermonNotes)}
+            >
+              Generate This Week’s Biblical Plan
+            </Button>
+            <Button variant="ghost" onClick={() => void saveDraft()} disabled={saving || generating}>
+              Save now
+            </Button>
+          </div>
+          {aiError ? (
+            <div className="weekly-plan__toolbar">
+              <Button variant="ghost" onClick={() => void generateBiblicalPlan()} disabled={generating}>
+                Try again
+              </Button>
+            </div>
+          ) : null}
+
+          <h2 className="weekly-plan__h2" style={{ marginTop: '1.25rem' }}>
+            Weekly Biblical focus
+          </h2>
+          <div className="weekly-plan__grid">
             <label className="path-field weekly-plan__span-2">
-              <span>Anything you disagreed with or are uncertain about? (optional)</span>
-              <input
-                value={plan.church.uncertainty}
+              <span>What was the central truth?</span>
+              <textarea
+                id="central-truth-field"
+                rows={3}
+                value={plan.church.centralTruth}
                 onChange={(e) =>
-                  patch((p) => ({ ...p, church: { ...p.church, uncertainty: e.target.value } }))
+                  patch((p) => ({ ...p, church: { ...p.church, centralTruth: e.target.value } }))
+                }
+              />
+            </label>
+            <label className="path-field weekly-plan__span-2">
+              <span>What needs to change in me?</span>
+              <textarea
+                rows={3}
+                value={plan.church.whatNeedsToChange}
+                onChange={(e) =>
+                  patch((p) => ({
+                    ...p,
+                    church: { ...p.church, whatNeedsToChange: e.target.value },
+                  }))
+                }
+              />
+            </label>
+            <label className="path-field weekly-plan__span-2">
+              <span>What should I practice this week?</span>
+              <textarea
+                rows={3}
+                value={plan.church.whatToPractice}
+                onChange={(e) =>
+                  patch((p) => ({ ...p, church: { ...p.church, whatToPractice: e.target.value } }))
+                }
+              />
+            </label>
+            <label className="path-field weekly-plan__span-2">
+              <span>What is one concrete act of obedience?</span>
+              <textarea
+                rows={2}
+                placeholder="Observable this week — not a vague aspiration."
+                value={plan.church.actOfObedience}
+                onChange={(e) =>
+                  patch((p) => ({ ...p, church: { ...p.church, actOfObedience: e.target.value } }))
                 }
               />
             </label>
@@ -297,36 +547,47 @@ export function WeeklyPlanWorkspace() {
             <Button
               onClick={() => {
                 patch((p) => applyBiblicalDefaultsFromChurch(p));
-                setStep(2);
               }}
             >
-              Build biblical draft
-            </Button>
-            <Button variant="ghost" onClick={() => setStep(0)}>
-              Back
+              Build faith plan draft from focus
             </Button>
           </div>
-        </section>
-      )}
 
-      {step === 2 && (
-        <section className="weekly-plan__section path-surface">
-          <h2 className="weekly-plan__h2">3. Biblical plan</h2>
+          <h2 className="weekly-plan__h2" style={{ marginTop: '1.25rem' }}>
+            Faith plan
+          </h2>
           <p className="weekly-plan__note">
-            Review all generated content against Scripture and your own judgment before activating
-            the plan. Prefer{' '}
+            Review all content against Scripture and your own judgment before activating. Based on
+            your notes — edit freely. Prefer{' '}
             <Link to="/church-notes">Church Notes AI</Link> for structured sermon analysis — this
             draft remains fully editable.
           </p>
+          {pendingAiPlan ? (
+            <div className="weekly-plan__pending path-surface">
+              <p className="path-body">
+                A regenerated plan is ready. Accepting replaces the current faith-track draft (sermon
+                notes are kept).
+              </p>
+              <div className="weekly-plan__toolbar">
+                <Button onClick={() => void acceptPendingAi()}>Accept regenerated plan</Button>
+                <Button variant="ghost" onClick={() => setPendingAiPlan(null)}>
+                  Keep current draft
+                </Button>
+              </div>
+            </div>
+          ) : null}
           <div className="weekly-plan__grid">
             <label className="path-field weekly-plan__span-2">
-              <span>Weekly theme</span>
+              <span>Weekly Biblical theme</span>
               <input
                 value={plan.biblical.weeklyTheme}
                 onChange={(e) =>
                   patch((p) => ({
                     ...p,
                     biblical: { ...p.biblical, weeklyTheme: e.target.value },
+                    aiMeta: p.aiMeta
+                      ? { ...p.aiMeta, generationSource: p.aiMeta.generationSource === 'manual' ? 'manual' : 'ai-edited' }
+                      : p.aiMeta,
                   }))
                 }
               />
@@ -344,14 +605,25 @@ export function WeeklyPlanWorkspace() {
               />
             </label>
             <label className="path-field weekly-plan__span-2">
-              <span>Measurable weekly practice</span>
+              <span>Weekly application / practice</span>
               <input
-                placeholder="When interrupted, pause and ask one clarifying question."
                 value={plan.biblical.weeklyPractice}
                 onChange={(e) =>
                   patch((p) => ({
                     ...p,
                     biblical: { ...p.biblical, weeklyPractice: e.target.value },
+                  }))
+                }
+              />
+            </label>
+            <label className="path-field weekly-plan__span-2">
+              <span>Act of obedience</span>
+              <input
+                value={plan.biblical.actOfObedience}
+                onChange={(e) =>
+                  patch((p) => ({
+                    ...p,
+                    biblical: { ...p.biblical, actOfObedience: e.target.value },
                   }))
                 }
               />
@@ -368,38 +640,154 @@ export function WeeklyPlanWorkspace() {
                 }
               />
             </label>
-            <label className="path-field">
-              <span>Sermon summary</span>
-              <input
-                value={plan.biblical.sermonSummary}
+            <label className="path-field weekly-plan__span-2">
+              <span>Why this matters</span>
+              <textarea
+                rows={2}
+                value={plan.biblical.whyThisMatters || plan.biblical.sermonSummary}
                 onChange={(e) =>
                   patch((p) => ({
                     ...p,
-                    biblical: { ...p.biblical, sermonSummary: e.target.value },
+                    biblical: {
+                      ...p.biblical,
+                      whyThisMatters: e.target.value,
+                      sermonSummary: e.target.value,
+                    },
+                  }))
+                }
+              />
+            </label>
+            <label className="path-field weekly-plan__span-2">
+              <span>Supporting Scriptures (comma-separated)</span>
+              <input
+                value={plan.biblical.supportingScriptures.join(', ')}
+                onChange={(e) =>
+                  patch((p) => ({
+                    ...p,
+                    biblical: {
+                      ...p.biblical,
+                      supportingScriptures: e.target.value
+                        .split(',')
+                        .map((s) => s.trim())
+                        .filter(Boolean),
+                    },
+                  }))
+                }
+              />
+            </label>
+            <label className="path-field weekly-plan__span-2">
+              <span>Watch for</span>
+              <input
+                value={(plan.biblical.watchFor ?? []).join(' · ')}
+                onChange={(e) =>
+                  patch((p) => ({
+                    ...p,
+                    biblical: {
+                      ...p.biblical,
+                      watchFor: e.target.value
+                        .split('·')
+                        .map((s) => s.trim())
+                        .filter(Boolean),
+                    },
+                  }))
+                }
+              />
+            </label>
+            <label className="path-field weekly-plan__span-2">
+              <span>Weekly prayer</span>
+              <textarea
+                rows={2}
+                value={plan.biblical.weeklyPrayer || ''}
+                onChange={(e) =>
+                  patch((p) => ({
+                    ...p,
+                    biblical: { ...p.biblical, weeklyPrayer: e.target.value },
                   }))
                 }
               />
             </label>
           </div>
 
+          <div className="weekly-plan__regen path-surface">
+            <h3 className="weekly-plan__h3">Regenerate</h3>
+            <label className="path-field">
+              <span>What should change?</span>
+              <textarea
+                rows={2}
+                placeholder="Make practices more challenging, less journaling, focus more on a passage…"
+                value={adjustment}
+                onChange={(e) => setAdjustment(e.target.value)}
+              />
+            </label>
+            <div className="weekly-plan__toolbar">
+              <Button
+                variant="ghost"
+                onClick={() => void generateBiblicalPlan({ regenerate: true })}
+                disabled={generating || !notesAreMeaningful(plan.church.sermonNotes)}
+              >
+                Regenerate complete plan
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (!window.confirm('Discard the generated Biblical plan fields?')) return;
+                  patch((p) => ({
+                    ...p,
+                    biblical: {
+                      ...p.biblical,
+                      weeklyTheme: '',
+                      centralPrinciple: '',
+                      weeklyPractice: '',
+                      actOfObedience: '',
+                      aiProposal: null,
+                    },
+                    aiMeta: {
+                      generationSource: 'manual',
+                      generatedAt: null,
+                      promptVersion: null,
+                      modelUsed: null,
+                    },
+                  }));
+                  setLastAiPlan(null);
+                }}
+              >
+                Discard generated result
+              </Button>
+            </div>
+            {aiError ? <p className="weekly-plan__error">{aiError}</p> : null}
+          </div>
+
           {plan.biblical.days.map((day, index) => (
             <div key={day.id} className="weekly-plan__day">
               <p className="weekly-plan__day-label">
                 {shortWeekdayLabel(day.dayNumber)} · Day {day.dayNumber}
-                {!day.isRequired ? ' · Sabbath' : ''}
+                {day.dayNumber === 7 ? ' · Sabbath reflection' : ''}
               </p>
               {day.dayNumber === 7 ? (
-                <p className="weekly-plan__note">No required structured lesson.</p>
+                <label className="path-field">
+                  <span>Saturday Sabbath / reflection prompt</span>
+                  <input
+                    value={day.eveningPrompt}
+                    onChange={(e) =>
+                      patch((p) => {
+                        const days = [...p.biblical.days];
+                        days[index] = { ...day, eveningPrompt: e.target.value };
+                        return { ...p, biblical: { ...p.biblical, days } };
+                      })
+                    }
+                    placeholder="What did God show me this week?"
+                  />
+                </label>
               ) : (
                 <div className="weekly-plan__grid">
                   <label className="path-field">
-                    <span>Title</span>
+                    <span>Focus</span>
                     <input
-                      value={day.title}
+                      value={day.focus}
                       onChange={(e) =>
                         patch((p) => {
                           const days = [...p.biblical.days];
-                          days[index] = { ...day, title: e.target.value };
+                          days[index] = { ...day, focus: e.target.value };
                           return { ...p, biblical: { ...p.biblical, days } };
                         })
                       }
@@ -419,20 +807,7 @@ export function WeeklyPlanWorkspace() {
                     />
                   </label>
                   <label className="path-field weekly-plan__span-2">
-                    <span>Focus</span>
-                    <input
-                      value={day.focus}
-                      onChange={(e) =>
-                        patch((p) => {
-                          const days = [...p.biblical.days];
-                          days[index] = { ...day, focus: e.target.value };
-                          return { ...p, biblical: { ...p.biblical, days } };
-                        })
-                      }
-                    />
-                  </label>
-                  <label className="path-field weekly-plan__span-2">
-                    <span>Observable practice</span>
+                    <span>Practice</span>
                     <input
                       value={day.practice}
                       onChange={(e) =>
@@ -444,15 +819,40 @@ export function WeeklyPlanWorkspace() {
                       }
                     />
                   </label>
-                  <label className="path-field weekly-plan__span-2">
-                    <span>Teaching</span>
-                    <textarea
-                      rows={2}
-                      value={day.teaching}
+                  <label className="path-field">
+                    <span>Morning</span>
+                    <input
+                      value={day.morningPrompt}
                       onChange={(e) =>
                         patch((p) => {
                           const days = [...p.biblical.days];
-                          days[index] = { ...day, teaching: e.target.value };
+                          days[index] = { ...day, morningPrompt: e.target.value };
+                          return { ...p, biblical: { ...p.biblical, days } };
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="path-field">
+                    <span>Midday</span>
+                    <input
+                      value={day.middayPrompt}
+                      onChange={(e) =>
+                        patch((p) => {
+                          const days = [...p.biblical.days];
+                          days[index] = { ...day, middayPrompt: e.target.value };
+                          return { ...p, biblical: { ...p.biblical, days } };
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="path-field weekly-plan__span-2">
+                    <span>Evening</span>
+                    <input
+                      value={day.eveningPrompt}
+                      onChange={(e) =>
+                        patch((p) => {
+                          const days = [...p.biblical.days];
+                          days[index] = { ...day, eveningPrompt: e.target.value };
                           return { ...p, biblical: { ...p.biblical, days } };
                         })
                       }
@@ -465,145 +865,33 @@ export function WeeklyPlanWorkspace() {
 
           <div className="weekly-plan__toolbar">
             <Button
-              onClick={() => {
+              onClick={() =>
                 patch((p) => ({
                   ...p,
                   biblical: { ...p.biblical, approved: true },
-                }));
-                setStep(3);
-              }}
+                }))
+              }
             >
-              Approve biblical track
+              Approve faith track
             </Button>
-            <Button variant="ghost" onClick={() => setStep(1)}>
-              Back
-            </Button>
+            <Button onClick={() => setStep(1)}>Continue to training</Button>
           </div>
         </section>
       )}
 
-      {step === 3 && (
-        <section className="weekly-plan__section path-surface">
-          <h2 className="weekly-plan__h2">4. Physical plan</h2>
-          <p className="weekly-plan__note">
-            Uses existing workout templates. Saturday defaults to Sabbath / Full Rest. AI scheduling
-            will propose later — assign templates manually or apply the suggested rhythm.
-          </p>
-          <div className="weekly-plan__toolbar">
-            <Button
-              variant="ghost"
-              onClick={() => patch((p) => suggestPhysicalSchedule(p, p.physical.desiredWorkoutCount))}
-            >
-              Suggest 4-day rhythm
-            </Button>
-            <label className="path-field">
-              <span>Desired workouts</span>
-              <input
-                type="number"
-                min={1}
-                max={6}
-                value={plan.physical.desiredWorkoutCount}
-                onChange={(e) =>
-                  patch((p) => ({
-                    ...p,
-                    physical: {
-                      ...p.physical,
-                      desiredWorkoutCount: Number(e.target.value) || 4,
-                    },
-                  }))
-                }
-              />
-            </label>
-          </div>
-
-          {plan.physical.days.map((day, index) => (
-            <div key={day.id} className="weekly-plan__phys-row">
-              <p className="weekly-plan__day-label">{shortWeekdayLabel(day.dayNumber)}</p>
-              <label className="path-field">
-                <span>Type</span>
-                <select
-                  value={day.type}
-                  onChange={(e) => {
-                    const type = e.target.value as PhysicalDayType;
-                    patch((p) => {
-                      const days = [...p.physical.days];
-                      days[index] = {
-                        ...day,
-                        type,
-                        workoutTemplateId: type === 'workout' ? day.workoutTemplateId : null,
-                        workoutName:
-                          type === 'rest'
-                            ? 'Sabbath / Full Rest'
-                            : type === 'workout'
-                              ? day.workoutName
-                              : type.replaceAll('_', ' '),
-                        isRequired: type === 'workout',
-                      };
-                      return { ...p, physical: { ...p.physical, days } };
-                    });
-                  }}
-                >
-                  {PHYSICAL_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="path-field">
-                <span>Template</span>
-                <select
-                  value={day.workoutTemplateId ?? ''}
-                  disabled={day.type !== 'workout'}
-                  onChange={(e) => {
-                    const id = e.target.value || null;
-                    const tmpl = templates.find((t) => t.id === id);
-                    patch((p) => {
-                      const days = [...p.physical.days];
-                      days[index] = {
-                        ...day,
-                        workoutTemplateId: id,
-                        workoutName: tmpl?.name ?? '',
-                        type: id ? 'workout' : day.type,
-                        isRequired: Boolean(id),
-                      };
-                      return { ...p, physical: { ...p.physical, days } };
-                    });
-                  }}
-                >
-                  <option value="">None</option>
-                  {templates.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          ))}
-
-          <div className="weekly-plan__toolbar">
-            <Button
-              onClick={() => {
-                patch((p) => ({ ...p, physical: { ...p.physical, approved: true } }));
-                setStep(4);
-              }}
-            >
-              Approve physical track
-            </Button>
-            <Button variant="ghost" onClick={() => setStep(2)}>
-              Back
-            </Button>
-          </div>
-        </section>
+      {step === 1 && plan && (
+        <TrainingPlanStep
+          plan={plan}
+          patch={patch}
+          onContinue={() => setStep(2)}
+          onBack={() => setStep(0)}
+        />
       )}
 
-      {step === 4 && (
+      {step === 2 && (
         <section className="weekly-plan__section path-surface">
-          <h2 className="weekly-plan__h2">5. Work plan</h2>
-          <p className="weekly-plan__note">
-            Keep this to three weekly outcomes. Saturday stays clear of required work by default.
-          </p>
+          <h2 className="weekly-plan__h2">Work plan</h2>
+          <p className="weekly-plan__note">Three meaningful outcomes. Assign focus across Monday–Friday.</p>
           <div className="weekly-plan__grid">
             {plan.work.weeklyOutcomes.map((outcome, index) => (
               <label key={outcome.id} className="path-field weekly-plan__span-2">
@@ -620,160 +908,136 @@ export function WeeklyPlanWorkspace() {
                 />
               </label>
             ))}
-            <label className="path-field weekly-plan__span-2">
-              <span>Difficult or avoided task</span>
-              <input
-                value={plan.work.avoidedTask}
-                onChange={(e) =>
-                  patch((p) => ({ ...p, work: { ...p.work, avoidedTask: e.target.value } }))
-                }
-              />
-            </label>
-            <label className="path-field weekly-plan__span-2">
-              <span>Deadlines / meetings</span>
-              <textarea
-                rows={2}
-                value={plan.work.deadlines}
-                onChange={(e) =>
-                  patch((p) => ({ ...p, work: { ...p.work, deadlines: e.target.value } }))
-                }
-              />
-            </label>
-            <label className="path-field weekly-plan__span-2">
-              <span>Constraints or travel</span>
-              <input
-                value={plan.work.constraints}
-                onChange={(e) =>
-                  patch((p) => ({ ...p, work: { ...p.work, constraints: e.target.value } }))
-                }
-              />
-            </label>
           </div>
-
-          <p className="weekly-plan__h2" style={{ marginTop: '0.5rem' }}>
-            Daily actions
-          </p>
-          {range.days
-            .filter((d) => d.dayNumber !== 7)
-            .map((d) => {
-              const actions = plan.work.days.filter((a) => a.date === d.dateKey);
-              return (
-                <div key={d.dateKey} className="weekly-plan__day">
-                  <p className="weekly-plan__day-label">{shortWeekdayLabel(d.dayNumber)}</p>
-                  {actions.map((action) => (
-                    <label key={action.id} className="path-field">
-                      <span>Key action</span>
-                      <input
-                        value={action.title}
-                        onChange={(e) =>
-                          patch((p) => ({
-                            ...p,
-                            work: {
-                              ...p.work,
-                              days: p.work.days.map((item) =>
-                                item.id === action.id ? { ...item, title: e.target.value } : item,
-                              ),
-                            },
-                          }))
-                        }
-                      />
-                    </label>
-                  ))}
-                  <button
-                    type="button"
-                    className="weekly-plan__step-btn"
-                    onClick={() =>
-                      patch((p) => ({
-                        ...p,
-                        work: {
-                          ...p.work,
-                          days: [
-                            ...p.work.days,
-                            {
-                              id: newId('wday'),
-                              date: d.dateKey,
-                              dayNumber: d.dayNumber,
-                              title: '',
-                              outcomeId: p.work.weeklyOutcomes[0]?.id ?? null,
-                              priority: actions.length + 1,
-                              status: 'open',
-                              notes: '',
-                              optional: false,
-                            },
-                          ],
-                        },
-                      }))
+          <h3 className="weekly-plan__h3">Daily actions</h3>
+          {plan.work.days.map((day, index) => (
+            <div key={day.id} className="weekly-plan__day">
+              <p className="weekly-plan__day-label">{shortWeekdayLabel(day.dayNumber)}</p>
+              <div className="weekly-plan__grid">
+                <label className="path-field weekly-plan__span-2">
+                  <span>Key action</span>
+                  <input
+                    value={day.title}
+                    onChange={(e) =>
+                      patch((p) => {
+                        const days = [...p.work.days];
+                        days[index] = { ...day, title: e.target.value };
+                        return { ...p, work: { ...p.work, days } };
+                      })
+                    }
+                  />
+                </label>
+                <label className="path-field">
+                  <span>Supports outcome</span>
+                  <select
+                    value={day.outcomeId ?? ''}
+                    onChange={(e) =>
+                      patch((p) => {
+                        const days = [...p.work.days];
+                        days[index] = { ...day, outcomeId: e.target.value || null };
+                        return { ...p, work: { ...p.work, days } };
+                      })
                     }
                   >
-                    Add action
-                  </button>
-                </div>
-              );
-            })}
-
+                    <option value="">—</option>
+                    {plan.work.weeklyOutcomes.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.title || `Outcome ${o.order + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+          ))}
           <div className="weekly-plan__toolbar">
             <Button
               onClick={() => {
-                patch((p) => ({ ...p, work: { ...p.work, approved: true } }));
-                setStep(5);
+                patch((p) => {
+                  if (p.work.days.some((d) => d.dayNumber === 2 && d.title)) return p;
+                  const days = [...p.work.days];
+                  for (let i = 2; i <= 6; i += 1) {
+                    if (!days.some((d) => d.dayNumber === i)) {
+                      days.push({
+                        id: newId('wday'),
+                        date: p.physical.days.find((d) => d.dayNumber === i)?.date ?? p.weekStartDate,
+                        dayNumber: i,
+                        title: '',
+                        outcomeId: p.work.weeklyOutcomes[0]?.id ?? null,
+                        priority: 1,
+                        status: 'open',
+                        notes: '',
+                        optional: false,
+                      });
+                    }
+                  }
+                  return { ...p, work: { ...p.work, days, approved: true } };
+                });
               }}
             >
               Approve work track
             </Button>
-            <Button variant="ghost" onClick={() => setStep(3)}>
+            <Button onClick={() => setStep(3)}>Continue to activate</Button>
+            <Button variant="ghost" onClick={() => setStep(1)}>
               Back
             </Button>
           </div>
         </section>
       )}
 
-      {step === 5 && (
+      {step === 3 && (
         <section className="weekly-plan__section path-surface">
           <h2 className="weekly-plan__h2">6. Review & activate</h2>
           <div className="weekly-plan__review">
-            <div className="weekly-plan__review-block">
-              <h3>Biblical</h3>
-              <p className="path-body">{plan.biblical.weeklyTheme || '—'}</p>
-              <p className="weekly-plan__note">{plan.biblical.coreScripture}</p>
-              <p className="weekly-plan__note">{plan.biblical.weeklyPractice}</p>
-              <ul>
-                {plan.biblical.days
-                  .filter((d) => d.enabled && d.dayNumber <= 6)
-                  .map((d) => (
+            <div>
+              <h3 className="weekly-plan__h3">Faith</h3>
+              <p className="path-body">
+                <strong>{plan.biblical.weeklyTheme || 'Theme unset'}</strong>
+              </p>
+              <p className="path-body">{plan.biblical.coreScripture}</p>
+              <p className="path-body">{plan.biblical.weeklyPractice}</p>
+              <p className="path-body">Act of obedience: {plan.biblical.actOfObedience || '—'}</p>
+              <Button variant="ghost" onClick={() => setStep(0)}>
+                Edit faith plan
+              </Button>
+            </div>
+            <div>
+              <h3 className="weekly-plan__h3">Training</h3>
+              <ul className="weekly-plan__review-list">
+                {plan.physical.days.map((d) => {
+                  const blocks = normalizePhysicalDay(d).scheduledWorkouts;
+                  const label =
+                    blocks.length > 0
+                      ? d.workoutName ||
+                        blocks
+                          .map(
+                            (b) =>
+                              templates.find((t) => t.id === b.workoutTemplateId)?.name ?? 'Workout',
+                          )
+                          .join(' + ')
+                      : d.type.replaceAll('_', ' ');
+                  return (
                     <li key={d.id}>
-                      {shortWeekdayLabel(d.dayNumber)}: {d.title}
+                      {shortWeekdayLabel(d.dayNumber)}: {label}
                     </li>
-                  ))}
+                  );
+                })}
               </ul>
-              <Button variant="ghost" onClick={() => setStep(2)}>
-                Edit biblical
+              <Button variant="ghost" onClick={() => setStep(1)}>
+                Edit training plan
               </Button>
             </div>
-            <div className="weekly-plan__review-block">
-              <h3>Physical</h3>
-              <ul>
-                {plan.physical.days.map((d) => (
-                  <li key={d.id}>
-                    {shortWeekdayLabel(d.dayNumber)}:{' '}
-                    {d.type === 'workout' ? d.workoutName || 'Workout' : d.type.replaceAll('_', ' ')}
-                  </li>
-                ))}
-              </ul>
-              <Button variant="ghost" onClick={() => setStep(3)}>
-                Edit physical
-              </Button>
-            </div>
-            <div className="weekly-plan__review-block">
-              <h3>Work</h3>
-              <ul>
+            <div>
+              <h3 className="weekly-plan__h3">Work</h3>
+              <ul className="weekly-plan__review-list">
                 {plan.work.weeklyOutcomes
                   .filter((o) => o.title.trim())
                   .map((o) => (
                     <li key={o.id}>{o.title}</li>
                   ))}
               </ul>
-              <Button variant="ghost" onClick={() => setStep(4)}>
-                Edit work
+              <Button variant="ghost" onClick={() => setStep(2)}>
+                Edit work plan
               </Button>
             </div>
           </div>
@@ -796,7 +1060,6 @@ export function startNextWeekPath(): string {
   return `/plan/week/${startOfWeekSunday()}`;
 }
 
-/** Path to draft the week after the current Sunday boundary. */
 export function startFollowingWeekPath(): string {
   return `/plan/week/${followingSundayStart()}`;
 }

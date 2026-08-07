@@ -38,7 +38,9 @@ Save.
 
 Apply to **Production** (and Preview if you use preview URLs).
 
-**Deployments → Redeploy** latest `main` (env vars only apply after a new build).
+**Important:** PATH is a Vite app. Keys named `NEXT_PUBLIC_SUPABASE_*` or bare `SUPABASE_*` do **not** enable the Sign in buttons. You must use the `VITE_` names above, then redeploy.
+
+**Deployments → Redeploy** latest `main` (env vars only apply after a new build). After redeploy, Settings should show **Sign in with Apple / Google** instead of “Cloud sign-in is not enabled”.
 
 Local dev (optional):
 
@@ -83,8 +85,8 @@ Full detail: [CLOUD_SYNC.md](./CLOUD_SYNC.md)
 1. Open https://1-tim4.vercel.app (hard refresh after deploy).
 2. Enter your name on welcome if prompted.
 3. **Guide** → **Sign in with Google** (or Apple).
-4. Add a journal note → wait a few seconds → **Sync now** should succeed.
-5. Second device/browser → same account → trail should appear after sign-in.
+4. Add a journal note or strength set → wait a few seconds (status should show account saved).
+5. Second device/browser → same account → reopen the app → data should appear with no Sync button.
 
 ---
 

@@ -42,14 +42,22 @@ export interface ExerciseLogEntry {
 export interface WorkoutSession {
   id: string;
   dateKey: string;
+  /** Links to ScheduledWorkoutBlock.id / WeekScheduleSlot.id for the day. */
+  scheduledWorkoutId: string;
   templateId: string;
   templateSessionId: string;
   workoutName: string;
+  order: number;
   status: WorkoutSessionStatus;
   startedAt: string | null;
   completedAt: string | null;
   exercises: ExerciseLogEntry[];
   notes: string;
+  /** Optional brief post-session coaching check-in (Stage 1+). */
+  difficultyRating?: 1 | 2 | 3 | 4 | 5 | null;
+  painNotes?: string;
+  adjustNextTime?: string;
+  skipReason?: string;
 }
 
 export type IntakeKind = 'protein' | 'water';

@@ -11,16 +11,15 @@ export function CloudSignIn() {
     signInWithApple,
     signInWithGoogle,
     signOutCloud,
-    refreshCloudSync,
   } = useAuth();
 
   if (!isCloudConfigured) {
     return (
       <section className="cloud-sign-in card">
-        <p className="eyebrow">Sync across devices</p>
+        <p className="eyebrow">Your account</p>
         <p className="cloud-sign-in__lead">
-          Cloud sign-in is not enabled on this deployment yet. Your trail still saves automatically
-          on this device. Add Supabase keys in Vercel to enable Apple or Google login.
+          Cloud sign-in is not enabled on this deployment yet. Your data still saves on this device
+          only. Add Supabase keys in Vercel to enable Apple or Google login.
         </p>
       </section>
     );
@@ -30,30 +29,29 @@ export function CloudSignIn() {
     const email = user.email ?? 'Signed in';
     return (
       <section className="cloud-sign-in card">
-        <p className="eyebrow">Cloud sync</p>
+        <p className="eyebrow">Your account</p>
         <p className="cloud-sign-in__signed-in">
           Signed in as <strong>{email}</strong>
         </p>
         <p className={`cloud-sign-in__status cloud-sign-in__status--${cloudSyncStatus}`}>
-          {cloudSyncStatus === 'syncing' && 'Syncing your trail…'}
-          {cloudSyncStatus === 'synced' && (cloudSyncMessage ?? 'Synced')}
-          {cloudSyncStatus === 'error' && (cloudSyncMessage ?? 'Sync error')}
-          {cloudSyncStatus === 'idle' && 'Ready to sync'}
+          {cloudSyncStatus === 'syncing' && 'Loading your account…'}
+          {cloudSyncStatus === 'synced' &&
+            (cloudSyncMessage ?? 'Your training saves to this account automatically.')}
+          {cloudSyncStatus === 'error' && (cloudSyncMessage ?? 'Account error')}
+          {cloudSyncStatus === 'idle' && 'Ready'}
         </p>
         {lastCloudSyncAt && (
-          <p className="field-hint">Last sync: {new Date(lastCloudSyncAt).toLocaleString()}</p>
+          <p className="field-hint">Last updated: {new Date(lastCloudSyncAt).toLocaleString()}</p>
         )}
         <div className="cloud-sign-in__actions">
-          <button type="button" className="btn btn-secondary" onClick={() => void refreshCloudSync()}>
-            Sync now
-          </button>
           <button type="button" className="btn btn-ghost" onClick={() => void signOutCloud()}>
-            Sign out of cloud
+            Sign out
           </button>
         </div>
         <p className="field-hint cloud-sign-in__note">
-          Your journal, weekly plans, and church notes save on this device first, then back up to your
-          account. Use <strong>Sync now</strong> on your phone after sign-in if Today still looks empty.
+          Sermons, workouts, strength logs, church notes, and daily training stay with this account
+          on every device. On a new phone, use <strong>Sync now</strong> on Today after sign-in if
+          training still looks empty.
         </p>
       </section>
     );
@@ -61,10 +59,10 @@ export function CloudSignIn() {
 
   return (
     <section className="cloud-sign-in card">
-      <p className="eyebrow">Sync across devices</p>
+      <p className="eyebrow">Your account</p>
       <p className="cloud-sign-in__lead">
-        Sign in to back up and restore your trail on a new phone or browser. Your data stays private
-        to your account. This device still works offline until you sign in.
+        Sign in with the same Apple or Google account on every phone and computer. Your sermons,
+        workouts, and daily training stay with the account — not the device.
       </p>
       <div className="cloud-sign-in__actions">
         <button

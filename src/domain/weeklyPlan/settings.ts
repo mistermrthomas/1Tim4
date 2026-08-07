@@ -3,6 +3,8 @@
  * but the shape is ready for user configuration later.
  */
 
+import { notifyAccountBag } from '../../services/notifyAccountBag';
+
 export interface WeeklyRhythmSettings {
   weekStartDay: 0; // Sunday (JS weekday)
   sabbathDay: 6; // Saturday
@@ -49,4 +51,5 @@ export function readWeeklyRhythmSettings(): WeeklyRhythmSettings {
 
 export function writeWeeklyRhythmSettings(settings: WeeklyRhythmSettings): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  notifyAccountBag('weekly_rhythm');
 }
