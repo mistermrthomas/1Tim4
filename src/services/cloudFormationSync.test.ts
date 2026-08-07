@@ -30,7 +30,7 @@ function mergeWeeklySnapshots(
   } else {
     activePlanId = cloudActive?.id ?? localActive?.id ?? null;
   }
-  return { index: { version: 1, byWeekStart, activePlanId }, plans };
+  return { index: { version: 2, byWeekStart, activePlanId }, plans };
 }
 
 describe('formation cloud merge', () => {
@@ -45,11 +45,11 @@ describe('formation cloud merge', () => {
     newer.status = 'active';
 
     const local: WeeklyPlansSnapshot = {
-      index: { version: 1, byWeekStart: { '2026-08-02': older.id }, activePlanId: null },
+      index: { version: 2, byWeekStart: { '2026-08-02': older.id }, activePlanId: null },
       plans: [older],
     };
     const cloud: WeeklyPlansSnapshot = {
-      index: { version: 1, byWeekStart: { '2026-08-02': newer.id }, activePlanId: newer.id },
+      index: { version: 2, byWeekStart: { '2026-08-02': newer.id }, activePlanId: newer.id },
       plans: [newer],
     };
 

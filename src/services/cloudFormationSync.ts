@@ -132,7 +132,7 @@ function mergeWeeklySnapshots(
   }
 
   return {
-    index: { version: 1, byWeekStart, activePlanId },
+    index: { version: 2, byWeekStart, activePlanId },
     plans,
   };
 }
