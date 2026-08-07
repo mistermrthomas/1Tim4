@@ -318,13 +318,13 @@
 }
 
 [data-path-theme='light'] .today-panel.today-panel--physical {
-  background: #fffefa;
+  background: var(--path-surface);
   border: 1px solid var(--path-border-strong);
   box-shadow: var(--path-practice-glow);
 }
 
 [data-path-theme='light'] .today-panel--physical .today-panel__divider {
-  border-color: #e5decf;
+  border-color: var(--path-hairline);
 }
 
 [data-path-theme='light'] .today-panel--physical .today-workout__title,
@@ -346,7 +346,7 @@
 }
 
 [data-path-theme='light'] .today-brief {
-  background: #fffefa;
+  background: var(--path-surface);
   border: 1px solid var(--path-border-strong);
   box-shadow: var(--path-practice-glow);
 }

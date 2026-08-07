@@ -1,6 +1,6 @@
 /**
  * Path design system — athletic formation brand.
- * Dark: cinematic near-black. Light: crisp white / light gray.
+ * Dark: cinematic near-black + brass. Light: champagne / light-gold.
  */
 
 :root,
@@ -65,65 +65,65 @@
 [data-path-theme='light'] {
   color-scheme: light;
 
-  /* Warm ivory page · warm-white panels · black ink · brass gold */
-  --path-bg: #f5f1e7;
-  --path-bg-elevated: #fbf9f3;
-  --path-surface: #fffefa;
-  --path-surface-solid: #fffefa;
-  --path-surface-2: #f7f2e6;
-  --path-surface-3: #f2e9d6;
-  --path-border: #ddd3bd;
-  --path-border-strong: #b08a24;
-  --path-hairline: #e5decf;
+  /* Champagne / light-gold page — pairs with dark brass, not silver */
+  --path-bg: #f6edd4;
+  --path-bg-elevated: #fbf3de;
+  --path-surface: #fff8e7;
+  --path-surface-solid: #fff8e7;
+  --path-surface-2: #f3e6c4;
+  --path-surface-3: #ead9a8;
+  --path-border: #dcc896;
+  --path-border-strong: #b8922a;
+  --path-hairline: #eadcb8;
 
-  --path-gold: #a87f17;
-  --path-gold-bright: #b38a1e;
-  --path-gold-dim: #9c7514;
+  --path-gold: #b8922a;
+  --path-gold-bright: #c9a227;
+  --path-gold-dim: #9a7a1c;
   --path-bronze: #8f6a12;
-  --path-gold-wash: #eee3c8;
-  --path-gold-wash-strong: #e7d9b5;
+  --path-gold-wash: #f0e2b8;
+  --path-gold-wash-strong: #e6d49a;
 
-  --path-text: #171715;
-  --path-text-muted: #69665e;
-  --path-text-dim: #8b877e;
+  --path-text: #1a160c;
+  --path-text-muted: #6b5c38;
+  --path-text-dim: #8f7d4e;
 
   --path-danger: #a13d32;
   --path-success: #4f6d46;
 
-  --path-scripture-bg: #fffefa;
-  --path-practice-glow: 0 6px 18px rgba(23, 23, 21, 0.06);
-  --path-sidebar-bg: #fcfbf7;
-  --path-sidebar-border: #e3ddcf;
-  --path-sidebar-shadow: 4px 0 18px rgba(23, 23, 21, 0.04);
-  --path-nav-active-bg: #f0e7d1;
-  --path-mobile-nav-bg: #fcfbf7;
-  --path-progress-track: #e7e1d5;
-  --path-shadow: 0 6px 18px rgba(23, 23, 21, 0.05);
-  --path-glow: 0 1px 0 rgba(23, 23, 21, 0.04);
-  --path-on-gold: #171715;
-  --path-focus-ring: 0 0 0 3px rgba(168, 127, 23, 0.22);
+  --path-scripture-bg: #fff8e7;
+  --path-practice-glow: 0 6px 20px rgba(184, 146, 42, 0.14);
+  --path-sidebar-bg: #faf1d8;
+  --path-sidebar-border: #e0cd9a;
+  --path-sidebar-shadow: 4px 0 18px rgba(80, 60, 10, 0.06);
+  --path-nav-active-bg: #f0e2b0;
+  --path-mobile-nav-bg: #faf1d8;
+  --path-progress-track: #e8d9b0;
+  --path-shadow: 0 8px 22px rgba(80, 60, 10, 0.08);
+  --path-glow: 0 0 18px rgba(184, 146, 42, 0.14);
+  --path-on-gold: #1a160c;
+  --path-focus-ring: 0 0 0 3px rgba(184, 146, 42, 0.28);
 
   /*
-   * Same gym image — crisp grayscale, warm ivory veil (not gray fog).
-   * Image visibility ~10% left / ~18% open mid / ~30% far right.
+   * Same gym image — warm sepia instead of silver grayscale.
+   * Champagne veil keeps the page gold while the image stays present.
    */
   --path-page-focal: 76% center;
-  --path-page-filter: grayscale(0.96) brightness(0.9) contrast(1.32) saturate(0.08);
+  --path-page-filter: sepia(0.32) saturate(0.58) brightness(1.04) contrast(1.1);
   --path-page-veil:
     linear-gradient(
       180deg,
-      rgba(245, 241, 231, 0.22) 0%,
-      rgba(245, 241, 231, 0.08) 40%,
-      rgba(245, 241, 231, 0.16) 78%,
-      rgba(245, 241, 231, 0.3) 100%
+      rgba(246, 237, 212, 0.58) 0%,
+      rgba(246, 237, 212, 0.38) 40%,
+      rgba(246, 237, 212, 0.48) 78%,
+      rgba(246, 237, 212, 0.66) 100%
     ),
     linear-gradient(
       90deg,
-      rgba(245, 241, 231, 0.9) 0%,
-      rgba(245, 241, 231, 0.86) 30%,
-      rgba(245, 241, 231, 0.78) 52%,
-      rgba(245, 241, 231, 0.66) 74%,
-      rgba(245, 241, 231, 0.52) 100%
+      rgba(246, 237, 212, 0.9) 0%,
+      rgba(246, 237, 212, 0.8) 30%,
+      rgba(246, 237, 212, 0.58) 52%,
+      rgba(246, 237, 212, 0.38) 74%,
+      rgba(246, 237, 212, 0.24) 100%
     );
 }
 

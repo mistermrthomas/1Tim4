@@ -86,7 +86,7 @@
 [data-path-theme='light'] .path-btn--primary:disabled,
 [data-path-theme='light'] .path-btn--ghost:disabled {
   opacity: 1;
-  background: #ebe6da;
+  background: var(--path-surface-2);
   color: var(--path-text-dim);
   border-color: var(--path-hairline);
   box-shadow: none;
