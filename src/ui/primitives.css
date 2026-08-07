@@ -63,8 +63,14 @@
     box-shadow var(--path-duration) var(--path-ease);
 }
 
-[data-path-theme='light'] .path-btn--primary:not(:disabled):hover {
+[data-path-theme='light'] .path-btn--primary {
   background: var(--path-gold-bright);
+  color: var(--path-on-gold);
+  box-shadow: var(--path-glow);
+}
+
+[data-path-theme='light'] .path-btn--primary:not(:disabled):hover {
+  background: var(--path-gold);
 }
 
 [data-path-theme='light'] .path-btn--primary:not(:disabled):active {
