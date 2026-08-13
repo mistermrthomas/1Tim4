@@ -28,6 +28,8 @@ import {
   readRotationState,
 } from '../../domain/strength/rotation';
 import { activeWorkouts, readStrengthState } from '../../domain/strength/store';
+import { selectedGroupsForWorkout, workoutHref } from '../../domain/strength/muscleGroups';
+import { MuscleGroupPicker, useGroupPicks } from '../strength/MuscleGroupPicker';
 import { Button } from '../../ui/Button';
 
 type PhysicalSection = 'overview' | 'strength' | 'mobility' | 'walking' | 'body' | 'travel';
@@ -157,6 +159,7 @@ function StrengthSection() {
   const last = getLastSlot(rotation);
   const workouts = activeWorkouts(strength);
   const travel = isTravelDay();
+  const { picks, setWorkoutGroups } = useGroupPicks();
 
   return (
     <>
@@ -185,18 +188,21 @@ function StrengthSection() {
       <p className="training-meta">
         Schedule follows the calendar week (Mon A · Tue B · Wed Recovery · Thu A · Fri B · Sat
         Recovery/Walk · Sun Rest). A missed day is recorded in history and does not replace
-        tomorrow’s plan.
+        tomorrow’s plan. Groupings are suggestions — uncheck a muscle group to skip it, or add one
+        from another workout (for example Core with Back).
       </p>
-      <div className="training-links">
+      <div className="muscle-picker-list">
         {workouts.map((workout) => (
-          <Link
+          <MuscleGroupPicker
             key={workout.id}
-            className="path-btn path-btn--primary"
-            to={`/workouts?w=${workout.id}`}
-          >
-            {workout.shortLabel}
-          </Link>
+            state={strength}
+            workout={workout}
+            picks={picks}
+            onChange={setWorkoutGroups}
+          />
         ))}
+      </div>
+      <div className="training-links">
         <Link className="path-btn path-btn--ghost" to="/workouts">
           All exercises table
         </Link>
@@ -214,8 +220,14 @@ function StrengthSection() {
         </div>
       ) : next.workoutId ? (
         <div className="training-actions">
-          <Link className="path-btn path-btn--primary" to={`/workouts?w=${next.workoutId}`}>
-            Begin {next.shortLabel}
+          <Link
+            className="path-btn path-btn--primary"
+            to={workoutHref(
+              next.workoutId,
+              selectedGroupsForWorkout(strength, next.workoutId, picks),
+            )}
+          >
+            Begin {selectedGroupsForWorkout(strength, next.workoutId, picks).join(' / ') || next.shortLabel}
           </Link>
           <Button
             variant="ghost"

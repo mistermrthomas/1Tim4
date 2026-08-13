@@ -19,15 +19,21 @@ import {
   deleteStrengthLogEntry,
   entriesForExercise,
   entryForExerciseDate,
-  exercisesForWorkout,
   getExercise,
   latestEntry,
   readStrengthState,
   sessionDatesForExercises,
   updateExerciseTechniqueNote,
   upsertStrengthLogEntry,
-  workoutLogProgress,
 } from '../../domain/strength/store';
+import {
+  exercisesForWorkoutGroups,
+  muscleGroupLogProgress,
+  parseGroupsParam,
+  serializeGroupsParam,
+  suggestedGroupsForWorkout,
+} from '../../domain/strength/muscleGroups';
+import { MuscleGroupPicker, useGroupPicks } from './MuscleGroupPicker';
 import {
   DIFFICULTY_OPTIONS,
   type StrengthDifficulty,
@@ -41,13 +47,14 @@ import './StrengthWorkoutsPage.css';
 
 type View =
   | { kind: 'home' }
-  | { kind: 'workout'; workoutId: string }
+  | { kind: 'workout'; workoutId: string; groups: string[] }
   | {
       kind: 'log';
       exerciseId: string;
       workoutId: string | null;
       entryId?: string;
       preferredDate?: string;
+      groups: string[];
     };
 
 function difficultyLabel(value: StrengthDifficulty): string {
@@ -602,6 +609,7 @@ export function StrengthWorkoutsPage() {
     const workoutId = params.get('w');
     const entryId = params.get('entry') || undefined;
     const preferredDate = params.get('date') || undefined;
+    const groups = parseGroupsParam(params.get('groups'));
     if (log) {
       return {
         kind: 'log',
@@ -609,20 +617,25 @@ export function StrengthWorkoutsPage() {
         workoutId: workoutId || getExercise(state, log)?.workoutId || null,
         entryId,
         preferredDate,
+        groups,
       };
     }
-    if (workoutId) return { kind: 'workout', workoutId };
+    if (workoutId) return { kind: 'workout', workoutId, groups };
     return { kind: 'home' };
   }, [params, state]);
 
   const setView = (next: View) => {
     const nextParams = new URLSearchParams();
-    if (next.kind === 'workout') nextParams.set('w', next.workoutId);
+    if (next.kind === 'workout') {
+      nextParams.set('w', next.workoutId);
+      if (next.groups.length) nextParams.set('groups', serializeGroupsParam(next.groups));
+    }
     if (next.kind === 'log') {
       nextParams.set('log', next.exerciseId);
       if (next.workoutId) nextParams.set('w', next.workoutId);
       if (next.entryId) nextParams.set('entry', next.entryId);
       if (next.preferredDate) nextParams.set('date', next.preferredDate);
+      if (next.groups.length) nextParams.set('groups', serializeGroupsParam(next.groups));
     }
     setParams(nextParams, { replace: false });
   };
@@ -644,6 +657,7 @@ export function StrengthWorkoutsPage() {
 
   const workouts = activeWorkouts(state);
   const detailExercise = detailExerciseId ? getExercise(state, detailExerciseId) : null;
+  const { picks, setWorkoutGroups } = useGroupPicks();
 
   if (view.kind === 'log') {
     const exercise = getExercise(state, view.exerciseId);
@@ -666,6 +680,7 @@ export function StrengthWorkoutsPage() {
             setView({
               kind: 'workout',
               workoutId: view.workoutId || exercise.workoutId || workouts[0]!.id,
+              groups: view.groups,
             })
           }
         >
@@ -685,6 +700,7 @@ export function StrengthWorkoutsPage() {
             setView({
               kind: 'workout',
               workoutId: view.workoutId || exercise.workoutId || workouts[0]!.id,
+              groups: view.groups,
             })
           }
           onSaved={(next) => {
@@ -692,6 +708,7 @@ export function StrengthWorkoutsPage() {
             setView({
               kind: 'workout',
               workoutId: view.workoutId || exercise.workoutId || workouts[0]!.id,
+              groups: view.groups,
             });
           }}
           onDeleted={(next) => {
@@ -699,6 +716,7 @@ export function StrengthWorkoutsPage() {
             setView({
               kind: 'workout',
               workoutId: view.workoutId || exercise.workoutId || workouts[0]!.id,
+              groups: view.groups,
             });
           }}
         />
@@ -710,11 +728,15 @@ export function StrengthWorkoutsPage() {
     const workout = state.workouts.find((w) => w.id === view.workoutId) as
       | StrengthWorkout
       | undefined;
-    const exercises = exercisesForWorkout(state, view.workoutId);
+    const selectedGroups =
+      view.groups.length > 0
+        ? view.groups
+        : suggestedGroupsForWorkout(state, view.workoutId);
+    const exercises = exercisesForWorkoutGroups(state, view.workoutId, selectedGroups);
     const sessionNote = state.workoutNotes.find((n) => n.workoutId === view.workoutId);
     const todayKey = todayDateKey();
     void completionTick;
-    const progress = workoutLogProgress(state, view.workoutId, todayKey);
+    const progress = muscleGroupLogProgress(state, exercises, todayKey);
     const scheduled = getScheduledDay(todayKey);
     const isTodaysPlan = scheduled.kind === 'workout' && scheduled.workoutId === view.workoutId;
     const sessionMarked = state.workoutNotes.some(
@@ -725,6 +747,9 @@ export function StrengthWorkoutsPage() {
     );
     const workoutComplete =
       sessionMarked || (isTodaysPlan && readDayStatus(todayKey) === 'completed');
+    const skippedSuggested = suggestedGroupsForWorkout(state, view.workoutId).filter(
+      (group) => !selectedGroups.includes(group),
+    );
 
     const markComplete = () => {
       // Only advance today’s calendar plan when this is the scheduled workout.
@@ -736,7 +761,9 @@ export function StrengthWorkoutsPage() {
           addWorkoutNote({
             workoutId: view.workoutId,
             date: todayKey,
-            notes: 'Workout complete.',
+            notes: skippedSuggested.length
+              ? `Workout complete (${selectedGroups.join(', ')}; skipped ${skippedSuggested.join(', ')}).`
+              : 'Workout complete.',
           }),
         );
       }
@@ -758,16 +785,36 @@ export function StrengthWorkoutsPage() {
         <header className="strength-page__header">
           <p className="path-eyebrow">Strength log</p>
           <h1 className="path-display strength-page__title">
-            {workout?.shortLabel ?? 'Workout'}
+            {selectedGroups.join(' / ') || workout?.shortLabel || 'Workout'}
           </h1>
           <p className="strength-page__lede">
-            Use Log for today’s result, or tap a cell to edit. Tap an exercise name for history and
-            details below.
+            Suggested grouping is {workout?.shortLabel ?? 'this workout'}. Uncheck a muscle group to
+            hide those lifts. Use Log for today’s result, or tap a cell to edit.
           </p>
           {sessionNote ? (
             <p className="strength-page__lede">Latest session note: {sessionNote.notes}</p>
           ) : null}
         </header>
+
+        {workout ? (
+          <MuscleGroupPicker
+            state={state}
+            workout={workout}
+            picks={{
+              ...picks,
+              byWorkout: {
+                ...picks.byWorkout,
+                [workout.id]: selectedGroups,
+              },
+            }}
+            onChange={(workoutId, groups) => {
+              if (!groups.length) return;
+              setWorkoutGroups(workoutId, groups);
+              setView({ kind: 'workout', workoutId, groups });
+            }}
+            showBegin={false}
+          />
+        ) : null}
 
         <ProgressionTable
           state={state}
@@ -780,6 +827,7 @@ export function StrengthWorkoutsPage() {
               workoutId: view.workoutId,
               entryId,
               preferredDate: entryId ? undefined : date,
+              groups: selectedGroups,
             })
           }
           onLogToday={(exerciseId) =>
@@ -788,6 +836,7 @@ export function StrengthWorkoutsPage() {
               exerciseId,
               workoutId: view.workoutId,
               preferredDate: todayDateKey(),
+              groups: selectedGroups,
             })
           }
           onOpenExercise={openExerciseDetail}
@@ -796,8 +845,9 @@ export function StrengthWorkoutsPage() {
         <section className="strength-complete path-surface" aria-label="Workout completion">
           <p className="path-eyebrow">Today</p>
           <p className="strength-complete__progress">
-            {progress.logged} of {progress.total} exercises logged
+            {progress.logged} of {progress.total} selected exercises logged
             {isTodaysPlan ? ' · today’s plan' : ''}
+            {skippedSuggested.length ? ` · skipped ${skippedSuggested.join(', ')}` : ''}
           </p>
           {workoutComplete ? (
             <p className="strength-complete__done">Workout complete for today.</p>
@@ -805,22 +855,23 @@ export function StrengthWorkoutsPage() {
             <>
               {progress.allLogged ? (
                 <p className="strength-complete__hint">
-                  All exercises are logged. Mark the workout complete when you’re finished.
+                  All selected muscle groups are logged. Mark complete when you’re finished — skipped
+                  groups can be trained later with another session.
                 </p>
               ) : progress.logged > 0 ? (
                 <p className="strength-complete__hint">
-                  You can mark complete now, or finish logging the remaining exercises first.
+                  You can mark complete now, or finish logging the remaining selected exercises first.
                 </p>
               ) : (
                 <p className="strength-complete__hint">
-                  Log today’s lifts, then mark the workout complete.
+                  Log today’s lifts, then mark the session complete.
                 </p>
               )}
               <Button
                 onClick={markComplete}
                 disabled={progress.logged === 0}
               >
-                Mark workout complete
+                Mark selected groups complete
               </Button>
             </>
           )}
@@ -843,6 +894,7 @@ export function StrengthWorkoutsPage() {
                   kind: 'log',
                   exerciseId: detailExercise.id,
                   workoutId: view.workoutId,
+                  groups: selectedGroups,
                 })
               }
               onEditEntry={(entryId) =>
@@ -851,6 +903,7 @@ export function StrengthWorkoutsPage() {
                   exerciseId: detailExercise.id,
                   workoutId: view.workoutId,
                   entryId,
+                  groups: selectedGroups,
                 })
               }
               onClose={() => {
@@ -872,29 +925,21 @@ export function StrengthWorkoutsPage() {
         <p className="path-eyebrow">Strength log</p>
         <h1 className="path-display strength-page__title">Workouts</h1>
         <p className="strength-page__lede">
-          Workouts A, B, and C. Use Training for the A→B→Recovery→C rotation. Recommendations stop at
-          equipment max (Bowflex 155 lb · dumbbells 25 lb).
+          Workouts A, B, and C are suggested groupings. Check the muscle groups you will train —
+          skip Core, or add it onto another workout later. Recommendations stop at equipment max
+          (Bowflex 155 lb · dumbbells 25 lb).
         </p>
       </header>
-      <div className="strength-pick">
-        {workouts.map((workout) => {
-          const count = exercisesForWorkout(state, workout.id).length;
-          return (
-            <button
-              key={workout.id}
-              type="button"
-              className="strength-pick__card"
-              onClick={() => {
-                setDetailExerciseId(null);
-                setView({ kind: 'workout', workoutId: workout.id });
-              }}
-            >
-              <p className="strength-pick__eyebrow">Workout {workout.order}</p>
-              <p className="strength-pick__name">{workout.shortLabel}</p>
-              <p className="strength-pick__meta">{count} exercises · tap to train</p>
-            </button>
-          );
-        })}
+      <div className="muscle-picker-list">
+        {workouts.map((workout) => (
+          <MuscleGroupPicker
+            key={workout.id}
+            state={state}
+            workout={workout}
+            picks={picks}
+            onChange={setWorkoutGroups}
+          />
+        ))}
       </div>
 
       <ProgressionTable
@@ -912,6 +957,7 @@ export function StrengthWorkoutsPage() {
             workoutId: exercise?.workoutId ?? null,
             entryId,
             preferredDate: entryId ? undefined : date,
+            groups: [],
           });
         }}
         onLogToday={(exerciseId) => {
@@ -921,6 +967,7 @@ export function StrengthWorkoutsPage() {
             exerciseId,
             workoutId: exercise?.workoutId ?? null,
             preferredDate: todayDateKey(),
+            groups: [],
           });
         }}
         onOpenExercise={openExerciseDetail}
@@ -943,6 +990,7 @@ export function StrengthWorkoutsPage() {
                 kind: 'log',
                 exerciseId: detailExercise.id,
                 workoutId: detailExercise.workoutId,
+                groups: [],
               })
             }
             onEditEntry={(entryId) =>
@@ -951,6 +999,7 @@ export function StrengthWorkoutsPage() {
                 exerciseId: detailExercise.id,
                 workoutId: detailExercise.workoutId,
                 entryId,
+                groups: [],
               })
             }
             onClose={() => {

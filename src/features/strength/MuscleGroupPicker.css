@@ -1,0 +1,91 @@
+.muscle-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1rem 1.05rem 1.05rem;
+  border: 1px solid var(--path-hairline);
+  border-radius: var(--path-radius);
+  background: var(--path-surface);
+}
+
+.muscle-picker__eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--path-text-dim);
+}
+
+.muscle-picker__title {
+  margin: 0.15rem 0 0;
+  font-family: var(--path-font-display);
+  font-size: 1.15rem;
+  line-height: 1.25;
+  font-weight: 650;
+}
+
+.muscle-picker__hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--path-text-muted);
+}
+
+.muscle-picker__groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.muscle-picker__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0.7rem;
+  border: 1px solid var(--path-hairline);
+  border-radius: 999px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.muscle-picker__check:has(input:checked) {
+  border-color: color-mix(in srgb, var(--path-gold) 70%, var(--path-hairline));
+  background: color-mix(in srgb, var(--path-gold) 18%, transparent);
+}
+
+.muscle-picker__check input {
+  accent-color: var(--path-gold);
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.muscle-picker__check--extra {
+  opacity: 0.92;
+}
+
+.muscle-picker__extras {
+  font-size: 0.82rem;
+  color: var(--path-text-muted);
+}
+
+.muscle-picker__extras summary {
+  cursor: pointer;
+  margin-bottom: 0.45rem;
+}
+
+.muscle-picker__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.muscle-picker__empty {
+  font-size: 0.84rem;
+  color: var(--path-text-muted);
+}
+
+.muscle-picker-list {
+  display: grid;
+  gap: 0.75rem;
+}
