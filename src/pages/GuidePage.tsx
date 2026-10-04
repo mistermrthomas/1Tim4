@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_NAME, TAGLINE } from '../constants/brand';
 import { CloudSignIn } from '../components/auth/CloudSignIn';
@@ -31,7 +31,6 @@ export function GuidePage() {
     resetSpiritualAssessment,
     servingDiscovery,
   } = useApp();
-  const importInputRef = useRef<HTMLInputElement>(null);
 
   const [focusTitle, setFocusTitle] = useState('');
   const [focusDesc, setFocusDesc] = useState('');
@@ -232,24 +231,19 @@ export function GuidePage() {
           >
             Export backup file (optional)
           </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => importInputRef.current?.click()}
-          >
+          <label className="btn btn-secondary guide-import-label">
             Import backup
-          </button>
-          <input
-            ref={importInputRef}
-            type="file"
-            accept="application/json,.json"
-            hidden
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void importTrailBackup(file);
-              e.target.value = '';
-            }}
-          />
+            <input
+              type="file"
+              accept="application/json,.json"
+              className="guide-import-file"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void importTrailBackup(file);
+                e.target.value = '';
+              }}
+            />
+          </label>
           {data.lastBackupAt && (
             <p className="field-hint" style={{ marginTop: 10, textAlign: 'center' }}>
               Last export: {new Date(data.lastBackupAt).toLocaleString()}
