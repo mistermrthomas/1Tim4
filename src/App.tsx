@@ -29,6 +29,8 @@ import { ExercisesPage } from './features/catalog/ExercisesPage';
 import { WorkoutsPage } from './features/catalog/WorkoutsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { SundaySermonPage } from './features/sermon/SundaySermonPage';
+import { WeeklyPlanWorkspace } from './features/weeklyPlan/WeeklyPlanWorkspace';
+import { ChurchNotesPage } from './features/churchNotes/ChurchNotesPage';
 import './styles/global.css';
 import './features/shell/FormationShell.css';
 import './styles/desktop.css';
@@ -105,7 +107,7 @@ export default function App() {
             <Route path="/phase0" element={<Phase0HarnessPage />} />
             {/* Formation product is the public Path home; legacy routes remain at /prepare, /guide, etc. */}
             <Route path="/" element={<Navigate to="/today" replace />} />
-            <Route element={<FormationShell />}>
+            <Route element={<FormationShell key={cloudReloadKey} />}>
               <Route path="/today" element={<TodayPage />} />
               <Route path="/training" element={<TrainingPage />} />
               <Route path="/progress" element={<ProgressPage />} />
@@ -114,8 +116,10 @@ export default function App() {
               <Route path="/coach" element={<CoachPage />} />
               <Route path="/sermon" element={<SundaySermonPage />} />
               <Route path="/plan" element={<Navigate to="/sermon" replace />} />
-              <Route path="/plan/week" element={<Navigate to="/sermon" replace />} />
-              <Route path="/plan/week/:weekId" element={<Navigate to="/sermon" replace />} />
+              <Route path="/plan/week" element={<WeeklyPlanWorkspace />} />
+              <Route path="/plan/week/:weekStart" element={<WeeklyPlanWorkspace />} />
+              <Route path="/church-notes" element={<ChurchNotesPage />} />
+              <Route path="/church-notes/:noteId" element={<ChurchNotesPage />} />
               <Route path="/exercises" element={<ExercisesPage />} />
               <Route path="/workouts" element={<WorkoutsPage />} />
               <Route

@@ -4,6 +4,18 @@
 
 Path saves **automatically on this device** and, when you sign in, **keeps your account as the source of truth** so every phone and computer signed into the same Apple/Google account sees the same sermons, workouts, and daily training. There is no Sync button.
 
+## What syncs
+
+| Data | Syncs across devices? |
+|------|------------------------|
+| Journal trail (Prepare / Live / Reflect, prayers, assessment) | Yes — `path_profile_trails` |
+| Weekly plans + Church Notes | Yes — `path_user_formation_state` (run migration `20260807000000_path_user_formation_state.sql`) |
+| Physical tracker / day logs | This device only (for now) |
+
+On a new phone: open **Today**, sign in with the **same** Apple/Google account, tap **Sync now**, and wait for “Synced”. If you previously created an empty local profile on the phone, Path now switches to your cloud profile automatically.
+
+---
+
 ## What you need
 
 1. A [Supabase](https://supabase.com) project (free tier is fine)
@@ -26,10 +38,13 @@ In Supabase → **SQL Editor**, run these migration files (in order):
 1. `supabase/migrations/20260531000000_path_profile_trails.sql` — trail / journal
 2. `supabase/migrations/20260805120000_path_weekly_plans.sql` — sermon notes + weekly biblical plans
 3. `supabase/migrations/20260806010000_path_account_bags.sql` — **strength, workouts, walking, day logs, etc.**
+4. `supabase/migrations/20260807000000_path_user_formation_state.sql` — weekly plans + church notes snapshot (`path_user_formation_state`)
 
 All use row-level security so each user only sees their own data.
 
 **Required for workouts across devices:** run `path_account_bags` or Device B will not receive strength logs / physical training.
+
+**Required for church notes across devices:** run `path_user_formation_state`.
 
 ---
 

@@ -9,17 +9,19 @@ import {
   type ReactNode,
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
+import { useProfile } from './ProfileContext';
 import { isCloudSyncConfigured, supabase } from '../lib/supabase';
 import {
   flushCloudAccountBagPushes,
   syncAccountBagsOnLogin,
 } from '../services/cloudAccountStateSync';
+import { syncFormationStateOnLogin } from '../services/cloudFormationSync';
 import { flushCloudTrailPush, syncUserTrailsOnLogin } from '../services/cloudTrailSync';
 import {
   flushCloudWeeklyPlanPushes,
   syncWeeklyPlansOnLogin,
 } from '../services/cloudWeeklyPlanSync';
-import { getActiveProfileId, listProfiles } from '../storage/profiles';
+import { getActiveProfileId, listProfiles, setActiveProfileId } from '../storage/profiles';
 
 export type CloudSyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'unconfigured';
 
@@ -35,7 +37,7 @@ export interface AuthContextValue {
   signInWithApple: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOutCloud: () => Promise<void>;
-  /** Quiet refresh — used on focus/online; not a user-facing Sync button. */
+  /** Quiet refresh — used on focus/online; also powers Sync now on phones. */
   refreshCloudSync: () => Promise<boolean>;
 }
 
@@ -68,6 +70,7 @@ export function AuthProvider({
   children: ReactNode;
   onActiveProfileShouldReload?: () => void;
 }) {
+  const { refreshProfiles, selectProfile } = useProfile();
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [cloudSyncStatus, setCloudSyncStatus] = useState<CloudSyncStatus>(
@@ -79,85 +82,119 @@ export function AuthProvider({
 
   const reloadRef = useRef(onActiveProfileShouldReload);
   reloadRef.current = onActiveProfileShouldReload;
-  const syncInFlightRef = useRef(false);
+  const mergeInFlight = useRef<Promise<boolean> | null>(null);
   const userRef = useRef<User | null>(null);
   userRef.current = user;
 
   const runCloudMerge = useCallback(async (userId: string) => {
-    if (syncInFlightRef.current) return false;
-    syncInFlightRef.current = true;
-    setCloudSyncStatus('syncing');
-    setCloudSyncMessage(null);
-    try {
-      const activeId = getActiveProfileId();
-      const { activeProfileReloaded } = await syncUserTrailsOnLogin(
-        userId,
-        listProfiles(),
-        activeId,
-      );
+    if (mergeInFlight.current) return mergeInFlight.current;
 
-      let weeklyReloaded = false;
-      let bagsReloaded = false;
-      const warnings: string[] = [];
-
+    const work = (async () => {
+      setCloudSyncStatus('syncing');
+      setCloudSyncMessage(null);
       try {
-        const weekly = await syncWeeklyPlansOnLogin(userId, activeId ?? 'default');
-        weeklyReloaded = weekly.reloaded;
-      } catch (weeklyErr) {
-        const msg = errorMessage(weeklyErr);
-        warnings.push(
-          missingTableHint(msg, 'path_weekly_plans')
-            ? 'Sermon weeks need the path_weekly_plans migration in Supabase.'
-            : permissionHint(msg)
-              ? 'Sermon weeks need database grants in Supabase.'
-              : `Sermon weeks: ${msg}`,
-        );
-      }
+        const activeId = getActiveProfileId();
+        const trail = await syncUserTrailsOnLogin(userId, listProfiles(), activeId);
 
-      try {
-        const bags = await syncAccountBagsOnLogin(userId);
-        bagsReloaded = bags.reloaded;
-      } catch (bagErr) {
-        const msg = errorMessage(bagErr);
-        warnings.push(
-          missingTableHint(msg, 'path_account_bags')
-            ? 'Workouts need the path_account_bags migration in Supabase.'
-            : permissionHint(msg)
-              ? 'Workouts need database grants in Supabase.'
-              : `Training logs: ${msg}`,
-        );
-      }
+        if (trail.selectedProfileId && trail.selectedProfileId !== getActiveProfileId()) {
+          setActiveProfileId(trail.selectedProfileId);
+          selectProfile(trail.selectedProfileId);
+        } else {
+          refreshProfiles();
+        }
 
-      const at = new Date().toISOString();
-      setLastCloudSyncAt(at);
-      const reloaded = activeProfileReloaded || weeklyReloaded || bagsReloaded;
-      if (warnings.length) {
+        let weeklyReloaded = false;
+        let bagsReloaded = false;
+        let formationRestored = false;
+        const warnings: string[] = [];
+
+        try {
+          const weekly = await syncWeeklyPlansOnLogin(userId, activeId ?? 'default');
+          weeklyReloaded = weekly.reloaded;
+        } catch (weeklyErr) {
+          const msg = errorMessage(weeklyErr);
+          warnings.push(
+            missingTableHint(msg, 'path_weekly_plans')
+              ? 'Sermon weeks need the path_weekly_plans migration in Supabase.'
+              : permissionHint(msg)
+                ? 'Sermon weeks need database grants in Supabase.'
+                : `Sermon weeks: ${msg}`,
+          );
+        }
+
+        try {
+          const bags = await syncAccountBagsOnLogin(userId);
+          bagsReloaded = bags.reloaded;
+        } catch (bagErr) {
+          const msg = errorMessage(bagErr);
+          warnings.push(
+            missingTableHint(msg, 'path_account_bags')
+              ? 'Workouts need the path_account_bags migration in Supabase.'
+              : permissionHint(msg)
+                ? 'Workouts need database grants in Supabase.'
+                : `Training logs: ${msg}`,
+          );
+        }
+
+        try {
+          formationRestored = await syncFormationStateOnLogin(userId);
+        } catch (formationErr) {
+          const msg = errorMessage(formationErr);
+          if (!missingTableHint(msg, 'path_user_formation_state')) {
+            warnings.push(
+              permissionHint(msg)
+                ? 'Formation state needs database grants in Supabase.'
+                : `Formation state: ${msg}`,
+            );
+          }
+          console.error('formation sync', msg);
+        }
+
+        const at = new Date().toISOString();
+        setLastCloudSyncAt(at);
+        const reloaded =
+          trail.activeProfileReloaded ||
+          trail.profilesChanged ||
+          weeklyReloaded ||
+          bagsReloaded ||
+          formationRestored;
+
+        if (warnings.length) {
+          setCloudSyncStatus('error');
+          setCloudSyncMessage(warnings.join(' '));
+        } else {
+          setCloudSyncStatus('synced');
+          setCloudSyncMessage(
+            formationRestored || weeklyReloaded
+              ? 'Trail and weekly plans synced with your account.'
+              : 'Signed in — your training saves to this account automatically.',
+          );
+        }
+
+        if (reloaded) {
+          setCloudDataEpoch((n) => n + 1);
+          reloadRef.current?.();
+          window.dispatchEvent(new CustomEvent('path-cloud-synced', { detail: { at } }));
+        }
+        refreshProfiles();
+        return reloaded;
+      } catch (err) {
+        const msg = errorMessage(err);
         setCloudSyncStatus('error');
-        setCloudSyncMessage(warnings.join(' '));
-      } else {
-        setCloudSyncStatus('synced');
-        setCloudSyncMessage('Signed in — your training saves to this account automatically.');
+        setCloudSyncMessage(
+          permissionHint(msg)
+            ? 'Cloud access blocked by database permissions. Run the grants SQL in Supabase.'
+            : msg || 'Could not load your account.',
+        );
+        return false;
+      } finally {
+        mergeInFlight.current = null;
       }
+    })();
 
-      if (reloaded) {
-        setCloudDataEpoch((n) => n + 1);
-        reloadRef.current?.();
-        window.dispatchEvent(new CustomEvent('path-cloud-synced', { detail: { at } }));
-      }
-      return reloaded;
-    } catch (err) {
-      const msg = errorMessage(err);
-      setCloudSyncStatus('error');
-      setCloudSyncMessage(
-        permissionHint(msg)
-          ? 'Cloud access blocked by database permissions. Run the grants SQL in Supabase.'
-          : msg || 'Could not load your account.',
-      );
-      return false;
-    } finally {
-      syncInFlightRef.current = false;
-    }
-  }, []);
+    mergeInFlight.current = work;
+    return work;
+  }, [refreshProfiles, selectProfile]);
 
   useEffect(() => {
     const flushAll = () => {

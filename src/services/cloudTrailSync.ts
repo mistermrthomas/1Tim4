@@ -130,10 +130,15 @@ export async function syncUserTrailsOnLogin(
   userId: string,
   localProfiles: UserProfile[],
   activeProfileId: string | null,
-): Promise<{ activeProfileReloaded: boolean }> {
+): Promise<{
+  activeProfileReloaded: boolean;
+  selectedProfileId: string | null;
+  profilesChanged: boolean;
+}> {
   const cloudRows = await fetchCloudTrails(userId);
   const cloudById = new Map(cloudRows.map((r) => [r.profile_id, r]));
   let activeProfileReloaded = false;
+  let profilesChanged = cloudRows.length > 0;
 
   for (const row of cloudRows) {
     ensureProfileInRegistry(row.profile_id, row.profile_name);
@@ -174,7 +179,22 @@ export async function syncUserTrailsOnLogin(
     }
   }
 
-  return { activeProfileReloaded };
+  // Prefer the newest cloud profile with content when the phone is on an empty/new local profile.
+  let selectedProfileId: string | null = activeProfileId;
+  const activeLocal = activeProfileId ? loadAppData(activeProfileId) : null;
+  const activeIsEmpty = !activeProfileId || !hasTrailContent(activeLocal!);
+  const bestCloud = cloudRows.find((row) => hasTrailContent(normalizeAppData(row.app_data)));
+
+  if (bestCloud && activeIsEmpty && bestCloud.profile_id !== activeProfileId) {
+    selectedProfileId = bestCloud.profile_id;
+    activeProfileReloaded = true;
+    profilesChanged = true;
+  } else if (!selectedProfileId && cloudRows[0]) {
+    selectedProfileId = cloudRows[0].profile_id;
+    profilesChanged = true;
+  }
+
+  return { activeProfileReloaded, selectedProfileId, profilesChanged };
 }
 
 export function scheduleCloudTrailPush(

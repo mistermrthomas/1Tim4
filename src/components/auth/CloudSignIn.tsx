@@ -49,8 +49,9 @@ export function CloudSignIn() {
           </button>
         </div>
         <p className="field-hint cloud-sign-in__note">
-          Sermons, workouts, strength logs, and daily training stay with this account on every
-          device. No sync button — just stay signed in.
+          Sermons, workouts, strength logs, church notes, and daily training stay with this account
+          on every device. On a new phone, use <strong>Sync now</strong> on Today after sign-in if
+          training still looks empty.
         </p>
       </section>
     );

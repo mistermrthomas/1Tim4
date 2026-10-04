@@ -63,4 +63,10 @@ describe('week calendar (local timezone)', () => {
     expect(nextSundayStart(sunday)).toBe('2026-08-02');
     expect(followingSundayStart(sunday)).toBe('2026-08-09');
   });
+
+  it('keeps Monday inside the Sunday week that started yesterday', () => {
+    const monday = new Date(2026, 7, 3, 9);
+    expect(startOfWeekSunday(monday)).toBe('2026-08-02');
+    expect(nextSundayStart(monday)).toBe('2026-08-09');
+  });
 });

@@ -1,0 +1,246 @@
+.church-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 40rem;
+  min-width: 0;
+}
+
+.church-notes__hero {
+  max-width: 36rem;
+}
+
+.church-notes__title {
+  font-size: clamp(1.85rem, 5vw, 2.6rem);
+  margin: 0.2rem 0 0;
+}
+
+.church-notes__lede {
+  margin-top: 0.45rem;
+}
+
+.church-notes__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.church-notes__status {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--path-text-dim);
+}
+
+.church-notes__status--saved {
+  color: var(--path-gold);
+}
+
+.church-notes__section {
+  padding: 1rem 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.church-notes__h2 {
+  margin: 0;
+  font-family: var(--path-font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--path-gold);
+}
+
+.church-notes__note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--path-text-muted);
+  line-height: 1.45;
+}
+
+.church-notes__grid {
+  display: grid;
+  gap: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  .church-notes__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.church-notes__span-2 {
+  grid-column: 1 / -1;
+}
+
+.church-notes__raw {
+  min-height: 14rem;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.church-notes__notice {
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  border-left: 3px solid var(--path-gold);
+  background: color-mix(in srgb, var(--path-gold) 8%, transparent);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--path-text);
+}
+
+.church-notes__raw-panel {
+  border-top: 1px solid var(--path-hairline);
+  padding-top: 0.75rem;
+}
+
+.church-notes__raw-panel pre {
+  margin: 0.4rem 0 0;
+  white-space: pre-wrap;
+  font-family: var(--path-font-body);
+  font-size: 0.82rem;
+  color: var(--path-text-muted);
+  line-height: 1.4;
+  max-height: 10rem;
+  overflow: auto;
+}
+
+.church-notes__loading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 1.25rem 0.25rem;
+}
+
+.church-notes__loading-pulse {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  border: 2px solid var(--path-hairline);
+  border-top-color: var(--path-gold);
+  animation: church-notes-spin 0.9s linear infinite;
+}
+
+@keyframes church-notes-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.church-notes__accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.church-notes__acc-item {
+  border: 1px solid var(--path-hairline);
+  border-radius: var(--path-radius-sm);
+  overflow: hidden;
+  background: var(--path-surface);
+}
+
+.church-notes__acc-item--flag {
+  border-color: color-mix(in srgb, var(--path-gold) 45%, var(--path-hairline));
+}
+
+.church-notes__acc-btn {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--path-text);
+  padding: 0.7rem 0.85rem;
+  font-family: var(--path-font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  align-items: center;
+}
+
+.church-notes__acc-body {
+  padding: 0 0.85rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.church-notes__chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.church-notes__chip {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--path-hairline);
+  border-radius: var(--path-radius-sm);
+  color: var(--path-text-muted);
+}
+
+.church-notes__chip--uncertain {
+  border-color: color-mix(in srgb, var(--path-gold) 50%, var(--path-hairline));
+  color: var(--path-gold);
+}
+
+.church-notes__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px dashed var(--path-hairline);
+  border-radius: var(--path-radius-sm);
+}
+
+.church-notes__preview h3 {
+  margin: 0;
+  font-family: var(--path-font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--path-gold);
+}
+
+.church-notes__preview ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.84rem;
+  color: var(--path-text-muted);
+  line-height: 1.4;
+}
+
+.church-notes__error {
+  margin: 0;
+  color: #c45c4a;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.church-notes__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.church-notes__actions .path-btn {
+  min-height: 2.75rem;
+  padding-inline: 1rem;
+}
+
+.church-notes textarea.path-field__control,
+.church-notes .path-field textarea {
+  min-height: 2.75rem;
+}
