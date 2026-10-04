@@ -31,6 +31,7 @@ import {
 } from '../../domain/aiTraining/settings';
 import { CloudSignIn } from '../../components/auth/CloudSignIn';
 import { Button } from '../../ui/Button';
+import { ExportWorkoutsSection } from './ExportWorkoutsSection';
 import './SettingsPage.css';
 
 export function SettingsPage() {
@@ -69,7 +70,12 @@ export function SettingsPage() {
   }, []);
 
   if (!sermon || !training || !reflect) {
-    return <p className="settings-page__loading">Loading settings…</p>;
+    return (
+      <div className="settings-page path-fade-in">
+        <ExportWorkoutsSection />
+        <p className="settings-page__loading">Loading settings…</p>
+      </div>
+    );
   }
 
   const sermonDirty =
@@ -188,6 +194,8 @@ export function SettingsPage() {
           server only.
         </p>
       </header>
+
+      <ExportWorkoutsSection />
 
       <section className="settings-page__section path-surface settings-page__cloud">
         <CloudSignIn />
