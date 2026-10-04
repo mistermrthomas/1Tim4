@@ -32,7 +32,6 @@ import {
 import { CloudSignIn } from '../../components/auth/CloudSignIn';
 import { Button } from '../../ui/Button';
 import { ExportWorkoutsSection } from './ExportWorkoutsSection';
-import { ImportWorkoutsSection } from './ImportWorkoutsSection';
 import './SettingsPage.css';
 
 export function SettingsPage() {
@@ -74,7 +73,6 @@ export function SettingsPage() {
     return (
       <div className="settings-page path-fade-in">
         <ExportWorkoutsSection />
-        <ImportWorkoutsSection />
         <p className="settings-page__loading">Loading settings…</p>
       </div>
     );
@@ -198,7 +196,6 @@ export function SettingsPage() {
       </header>
 
       <ExportWorkoutsSection />
-      <ImportWorkoutsSection />
 
       <section className="settings-page__section path-surface settings-page__cloud">
         <CloudSignIn />
